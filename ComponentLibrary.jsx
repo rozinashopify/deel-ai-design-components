@@ -23,7 +23,7 @@
  * ─── DOMAINS ───────────────────────────────────────────────────────
  *  Forms               · TextInput, DropdownSelect, RadioOption, FormFieldGroup
  *  Actions             · PrimaryButton, SecondaryButton, TextButton
- *  Status & Feedback   · StatusBadge, AutosaveWidget, HiringGuideBanner
+ *  Status & Feedback   · StatusBadge, AutosaveWidget, ContextBanner (guide / insight / promo variants)
  *  Navigation          · StepperRail
  *  Compliance          · ComplianceCheckCard, ComplianceCheckPanel
  *  Market Intelligence · MarketRateChart
@@ -205,20 +205,27 @@ export const COMPONENT_MANIFEST = [
     usage: '<AutosaveWidget status="saved" lastSaved="3 minutes ago" onDeleteDraft={handleDelete} />',
   },
   {
-    name: "HiringGuideBanner",
+    name: "ContextBanner",
     domain: "Status & Feedback",
     tier: "molecule",
     description:
-      "Contextual dismissable banner linking to Deel's country-specific hiring guide. Appears at the top of the contract creation flow. Two variants: info-tinted (prominent) and surface (subtle).",
+      "Unified contextual banner covering three semantic use cases via the variant prop: 'guide' (dismissable country hiring-guide link with flag imagery), 'insight' (inline AI callout with mascot + bold 'Deel Insight:' prefix + text link), and 'promo' (persistent upsell tile with imagery on the right + outlined button CTA). Replaces the separate HiringGuideBanner, InsightCallout, and PromoBanner components.",
     composedOf: ["TextButton"],
     props: [
-      { name: "country",   type: "string",             required: false, description: "Country name inserted into the body copy." },
-      { name: "guideUrl",  type: "string",             required: false, description: "URL for the 'View' link." },
-      { name: "flags",     type: "string[]",           required: false, description: "2–3 emoji or character flags shown as stacked circles." },
-      { name: "variant",   type: "'info' | 'surface'", required: false, description: "'info' = blue tint (default), 'surface' = neutral card." },
-      { name: "onDismiss", type: "() => void",         required: false, description: "Called when × is clicked." },
+      { name: "variant",     type: "'guide' | 'insight' | 'promo'", required: false, description: "Semantic type — controls default styles, media placement, CTA style, and dismissable behaviour." },
+      { name: "title",       type: "string",   required: false, description: "Bold prefix label (auto: null for guide, 'Deel Insight:' for insight, 'Foreign Entity Setup' for promo)." },
+      { name: "body",        type: "string",   required: false, description: "Body copy. For guide variant the country prop auto-populates this." },
+      { name: "country",     type: "string",   required: false, description: "Convenience for guide variant — inserts country name into default body copy." },
+      { name: "media",       type: "string[]", required: false, description: "Emoji or flag array. Placed left for guide/insight, right for promo. Insight uses a built-in mascot SVG when null." },
+      { name: "ctaLabel",    type: "string",   required: false, description: "CTA text. Defaults: 'View' for guide, 'Learn more' for others." },
+      { name: "ctaUrl",      type: "string",   required: false, description: "href for the CTA (default: '#')." },
+      { name: "ctaStyle",    type: "'link' | 'button'", required: false, description: "CTA style. Default: 'button' for promo, 'link' for guide/insight." },
+      { name: "dismissable", type: "boolean",  required: false, description: "Show × dismiss button. Default: true for guide, false for insight/promo." },
+      { name: "onDismiss",   type: "() => void", required: false, description: "Called when × is clicked." },
     ],
-    usage: '<HiringGuideBanner country="Germany" variant="info" onDismiss={handleDismiss} />',
+    usage: `<ContextBanner variant="guide" country="Germany" onDismiss={handleDismiss} />
+<ContextBanner variant="insight" body="Severance in the US ranges from 0–26 weeks." />
+<ContextBanner variant="promo" title="Foreign Entity Setup" />`,
   },
 
   // ── Navigation ────────────────────────────────────────────────
@@ -791,20 +798,25 @@ export const makeLibraryCSS = (t, isDark) => {
   .autosave-dot.saving { background: ${t.mandatory}; animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-  /* ── HiringGuideBanner ── */
-  .hgb { border-radius: ${br + 4}px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: opacity .2s; }
-  .hgb.info-style { background: ${t.infoBg}; border: 1px solid ${isDark ? t.info + "33" : "#BFDBFE"}; }
-  .hgb.surface-style { background: ${t.surface}; border: 1px solid ${t.border}; box-shadow: ${t.shadow}; }
-  .hgb-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-  .hgb-flags { display: flex; align-items: center; flex-shrink: 0; }
-  .hgb-flag { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid ${t.surface}; font-size: 13px; display: flex; align-items: center; justify-content: center; background: ${t.surfaceHover}; }
-  .hgb-flag:nth-child(n+2) { margin-left: -6px; }
-  .hgb-text { font-size: 13px; color: ${t.textMain}; line-height: 1.4; min-width: 0; }
-  .hgb-link { color: ${t.info}; font-weight: 500; text-decoration: none; cursor: pointer; }
-  .hgb-link:hover { text-decoration: underline; }
-  .hgb-dismiss { background: none; border: none; cursor: pointer; color: ${t.textMuted}; display: flex; align-items: center; padding: 3px; border-radius: 4px; transition: color .1s, background .1s; }
-  .hgb-dismiss:hover { color: ${t.textMain}; background: ${t.surfaceHover}; }
-  .hgb-dismissed { opacity: .4; pointer-events: none; }
+  /* ── ContextBanner ── */
+  .ctxb { border-radius: ${br + 4}px; display: flex; align-items: center; gap: 12px; transition: opacity .2s; }
+  .ctxb.guide-v   { padding: 14px 16px; background: ${t.infoBg}; border: 1px solid ${isDark ? t.info + "33" : "#BFDBFE"}; }
+  .ctxb.insight-v { padding: 12px 16px; background: ${isDark ? "#1b1e2e" : "#F5F3FF"}; border: 1px solid ${isDark ? "#6366f133" : "#DDD6FE"}; }
+  .ctxb.promo-v   { padding: 16px 20px; background: ${t.surface}; border: 1px solid ${t.border}; box-shadow: ${t.shadow}; justify-content: space-between; }
+  .ctxb-media { display: flex; align-items: center; flex-shrink: 0; }
+  .ctxb-media-item { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid ${t.surface}; font-size: 13px; display: flex; align-items: center; justify-content: center; background: ${t.surfaceHover}; }
+  .ctxb-media-item:nth-child(n+2) { margin-left: -6px; }
+  .ctxb-mascot { width: 30px; height: 30px; border-radius: 8px; background: ${isDark ? "#312e81" : "#EDE9FE"}; color: ${isDark ? "#a5b4fc" : "#7C3AED"}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ctxb-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .ctxb-body-row { font-size: 13px; color: ${t.textMain}; line-height: 1.45; }
+  .ctxb-label { font-weight: 700; color: ${isDark ? "#a5b4fc" : "#6D28D9"}; }
+  .ctxb-link  { color: ${t.info}; font-weight: 500; text-decoration: none; cursor: pointer; white-space: nowrap; }
+  .ctxb-link:hover { text-decoration: underline; }
+  .ctxb-btn   { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 12.5px; font-weight: 500; padding: 6px 12px; border: 1px solid ${t.border}; border-radius: 6px; color: ${t.textMain}; background: none; cursor: pointer; text-decoration: none; font-family: inherit; transition: background .12s, border-color .12s; width: fit-content; }
+  .ctxb-btn:hover { background: ${t.surfaceHover}; border-color: ${t.textMuted}; }
+  .ctxb-dismiss { background: none; border: none; cursor: pointer; color: ${t.textMuted}; display: flex; align-items: center; padding: 3px; border-radius: 4px; flex-shrink: 0; transition: color .1s, background .1s; }
+  .ctxb-dismiss:hover { color: ${t.textMain}; background: ${t.surfaceHover}; }
+  .ctxb-gone { opacity: .4; pointer-events: none; }
 
   /* ── StepperRail ── */
   .srail { display: flex; flex-direction: column; gap: 0; width: 100%; background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 4}px; overflow: hidden; padding: 8px; }
@@ -1301,25 +1313,104 @@ export function AutosaveWidget({ status = "saved", lastSaved, onDeleteDraft }) {
  * @param {'info'|'surface'}  [variant]   - 'info' = blue tint (default), 'surface' = neutral.
  * @param {function}          [onDismiss] - Called when × is clicked.
  */
-export function HiringGuideBanner({ country = "United States", guideUrl = "#", flags = ["🌍", "🇺🇸"], variant = "info", onDismiss }) {
+/**
+ * Unified contextual banner — three semantic variants:
+ * - "guide"   : dismissable hiring-guide link (blue tint, flags, × button)
+ * - "insight" : inline AI callout (purple tint, mascot, "Deel Insight:" prefix, text link)
+ * - "promo"   : persistent upsell tile (surface card, imagery right, outlined button CTA)
+ */
+export function ContextBanner({
+  variant = "guide",
+  title,
+  body,
+  country,
+  media,
+  ctaLabel,
+  ctaUrl = "#",
+  ctaStyle,
+  dismissable,
+  onDismiss,
+}) {
   const [dismissed, setDismissed] = useState(false);
   const handleDismiss = () => { setDismissed(true); onDismiss?.(); };
-  return (
-    <div className={`hgb ${variant === "info" ? "info-style" : "surface-style"}${dismissed ? " hgb-dismissed" : ""}`}>
-      <div className="hgb-left">
-        <div className="hgb-flags">
-          {flags.map((f, i) => <div key={i} className="hgb-flag">{f}</div>)}
-        </div>
-        <div className="hgb-text">
-          View Deel's global hiring guide for {country}.{" "}
-          <a className="hgb-link" href={guideUrl} target="_blank" rel="noreferrer">
-            View <ExternalLink />
-          </a>
-        </div>
-      </div>
-      <button type="button" className="hgb-dismiss" onClick={handleDismiss} aria-label="Dismiss"><X /></button>
+
+  const isGuide   = variant === "guide";
+  const isInsight = variant === "insight";
+  const isPromo   = variant === "promo";
+
+  const resolvedBody = body ?? (
+    isGuide   ? `View Deel's global hiring guide for ${country ?? "your country"}.` :
+    isInsight ? "Severance in the United States typically ranges from 0–26 weeks depending on tenure." :
+                "Set up a foreign entity with Deel — we handle compliance, payroll, and local filings."
+  );
+  const resolvedTitle = title !== undefined ? title : (
+    isInsight ? "Deel Insight:" :
+    isPromo   ? "Foreign Entity Setup" : null
+  );
+  const resolvedMedia       = media ?? (isInsight ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
+  const resolvedCtaLabel    = ctaLabel ?? (isGuide ? "View" : "Learn more");
+  const resolvedCtaStyle    = ctaStyle ?? (isPromo ? "button" : "link");
+  const resolvedDismissable = dismissable ?? isGuide;
+
+  const MediaStack = ({ items }) => (
+    <div className="ctxb-media">
+      {(items ?? []).map((f, i) => <div key={i} className="ctxb-media-item">{f}</div>)}
     </div>
   );
+
+  return (
+    <div className={`ctxb ${variant}-v${dismissed ? " ctxb-gone" : ""}`}>
+
+      {/* Left media */}
+      {!isPromo && (
+        isInsight
+          ? <div className="ctxb-mascot">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 .5L9.9 4.8 14.5 5.5 11 8.9l.8 4.6L8 11.4l-3.8 2.1.8-4.6L1.5 5.5l4.6-.7z"/>
+              </svg>
+            </div>
+          : resolvedMedia && <MediaStack items={resolvedMedia} />
+      )}
+
+      {/* Content */}
+      <div className="ctxb-content">
+        <div className="ctxb-body-row">
+          {resolvedTitle && <span className="ctxb-label">{resolvedTitle} </span>}
+          <span className="ctxb-body">{resolvedBody}</span>
+          {resolvedCtaStyle === "link" && (
+            <button
+              type="button"
+              className="btn btn-g"
+              style={{ paddingLeft: 4, paddingRight: 2, verticalAlign: "middle", display: "inline-flex" }}
+              onClick={() => window.open(ctaUrl, "_blank", "noreferrer")}
+            >
+              {resolvedCtaLabel} <ExternalLink />
+            </button>
+          )}
+        </div>
+        {resolvedCtaStyle === "button" && (
+          <a className="ctxb-btn" href={ctaUrl} target="_blank" rel="noreferrer">
+            {resolvedCtaLabel} ↗
+          </a>
+        )}
+      </div>
+
+      {/* Right media (promo only) */}
+      {isPromo && resolvedMedia && <MediaStack items={resolvedMedia} />}
+
+      {/* Dismiss */}
+      {resolvedDismissable && (
+        <button type="button" className="ctxb-dismiss" onClick={handleDismiss} aria-label="Dismiss">
+          <X />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** @deprecated Use ContextBanner with variant="guide" instead. */
+export function HiringGuideBanner({ country = "United States", flags, variant, onDismiss, guideUrl }) {
+  return <ContextBanner variant="guide" country={country} media={flags} ctaUrl={guideUrl ?? "#"} onDismiss={onDismiss} />;
 }
 
 // ═══════════════════════════════════════════════════════════════════
