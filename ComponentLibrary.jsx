@@ -460,13 +460,96 @@ export const darkTokens = {
 //   });
 // ═══════════════════════════════════════════════════════════════════
 
+// ─── Colour utility helpers (used by applyAppearance) ───────────────────────
+
+function _hexToHsl(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6;               break;
+      case b: h = ((r - g) / d + 4) / 6;               break;
+    }
+  }
+  return [h, s, l];
+}
+
+function _hslToHex(h, s, l) {
+  const toRgb = (p, q, t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = toRgb(p, q, h + 1/3);
+    g = toRgb(p, q, h);
+    b = toRgb(p, q, h - 1/3);
+  }
+  const toH = x => Math.round(x * 255).toString(16).padStart(2, '0');
+  return `#${toH(r)}${toH(g)}${toH(b)}`;
+}
+
+/** Ensure a custom primary colour is legible in the given mode. */
+function _adjustPrimaryForMode(hex, isDark) {
+  if (!hex || hex.length < 7) return hex;
+  const [h, s, l] = _hexToHsl(hex);
+  // Dark mode: lift lightness so colour stays vibrant against near-black bg
+  // Light mode: cap lightness so colour stays visible against near-white bg
+  const adjusted = isDark ? Math.max(l, 0.56) : Math.min(l, 0.52);
+  return _hslToHex(h, Math.max(s, 0.15), adjusted);
+}
+
+/** Pick white or near-black text for maximum contrast on a given bg colour. */
+function _contrastText(hex) {
+  if (!hex || hex.length < 7) return "#FFFFFF";
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  // sRGB relative luminance
+  const lin = c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.22 ? "#09090B" : "#FFFFFF";
+}
+
+/** Derive a hover shade (slightly darker in light mode, lighter in dark mode). */
+function _hoverShade(hex, isDark) {
+  if (!hex || hex.length < 7) return hex;
+  const [h, s, l] = _hexToHsl(hex);
+  const shift = isDark ? Math.min(1, l + 0.09) : Math.max(0, l - 0.07);
+  return _hslToHex(h, s, shift);
+}
+
+/** Convert hex to rgba with given alpha for focus rings. */
+function _hexToRgba(hex, alpha) {
+  if (!hex || hex.length < 7) return `rgba(0,0,0,${alpha})`;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * All supported appearance customisation keys and their defaults.
  * Pass a subset of these to applyAppearance() to override only what you need.
  */
 export const APPEARANCE_DEFAULTS = {
-  /** Primary action colour — buttons, focus rings, active chart bars. */
-  primaryColor: "#18181B",
+  /** Primary action colour — buttons, focus rings, active chart bars.
+   *  Leave empty ("") to respect each theme's built-in primary token. */
+  primaryColor: "",
   /** Main body font family. Accepts any web-safe font or Google Fonts name. */
   fontFamily: "Inter",
   /** Monospace font family — used for IDs, code snippets, and numeric fields. */
@@ -485,17 +568,24 @@ export const APPEARANCE_DEFAULTS = {
  * all remaining token values are preserved unchanged, keeping light/dark
  * mode intact.
  *
- * @param {object} baseTokens - lightTokens or darkTokens
- * @param {Partial<typeof APPEARANCE_DEFAULTS>} appearance
+ * @param {object} baseTokens   - lightTokens or darkTokens
+ * @param {Partial<typeof APPEARANCE_DEFAULTS>} [appearance]
+ * @param {boolean} [isDark]    - Pass true when using darkTokens so the primary
+ *                                colour is auto-lifted and btnText is computed
+ *                                for correct contrast.
  * @returns {object} merged token object suitable for makeLibraryCSS()
  */
-export function applyAppearance(baseTokens, appearance = {}) {
+export function applyAppearance(baseTokens, appearance = {}, isDark = false) {
   const t = { ...baseTokens };
   if (appearance.primaryColor) {
-    t.primary        = appearance.primaryColor;
-    t.primaryHover   = appearance.primaryColor;
-    t.borderFocus    = appearance.primaryColor;
-    t.chartBarActive = appearance.primaryColor;
+    const adjusted   = _adjustPrimaryForMode(appearance.primaryColor, isDark);
+    const hoverColor = _hoverShade(adjusted, isDark);
+    t.primary        = adjusted;
+    t.primaryHover   = hoverColor;
+    t.borderFocus    = adjusted;
+    t.chartBarActive = adjusted;
+    t.btnText        = _contrastText(adjusted);
+    t.ring           = _hexToRgba(adjusted, 0.18);
   }
   if (appearance.fontFamily)            t._fontFamily = appearance.fontFamily;
   if (appearance.monospaceFontFamily)   t._monoFont   = appearance.monospaceFontFamily;

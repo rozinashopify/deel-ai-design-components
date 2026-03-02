@@ -2083,9 +2083,12 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const ap    = appearanceProp ?? localAp;
   const setAp = setAppearanceProp ?? setLocalAp;
 
-  const isApCustomised = ap.primaryColor !== APPEARANCE_DEFAULTS.primaryColor
+  const isApCustomised = !!(ap.primaryColor)
     || ap.fontFamily !== APPEARANCE_DEFAULTS.fontFamily
     || ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius;
+
+  // Effective primary = custom (adjusted) if set, else the theme token default
+  const effectivePrimary = ap.primaryColor || (dark ? darkTokens.primary : lightTokens.primary);
 
   const t = dark ? darkTokens : lightTokens;
   const { color: tierColor, bg: tierBg } = TIER_COLORS[manifest?.tier] ?? TIER_COLORS.atom;
@@ -2152,7 +2155,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
 
   return (
     <>
-      {!embedded && <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(applyAppearance(t, ap), dark) + makeCatalogCSS(t) }} />}
+      {!embedded && <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(applyAppearance(t, ap, dark), dark) + makeCatalogCSS(t) }} />}
 
       {/* ── Back bar (non-embedded) ── */}
       {!embedded && (
@@ -2219,7 +2222,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
               textAlign: "left",
             }}
           >
-            <span style={{ width: 10, height: 10, borderRadius: "50%", background: ap.primaryColor, border: `1.5px solid ${t.border}`, flexShrink: 0, display: "inline-block" }} />
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: effectivePrimary, border: `1.5px solid ${t.border}`, flexShrink: 0, display: "inline-block" }} />
             <span>Appearance</span>
             {isApCustomised && (
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", background: t.primary + "18", color: t.primary, padding: "1.5px 7px", borderRadius: 4 }}>customised</span>
@@ -2237,17 +2240,23 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <input
                     type="color"
-                    value={ap.primaryColor}
+                    value={ap.primaryColor || effectivePrimary}
                     onChange={e => setAp(prev => ({ ...prev, primaryColor: e.target.value }))}
                     style={{ width: 32, height: 32, border: `1px solid ${t.border}`, borderRadius: 6, padding: 2, cursor: "pointer", background: t.inputBg }}
                   />
                   <input
                     type="text"
-                    value={ap.primaryColor}
+                    value={ap.primaryColor || effectivePrimary}
                     onChange={e => { const v = e.target.value; if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setAp(prev => ({ ...prev, primaryColor: v })); }}
-                    onBlur={e => { if (!/^#[0-9a-fA-F]{6}$/.test(e.target.value)) setAp(prev => ({ ...prev, primaryColor: APPEARANCE_DEFAULTS.primaryColor })); }}
+                    onBlur={e => { if (!/^#[0-9a-fA-F]{6}$/.test(e.target.value)) setAp(prev => ({ ...prev, primaryColor: "" })); }}
                     style={{ width: 80, height: 32, fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 500, color: t.textMain, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "0 8px", outline: "none" }}
                   />
+                  {ap.primaryColor && (
+                    <button type="button" onClick={() => setAp(prev => ({ ...prev, primaryColor: "" }))} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: t.textDisabled, background: "transparent", border: "none", cursor: "pointer", padding: "0 2px" }} title="Reset to theme default">✕</button>
+                  )}
+                  {!ap.primaryColor && (
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled, letterSpacing: "0.05em" }}>theme default</span>
+                  )}
                 </div>
               </div>
 
@@ -2283,7 +2292,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                     min={0} max={20} step={1}
                     value={ap.borderRadius}
                     onChange={e => setAp(prev => ({ ...prev, borderRadius: Number(e.target.value) }))}
-                    style={{ width: 160, accentColor: ap.primaryColor, cursor: "pointer" }}
+                    style={{ width: 160, accentColor: effectivePrimary, cursor: "pointer" }}
                   />
                   <div style={{ display: "flex", gap: 3 }}>
                     {[0, 4, 8, 14, 20].map(v => (
@@ -2712,11 +2721,14 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
 
   const update = (key, val) => setAp(prev => ({ ...prev, [key]: val }));
 
+  // Effective primary — use custom if set, otherwise use the theme token
+  const effectivePrimaryColor = ap.primaryColor || t.primary;
+
   const codeStr =
 `const handler = window.DeelComponent.create({
   link: componentLink,
   appearance: {
-    primaryColor:        "${ap.primaryColor}",
+    primaryColor:        "${ap.primaryColor || 'theme default'}",
     fontFamily:          "${ap.fontFamily}",
     monospaceFontFamily: "${ap.monospaceFontFamily}",
     borderRadius:        ${ap.borderRadius},
@@ -2744,7 +2756,7 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
       onClick={() => onChange(!checked)}
       style={{
         width: 38, height: 22, borderRadius: 999, border: "none", cursor: "pointer",
-        background: checked ? ap.primaryColor : t.border,
+        background: checked ? effectivePrimaryColor : t.border,
         position: "relative", transition: "background 0.18s", flexShrink: 0,
       }}
     >
@@ -2809,7 +2821,7 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
           + Add bank account
         </button>
         {/* Primary CTA */}
-        <button type="button" style={{ fontFamily: font, fontSize: 13, fontWeight: 600, color: "#fff", background: ap.primaryColor, border: "none", borderRadius: br, padding: "10px 14px", cursor: "pointer", width: "100%" }}>
+        <button type="button" style={{ fontFamily: font, fontSize: 13, fontWeight: 600, color: "#fff", background: effectivePrimaryColor, border: "none", borderRadius: br, padding: "10px 14px", cursor: "pointer", width: "100%" }}>
           Continue →
         </button>
       </div>
@@ -2839,16 +2851,22 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
             <ControlRow label="primaryColor">
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <input
-                  type="color" value={ap.primaryColor}
+                  type="color" value={ap.primaryColor || effectivePrimaryColor}
                   onChange={e => update("primaryColor", e.target.value)}
                   style={{ width: 34, height: 30, padding: 2, border: `1px solid ${t.border}`, borderRadius: 6, cursor: "pointer", background: t.inputBg, flexShrink: 0 }}
                 />
                 <input
-                  type="text" value={ap.primaryColor}
+                  type="text" value={ap.primaryColor || effectivePrimaryColor}
                   onChange={e => update("primaryColor", e.target.value)}
                   style={{ ...inputBase, flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}
                 />
+                {ap.primaryColor && (
+                  <button type="button" onClick={() => update("primaryColor", "")} style={{ background: "transparent", border: "none", cursor: "pointer", color: t.textDisabled, fontSize: 14, padding: "0 2px", flexShrink: 0 }} title="Reset to theme default">✕</button>
+                )}
               </div>
+              {!ap.primaryColor && (
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textDisabled, letterSpacing: "0.05em" }}>theme default</span>
+              )}
             </ControlRow>
 
             <ControlRow label="fontFamily">
@@ -2863,7 +2881,7 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
               <input
                 type="range" min={0} max={20} step={1} value={ap.borderRadius}
                 onChange={e => update("borderRadius", Number(e.target.value))}
-                style={{ width: "100%", accentColor: ap.primaryColor, cursor: "pointer" }}
+                style={{ width: "100%", accentColor: effectivePrimaryColor, cursor: "pointer" }}
               />
             </ControlRow>
 
@@ -3248,7 +3266,7 @@ export default function DeelDesignSystemIndex() {
   const [activeDomain, setActiveDomain] = useState("All");
   const [appearance, setAppearance]   = useState({ ...APPEARANCE_DEFAULTS });
   const t = dark ? darkTokens : lightTokens;
-  const appliedT = applyAppearance(t, appearance);
+  const appliedT = applyAppearance(t, appearance, dark);
   const wc = WAVE_COLORS(t);
 
   // ── Landing page ──
