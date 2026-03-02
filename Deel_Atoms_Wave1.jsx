@@ -253,6 +253,14 @@ const css = (t, isDark) => `
   .trow-track.on  .trow-thumb { left: 18px; }
   .trow-track.off .trow-thumb { left: 2px; }
 
+  /* SectionCard */
+  .sc { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 6}px; padding: 20px 20px 24px; box-shadow: ${t.shadow}; display: flex; flex-direction: column; gap: 16px; }
+  .sc-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sc-title { font-size: 15px; font-weight: 600; color: ${t.textMain}; letter-spacing: -.01em; }
+  .sc-info-btn { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: ${t.textMuted}; padding: 3px; border-radius: 5px; transition: color .12s, background .12s; flex-shrink: 0; }
+  .sc-info-btn:hover { color: ${t.textMain}; background: ${t.surfaceHover}; }
+  .sc-body { display: flex; flex-direction: column; gap: 12px; }
+
   /* Buttons */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -388,6 +396,31 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
   );
 }
 
+export function SectionCard({ title, onInfoClick, children }) {
+  return (
+    <div className="sc">
+      <div className="sc-header">
+        <span className="sc-title">{title}</span>
+        {onInfoClick && (
+          <button
+            type="button"
+            className="sc-info-btn"
+            onClick={onInfoClick}
+            aria-label="More information"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="8" r="6.5" />
+              <line x1="8" y1="7.5" x2="8" y2="11" />
+              <circle cx="8" cy="5.5" r=".8" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {children && <div className="sc-body">{children}</div>}
+    </div>
+  );
+}
+
 export function PrimaryButton({ label, disabled, loading, size, icon }) {
   return (
     <button type="button"
@@ -488,7 +521,7 @@ export default function DeelAtomsPreview() {
             <span className="pg-title">Atoms — Wave 1</span>
           </div>
           <div className="hdr-r">
-            <span className="count-tag">6 components · 19 variants</span>
+            <span className="count-tag">7 components · 20 variants</span>
             <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">
               {dark ? <Moon /> : <Sun />}
               {dark ? "Dark" : "Light"}
@@ -730,6 +763,35 @@ export default function DeelAtomsPreview() {
           <Card label="Interactive — click to toggle" full>
             <ToggleRow label="I don't know the worker's personal details yet"
               description="Get a cost estimate without providing worker details" />
+          </Card>
+        </Sec>
+
+        <Sec n={7} name="SectionCard"
+          desc="White rounded card that wraps a group of related form fields. Displays a bold section title at the top and an optional ⓘ icon button for contextual help. Used for 'Team information', 'Employee personal details', etc. in the Add person flow."
+          props={[
+            ["title",       "string",   true,  "Bold section heading at the top of the card"],
+            ["onInfoClick", "function", false, "Renders a ⓘ button when provided; called on click"],
+            ["children",   "ReactNode", false, "Form fields or any content inside the card"],
+          ]}>
+          <Card label="Title only" wide>
+            <SectionCard title="Team information" />
+          </Card>
+          <Card label="Title + ⓘ button" wide>
+            <SectionCard title="Employee personal details" onInfoClick={() => {}} />
+          </Card>
+          <Card label="With field placeholders" wide>
+            <SectionCard title="Workplace information">
+              <div style={{ height: 40, border: `1px solid var(--border, #e2e2e2)`, borderRadius: 7, background: "transparent", display: "flex", alignItems: "center", paddingLeft: 12, color: "#aaa", fontSize: 13 }}>Entity — Select entity</div>
+              <div style={{ height: 40, border: `1px solid var(--border, #e2e2e2)`, borderRadius: 7, background: "transparent", display: "flex", alignItems: "center", paddingLeft: 12, color: "#aaa", fontSize: 13 }}>Group — Select group</div>
+            </SectionCard>
+          </Card>
+          <Card label="Interactive ⓘ button" wide>
+            <SectionCard
+              title="Contract details"
+              onInfoClick={() => alert('These details appear on the EOR contract and cannot be changed after signing.')}
+            >
+              <div style={{ height: 40, border: `1px solid var(--border, #e2e2e2)`, borderRadius: 7, background: "transparent", display: "flex", alignItems: "center", paddingLeft: 12, color: "#aaa", fontSize: 13 }}>Country — Select country</div>
+            </SectionCard>
           </Card>
         </Sec>
 

@@ -116,6 +116,23 @@ export const COMPONENT_MANIFEST = [
 />`,
   },
   {
+    name: "SectionCard",
+    domain: "Forms",
+    tier: "atom",
+    description:
+      "White rounded card that wraps a group of related form fields. Renders a bold section title at the top and an optional ⓘ icon button for contextual help. Used for 'Team information', 'Employee personal details', 'Workplace information', etc. in the Add person flow.",
+    composedOf: [],
+    props: [
+      { name: "title",       type: "string",   required: true,  description: "Bold section heading shown at the top of the card." },
+      { name: "onInfoClick", type: "() => void", required: false, description: "When provided, renders a ⓘ icon button on the right; called when clicked." },
+      { name: "children",    type: "ReactNode", required: false, description: "Form fields or any content rendered inside the card body." },
+    ],
+    usage: `<SectionCard title="Team information" onInfoClick={showHelp}>
+  <DropdownSelect label="Entity" options={entities} />
+  <DropdownSelect label="Group"  options={groups} />
+</SectionCard>`,
+  },
+  {
     name: "FormFieldGroup",
     domain: "Forms",
     tier: "molecule",
@@ -709,6 +726,14 @@ export const makeLibraryCSS = (t, isDark) => {
   .trow-track.on  .trow-thumb { left: 18px; }
   .trow-track.off .trow-thumb { left: 2px; }
 
+  /* ── SectionCard ── */
+  .sc { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 6}px; padding: 20px 20px 24px; box-shadow: ${t.shadow}; display: flex; flex-direction: column; gap: 16px; }
+  .sc-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sc-title { font-size: 15px; font-weight: 600; color: ${t.textMain}; letter-spacing: -.01em; }
+  .sc-info-btn { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: ${t.textMuted}; padding: 3px; border-radius: 5px; transition: color .12s, background .12s; flex-shrink: 0; }
+  .sc-info-btn:hover { color: ${t.textMain}; background: ${t.surfaceHover}; }
+  .sc-body { display: flex; flex-direction: column; gap: 12px; }
+
   /* ── FormFieldGroup ── */
   .ffg { display: flex; flex-direction: column; gap: 14px; }
   .ffg-title { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; margin-bottom: 2px; }
@@ -782,14 +807,15 @@ export const makeLibraryCSS = (t, isDark) => {
 
   /* ── StepperRail ── */
   .srail { display: flex; flex-direction: column; gap: 0; width: 100%; background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 4}px; overflow: hidden; padding: 8px; }
-  .srail-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: ${br + 2}px; transition: background .12s; }
+  .srail-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: ${br + 2}px; transition: background .12s; }
   .srail-item.clickable { cursor: pointer; }
   .srail-item.clickable:hover { background: ${t.surfaceHover}; border-radius: ${br + 2}px; }
   .srail-item.active { background: ${t.surfaceHover}; border-radius: ${br + 2}px; }
-  .srail-between { width: 1.5px; height: 10px; background: ${t.border}; margin: 0 0 0 23px; transition: background .15s; }
-  .srail-between.done { background: ${t.primary}; }
-  .srail-line-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .srail-line-col { flex-shrink: 0; }
+  .srail-connector { position: absolute; left: 23px; top: 34px; bottom: -14px; width: 1.5px; background: ${t.border}; transition: background .15s; z-index: 0; }
+  .srail-connector.done { background: ${t.primary}; }
   .srail-circle {
+    position: relative; z-index: 1;
     width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 600; font-family: ${mf};
@@ -1079,6 +1105,38 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
 }
 
 /**
+ * White rounded card wrapping a group of related form fields.
+ *
+ * @param {string}      title       - Bold section heading at the top of the card.
+ * @param {Function}    [onInfoClick] - Renders a ⓘ icon button when provided; called on click.
+ * @param {ReactNode}   [children]  - Form fields or any content inside the card.
+ */
+export function SectionCard({ title, onInfoClick, children }) {
+  return (
+    <div className="sc">
+      <div className="sc-header">
+        <span className="sc-title">{title}</span>
+        {onInfoClick && (
+          <button
+            type="button"
+            className="sc-info-btn"
+            onClick={onInfoClick}
+            aria-label="More information"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="8" r="6.5" />
+              <line x1="8" y1="7.5" x2="8" y2="11" />
+              <circle cx="8" cy="5.5" r=".8" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {children && <div className="sc-body">{children}</div>}
+    </div>
+  );
+}
+
+/**
  * Groups a section heading plus a responsive grid of TextInput / DropdownSelect atoms.
  *
  * @param {string}   [title]       - Optional section heading.
@@ -1281,26 +1339,25 @@ export function StepperRail({ steps = [], currentStep = 1, onStepClick }) {
         const isActive = num === currentStep;
         const isLast   = i === steps.length - 1;
         return (
-          <div key={num}>
-            <div
-              className={`srail-item${isActive ? " active" : ""}${isDone && onStepClick ? " clickable" : ""}`}
-              onClick={() => isDone && onStepClick?.(num)}
-            >
-              <div className="srail-line-col">
-                <div className={`srail-circle${isDone ? " done" : isActive ? " active" : ""}`}>
-                  {isDone ? <Check /> : num}
-                </div>
-              </div>
-              <div className="srail-info">
-                <div className={`srail-step-label${isDone ? " done-lbl" : isActive ? " active-lbl" : ""}`}>
-                  {isDone ? "Completed" : isActive ? "In progress" : `Step ${num}`}
-                </div>
-                <div className={`srail-step-name${isActive ? " active" : isDone ? " done-name" : ""}`}>
-                  {step.label}
-                </div>
+          <div
+            key={num}
+            className={`srail-item${isActive ? " active" : ""}${isDone && onStepClick ? " clickable" : ""}`}
+            onClick={() => isDone && onStepClick?.(num)}
+          >
+            <div className="srail-line-col">
+              <div className={`srail-circle${isDone ? " done" : isActive ? " active" : ""}`}>
+                {isDone ? <Check /> : num}
               </div>
             </div>
-            {!isLast && <div className={`srail-between${isDone ? " done" : ""}`} />}
+            <div className="srail-info">
+              <div className={`srail-step-label${isDone ? " done-lbl" : isActive ? " active-lbl" : ""}`}>
+                {isDone ? "Completed" : isActive ? "In progress" : `Step ${num}`}
+              </div>
+              <div className={`srail-step-name${isActive ? " active" : isDone ? " done-name" : ""}`}>
+                {step.label}
+              </div>
+            </div>
+            {!isLast && <div className={`srail-connector${isDone ? " done" : ""}`} />}
           </div>
         );
       })}

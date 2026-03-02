@@ -7,7 +7,7 @@ import {
   APPEARANCE_DEFAULTS,
   applyAppearance,
   // ── Atoms
-  TextInput, DropdownSelect, RadioOption, ToggleRow,
+  TextInput, DropdownSelect, RadioOption, ToggleRow, SectionCard,
   // ── Molecules
   FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
   AutosaveWidget, HiringGuideBanner,
@@ -449,7 +449,7 @@ const WAVES = [
     name: "Atoms",
     subtitle: "Wave 1",
     file: "Deel_Atoms_Wave1.jsx",
-    tag: "6 components · 19 variants",
+    tag: "7 components · 20 variants",
     tagKey: "atoms",
     desc: "Foundation primitives — every higher-level component is assembled from these. All support light/dark mode, controlled & uncontrolled usage, disabled states, and validation.",
     ai: false,
@@ -460,6 +460,7 @@ const WAVES = [
       { icon: "◯",  name: "RadioOption",    desc: "Full-width tappable row with optional sublabel" },
       { icon: "▣",  name: "Buttons",        desc: "Primary / Secondary / Text — 3 sizes, loading, icons" },
       { icon: "◑",  name: "ToggleRow",      desc: "Bordered row with iOS-style toggle for binary settings" },
+      { icon: "▭",  name: "SectionCard",   desc: "White rounded card with bold title + optional ⓘ button for form sections" },
     ],
   },
   {
@@ -637,6 +638,27 @@ function MiniToggleRow({ t }) {
       </div>
       <div style={{ width:32, height:18, borderRadius:999, background: on ? t.primary : t.border, position:"relative", flexShrink:0, transition:"background .18s" }}>
         <div style={{ position:"absolute", top:2, left: on ? 14 : 2, width:14, height:14, borderRadius:"50%", background:"#fff", boxShadow:"0 1px 3px rgba(0,0,0,0.25)", transition:"left .18s" }} />
+      </div>
+    </div>
+  );
+}
+
+function MiniSectionCard({ t }) {
+  return (
+    <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 14, padding: "16px 16px 18px", boxShadow: t.shadow, display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <span style={{ fontFamily: "Inter,sans-serif", fontSize: 13.5, fontWeight: 600, color: t.textMain, letterSpacing: "-.01em" }}>Team information</span>
+        <button type="button" style={{ display: "flex", alignItems: "center", background: "none", border: "none", cursor: "pointer", color: t.textMuted, padding: 2, borderRadius: 5 }} aria-label="More information">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="8" cy="8" r="6.5" />
+            <line x1="8" y1="7.5" x2="8" y2="11" />
+            <circle cx="8" cy="5.5" r=".8" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ height: 28, borderRadius: 7, background: t.border, opacity: 0.5 }} />
+        <div style={{ height: 28, borderRadius: 7, background: t.border, opacity: 0.5 }} />
       </div>
     </div>
   );
@@ -920,6 +942,7 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"RadioOption",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniRadioOption t={t} /> },
   { name:"Buttons",                wave:"Wave 1", waveKey:"atoms",  composed:"Primary · Secondary · Text",                      preview:<MiniButtons t={t} /> },
   { name:"ToggleRow",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniToggleRow t={t} /> },
+  { name:"SectionCard",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniSectionCard t={t} /> },
   { name:"FormFieldGroup",         wave:"Wave 2", waveKey:"mol",    composed:"TextInput × n + DropdownSelect × n",              preview:<MiniFormFieldGroup t={t} /> },
   { name:"StepperRail",            wave:"Wave 2", waveKey:"mol",    composed:"StepIndicator + connector + StatusBadge",         preview:<MiniStepperRail t={t} /> },
   { name:"AutosaveWidget",         wave:"Wave 2", waveKey:"mol",    composed:"InfoIcon + status dot + SecondaryButton",         preview:<MiniAutosave t={t} /> },
@@ -1018,6 +1041,22 @@ const COMPONENT_DEMOS = {
         description="Disabled — only available to contract admins"
         disabled
       />
+    </div>
+  ),
+  SectionCard: (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 520 }}>
+      <SectionCard title="Team information">
+        <TextInput label="Entity" placeholder="Select entity" />
+        <TextInput label="Group" placeholder="Select group" />
+      </SectionCard>
+      <SectionCard
+        title="Employee personal details"
+        onInfoClick={() => alert('These details appear on the EOR contract.')}
+      >
+        <TextInput label="First name" required placeholder="Alex" />
+        <TextInput label="Last name" required placeholder="Johnson" />
+      </SectionCard>
+      <SectionCard title="No children (title only)" />
     </div>
   ),
   FormFieldGroup: (
@@ -1341,6 +1380,23 @@ const COMPONENT_PLAYGROUND_CONFIG = {
       disabled:    false,
     },
     render: (p) => <div style={{ maxWidth: 520 }}><ToggleRow {...p} /></div>,
+  },
+  SectionCard: {
+    defaults: {
+      title:          "Team information",
+      showInfoButton: true,
+    },
+    render: (p) => (
+      <div style={{ maxWidth: 520 }}>
+        <SectionCard
+          title={p.title}
+          onInfoClick={p.showInfoButton ? () => alert('Section info!') : undefined}
+        >
+          <TextInput label="Entity" placeholder="Select entity" />
+          <TextInput label="Group" placeholder="Select group" />
+        </SectionCard>
+      </div>
+    ),
   },
   FormFieldGroup: {
     defaults: { title: "Personal details", description: "Worker's basic information", columns: 2 },
