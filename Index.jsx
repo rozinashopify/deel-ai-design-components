@@ -9,7 +9,7 @@ import {
   // ── Atoms
   TextInput, DropdownSelect, RadioOption,
   // ── Molecules
-  FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton,
+  FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
   AutosaveWidget, HiringGuideBanner,
   // ── Navigation
   StepperRail,
@@ -996,29 +996,36 @@ const COMPONENT_DEMOS = {
   ),
 
   // Actions
-  PrimaryButton: (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-      <PrimaryButton label="Continue" />
-      <PrimaryButton label="Small" size="sm" />
-      <PrimaryButton label="Large" size="lg" />
-      <PrimaryButton label="Loading…" loading />
-      <PrimaryButton label="Disabled" disabled />
-    </div>
-  ),
-  SecondaryButton: (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-      <SecondaryButton label="Run check" />
-      <SecondaryButton label="Small" size="sm" />
-      <SecondaryButton label="Large" size="lg" />
-      <SecondaryButton label="Loading…" loading />
-      <SecondaryButton label="Disabled" disabled />
-    </div>
-  ),
-  TextButton: (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center" }}>
-      <TextButton label="Learn more" />
-      <TextButton label="View hiring guide" />
-      <TextButton label="Disabled" disabled />
+  Buttons: (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Primary</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <PrimaryButton label="Continue" />
+          <PrimaryButton label="Small" size="sm" />
+          <PrimaryButton label="Large" size="lg" />
+          <PrimaryButton label="Loading…" loading />
+          <PrimaryButton label="Disabled" disabled />
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Secondary</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <SecondaryButton label="Run check" />
+          <SecondaryButton label="Small" size="sm" />
+          <SecondaryButton label="Large" size="lg" />
+          <SecondaryButton label="Loading…" loading />
+          <SecondaryButton label="Disabled" disabled />
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Text</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center" }}>
+          <TextButton label="Learn more" />
+          <TextButton label="View hiring guide" />
+          <TextButton label="Disabled" disabled />
+        </div>
+      </div>
     </div>
   ),
 
@@ -1289,17 +1296,9 @@ const COMPONENT_PLAYGROUND_CONFIG = {
       ]} />
     ),
   },
-  PrimaryButton: {
-    defaults: { label: "Continue", size: "md", disabled: false, loading: false },
-    render: (p) => <PrimaryButton {...p} />,
-  },
-  SecondaryButton: {
-    defaults: { label: "Run check", size: "md", disabled: false, loading: false },
-    render: (p) => <SecondaryButton {...p} />,
-  },
-  TextButton: {
-    defaults: { label: "Learn more", disabled: false },
-    render: (p) => <TextButton {...p} />,
+  Buttons: {
+    defaults: { variant: "primary", label: "Continue", size: "md", disabled: false, loading: false },
+    render: (p) => <Button {...p} />,
   },
   StatusBadge: {
     defaults: { variant: "completed", label: "Step complete", dot: true },
@@ -1355,7 +1354,7 @@ const COMPONENT_PLAYGROUND_CONFIG = {
 // ─────────────────────────────────────────────────────────────────
 // COMPONENT PLAYGROUND
 // ─────────────────────────────────────────────────────────────────
-function ComponentPlayground({ name, dark, setDark, onBack }) {
+function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library" }) {
   const config   = COMPONENT_PLAYGROUND_CONFIG[name] ?? { defaults: {}, render: () => null };
   const manifest = COMPONENT_MANIFEST.find(c => c.name === name);
 
@@ -1426,7 +1425,7 @@ function ComponentPlayground({ name, dark, setDark, onBack }) {
               fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500,
             }}
           >
-            <BackArrow /> Library
+            <BackArrow /> {backLabel}
           </button>
           <span style={{ color: t.textDisabled }}>/</span>
           <span style={{ fontSize: 13.5, fontWeight: 700, color: t.textMain, letterSpacing: "-0.01em" }}>{name}</span>
@@ -2031,9 +2030,287 @@ function AppearanceSection({ t }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────
+// LANDING PAGE  — visual showcase, grouped by Wave
+// ─────────────────────────────────────────────────────────────────
+function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
+  const previews = COMPONENT_PREVIEWS(t, (nameOrN) => {
+    // MiniFlow calls openDemo(5) — translate wave-number to component name
+    if (typeof nameOrN === "number") onOpenComponent("EORContractCreationFlow");
+    else onOpenComponent(nameOrN);
+  });
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) }} />
+      <div style={{ minHeight: "100vh", background: t.bg, color: t.textMain, fontFamily: "'Inter', sans-serif" }}>
+
+        {/* ── Topbar ── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "13px 36px", background: t.surface, borderBottom: `1px solid ${t.border}`,
+          boxShadow: t.shadow, position: "sticky", top: 0, zIndex: 100,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: t.btnText, background: t.primary, padding: "5px 10px", borderRadius: 7 }}>deel</span>
+            <span style={{ color: t.textDisabled }}>/</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: t.textMain, letterSpacing: "-0.02em" }}>Design System</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.07em", textTransform: "uppercase", color: t.purple, background: t.purpleBg, padding: "3px 9px", borderRadius: 6 }}>✦ LLM-ready</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button" onClick={onOpenDocs}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500,
+                color: t.textMain, background: t.surface, border: `1px solid ${t.border}`,
+                padding: "5px 13px", borderRadius: 8, cursor: "pointer",
+                transition: "border-color .12s, background .12s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = t.textMuted; e.currentTarget.style.background = t.surfaceHover; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.background = t.surface; }}
+            >
+              Documentation <ArrowRight />
+            </button>
+            <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">
+              {dark ? <Moon /> : <Sun />}
+              {dark ? "Dark" : "Light"}
+              <div className="track"><div className="thumb" /></div>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Hero ── */}
+        <div style={{ padding: "72px 36px 60px", background: t.surface, borderBottom: `1px solid ${t.border}` }}>
+          <div style={{ maxWidth: 800 }}>
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500,
+              letterSpacing: "0.14em", textTransform: "uppercase", color: t.textMuted,
+              marginBottom: 14, display: "block",
+            }}>
+              Deel Design Foundation · Waves 1 – 5
+            </span>
+            <h1 style={{
+              fontSize: 48, fontWeight: 700, letterSpacing: "-0.05em", lineHeight: 1.08,
+              color: t.textMain, marginBottom: 18, margin: "0 0 18px",
+            }}>
+              Components that<br />
+              <span style={{ color: t.purple }}>LLMs build from</span>
+            </h1>
+            <p style={{ fontSize: 16, color: t.textMuted, lineHeight: 1.65, maxWidth: 580, marginBottom: 36, margin: "0 0 36px" }}>
+              {COMPONENT_MANIFEST.length} production-ready components across 5 tiers — from atoms to full EOR flows.
+              Every component ships with a structured manifest, live playground, and copy-ready JSX.
+            </p>
+            {/* Stats row */}
+            <div style={{ display: "flex", gap: 40, flexWrap: "wrap", marginBottom: 44 }}>
+              {[
+                { n: COMPONENT_MANIFEST.length,                                            l: "Components" },
+                { n: DOMAINS.length - 1,                                                   l: "Domains" },
+                { n: COMPONENT_MANIFEST.reduce((s, c) => s + c.props.length, 0),          l: "Documented props" },
+                { n: 5,                                                                    l: "Composition tiers" },
+              ].map(({ n, l }) => (
+                <div key={l} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-0.04em", color: t.textMain }}>{n}</span>
+                  <span style={{ fontSize: 12, color: t.textMuted, fontWeight: 500 }}>{l}</span>
+                </div>
+              ))}
+            </div>
+            {/* Wave journey pills */}
+            <div style={{ display: "flex", alignItems: "center", gap: 0, flexWrap: "wrap" }}>
+              {WAVES.map((w, i) => {
+                const c = wc[w.tagKey];
+                return (
+                  <div key={w.n} style={{ display: "flex", alignItems: "center" }}>
+                    <a
+                      href={`#wave-${w.n}`}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 7,
+                        fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500,
+                        color: c.color, background: c.bg, border: `1px solid ${c.color}30`,
+                        padding: "6px 16px", borderRadius: 999, textDecoration: "none",
+                        transition: "box-shadow .12s",
+                      }}
+                    >
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, opacity: 0.75 }}>W{w.n}</span>
+                      {w.name}
+                    </a>
+                    {i < WAVES.length - 1 && (
+                      <span style={{ color: t.border, fontSize: 13, margin: "0 6px" }}>→</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Wave sections ── */}
+        {WAVES.map(wave => {
+          const c = wc[wave.tagKey];
+          const wavePreviews = previews.filter(p => p.wave === `Wave ${wave.n}`);
+          return (
+            <div key={wave.n} id={`wave-${wave.n}`} style={{ padding: "56px 36px 0", borderBottom: `1px solid ${t.border}` }}>
+
+              {/* Wave header */}
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <span style={{
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+                      color: c.color, background: c.bg, border: `1px solid ${c.color}30`,
+                      padding: "4px 14px", borderRadius: 999,
+                    }}>
+                      Wave {wave.n}
+                    </span>
+                    {wave.ai && (
+                      <span style={{
+                        fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500,
+                        letterSpacing: "0.07em", textTransform: "uppercase",
+                        color: t.purple, background: t.purpleBg, padding: "3px 9px", borderRadius: 5,
+                      }}>✦ AI-powered</span>
+                    )}
+                  </div>
+                  <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: t.textMain, margin: "0 0 8px" }}>
+                    {wave.name}
+                  </h2>
+                  <p style={{ fontSize: 13.5, color: t.textMuted, lineHeight: 1.6, maxWidth: 560, margin: 0 }}>
+                    {wave.desc}
+                  </p>
+                </div>
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500,
+                  color: t.textMuted, background: t.surfaceHover, border: `1px solid ${t.border}`,
+                  padding: "5px 12px", borderRadius: 7, alignSelf: "flex-start",
+                }}>
+                  {wave.tag}
+                </span>
+              </div>
+
+              {/* Component preview grid */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: 14, paddingBottom: 52,
+              }}>
+                {wavePreviews.map(p => {
+                  const hasDemo = Boolean(COMPONENT_DEMOS[p.name]);
+                  return (
+                    <div
+                      key={p.name}
+                      style={{
+                        background: t.surface, border: `1px solid ${t.border}`,
+                        borderRadius: 12, overflow: "hidden", boxShadow: t.shadow,
+                        display: "flex", flexDirection: "column",
+                        transition: "box-shadow .14s, transform .14s",
+                        cursor: hasDemo ? "pointer" : "default",
+                      }}
+                      onClick={() => hasDemo && onOpenComponent(p.name)}
+                      onMouseEnter={e => { if (hasDemo) { e.currentTarget.style.boxShadow = t.shadowMd; e.currentTarget.style.transform = "translateY(-2px)"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.boxShadow = t.shadow; e.currentTarget.style.transform = "translateY(0)"; }}
+                    >
+                      {/* Visual preview */}
+                      <div style={{
+                        padding: "22px 18px", background: t.bg,
+                        borderBottom: `1px solid ${t.border}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        minHeight: 160, overflow: "hidden",
+                      }}>
+                        {p.preview}
+                      </div>
+
+                      {/* Card footer */}
+                      <div style={{
+                        padding: "12px 16px",
+                        display: "flex", alignItems: "center",
+                        justifyContent: "space-between", gap: 8,
+                      }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: t.textMain, letterSpacing: "-0.01em" }}>
+                            {p.name}
+                          </span>
+                          <span style={{
+                            fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textMuted,
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          }}>
+                            {p.composed}
+                          </span>
+                        </div>
+                        {hasDemo && (
+                          <div style={{
+                            display: "flex", alignItems: "center", gap: 5,
+                            fontSize: 11.5, fontWeight: 500, color: t.textMain,
+                            background: t.bg, border: `1px solid ${t.border}`,
+                            padding: "5px 10px", borderRadius: 7,
+                            whiteSpace: "nowrap", flexShrink: 0,
+                            fontFamily: "'Inter', sans-serif",
+                          }}>
+                            Open <ArrowRight />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* ── Documentation CTA ── */}
+        <div style={{
+          padding: "72px 36px", background: t.surface,
+          borderTop: `1px solid ${t.border}`, textAlign: "center",
+        }}>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 500,
+            letterSpacing: "0.12em", textTransform: "uppercase", color: t.textMuted,
+            display: "block", marginBottom: 14,
+          }}>
+            Explore further
+          </span>
+          <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: t.textMain, margin: "0 0 12px" }}>
+            Ready for the full picture?
+          </h2>
+          <p style={{ fontSize: 14, color: t.textMuted, lineHeight: 1.65, maxWidth: 480, margin: "0 auto 32px" }}>
+            The documentation page lists every component with its complete prop table,
+            live playground, code snippets, and the LLM-ready manifest.
+          </p>
+          <button
+            type="button" onClick={onOpenDocs}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600,
+              color: t.btnText, background: t.primary, border: "none",
+              padding: "12px 26px", borderRadius: 10, cursor: "pointer",
+              transition: "background .12s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = t.primaryHover; }}
+            onMouseLeave={e => { e.currentTarget.style.background = t.primary; }}
+          >
+            View Documentation <ArrowRight />
+          </button>
+        </div>
+
+        {/* ── Footer ── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "20px 36px", borderTop: `1px solid ${t.border}`,
+          fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: t.textMuted,
+        }}>
+          <span>Deel Design System · {COMPONENT_MANIFEST.length} components · 5 waves</span>
+          <span>atom → molecule → ai-molecule → block → flow ✦</span>
+        </div>
+
+      </div>
+    </>
+  );
+}
+
 export default function DeelDesignSystemIndex() {
   const [dark, setDark] = useState(false);
   const [currentDemo, setCurrentDemo] = useState(null); // string: component name
+  const [showDocs, setShowDocs]       = useState(false);
+  const [demoSource, setDemoSource]   = useState("landing"); // "landing" | "docs"
   const [activeDomain, setActiveDomain] = useState("All");
   const t = dark ? darkTokens : lightTokens;
   const wc = WAVE_COLORS(t);
@@ -2046,7 +2323,22 @@ export default function DeelDesignSystemIndex() {
         name={currentDemo}
         dark={dark}
         setDark={setDark}
-        onBack={() => { setCurrentDemo(null); window.scrollTo(0, 0); }}
+        backLabel={demoSource === "docs" ? "Library" : "Home"}
+        onBack={() => { setCurrentDemo(null); setShowDocs(demoSource === "docs"); window.scrollTo(0, 0); }}
+      />
+    );
+  }
+
+  // ── Landing page ──
+  if (!showDocs) {
+    return (
+      <LandingPage
+        dark={dark}
+        setDark={setDark}
+        t={t}
+        wc={wc}
+        onOpenDocs={() => { setShowDocs(true); window.scrollTo(0, 0); }}
+        onOpenComponent={(name) => { setDemoSource("landing"); setCurrentDemo(name); window.scrollTo(0, 0); }}
       />
     );
   }
@@ -2068,6 +2360,21 @@ export default function DeelDesignSystemIndex() {
         {/* ── Top bar ── */}
         <div className="lib-topbar">
           <div className="lib-brand">
+            <button
+              type="button"
+              onClick={() => { setShowDocs(false); window.scrollTo(0, 0); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500,
+                color: t.textMuted, background: "transparent",
+                border: `1px solid ${t.border}`, borderRadius: 7,
+                padding: "4px 10px", cursor: "pointer",
+                transition: "border-color .12s, color .12s",
+              }}
+            >
+              <BackArrow /> Home
+            </button>
+            <span className="lib-sep">/</span>
             <span className="lib-logo">deel</span>
             <span className="lib-sep">/</span>
             <span className="lib-title">Component Library</span>
@@ -2183,7 +2490,7 @@ export default function DeelDesignSystemIndex() {
                             <button
                               type="button"
                               className="lib-demo-btn"
-                              onClick={() => { setCurrentDemo(comp.name); window.scrollTo(0, 0); }}
+                              onClick={() => { setDemoSource("docs"); setCurrentDemo(comp.name); window.scrollTo(0, 0); }}
                             >
                               Demo <ArrowRight />
                             </button>

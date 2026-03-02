@@ -120,51 +120,21 @@ export const COMPONENT_MANIFEST = [
 
   // ── Actions ────────────────────────────────────────────────────
   {
-    name: "PrimaryButton",
+    name: "Buttons",
     domain: "Actions",
     tier: "atom",
     description:
-      "Primary filled call-to-action. Used for 'Continue', 'Add benefit', 'Save scope'. Supports loading spinner, three sizes (sm / md / lg), and a leading icon slot.",
+      "Unified button component. Use the variant prop to choose the style: primary (filled CTA), secondary (outlined action), or text (ghost link). Primary and secondary also support loading and size.",
     composedOf: [],
     props: [
+      { name: "variant",  type: "'primary' | 'secondary' | 'text'", required: false, description: "Visual style (default: 'primary')." },
       { name: "label",    type: "string",            required: true,  description: "Button label text." },
       { name: "disabled", type: "boolean",           required: false, description: "Prevents interaction." },
-      { name: "loading",  type: "boolean",           required: false, description: "Shows spinner and blocks click." },
-      { name: "size",     type: "'sm' | 'md' | 'lg'", required: false, description: "Height 30 / 36 / 42px (default: 'md')." },
-      { name: "icon",     type: "ReactNode",         required: false, description: "Leading icon element." },
+      { name: "loading",  type: "boolean",           required: false, description: "Shows spinner (primary and secondary only)." },
+      { name: "size",     type: "'sm' | 'md' | 'lg'", required: false, description: "Height 30 / 36 / 42px (primary and secondary only, default: 'md')." },
       { name: "onClick",  type: "() => void",        required: false, description: "Click handler." },
     ],
-    usage: '<PrimaryButton label="Continue" icon={<ArrowRight />} />',
-  },
-  {
-    name: "SecondaryButton",
-    domain: "Actions",
-    tier: "atom",
-    description:
-      "Outlined secondary action. Used for 'Manage job scopes', 'Delete draft', 'Run check'. Same size and loading API as PrimaryButton.",
-    composedOf: [],
-    props: [
-      { name: "label",    type: "string",            required: true,  description: "Button label text." },
-      { name: "disabled", type: "boolean",           required: false, description: "Prevents interaction." },
-      { name: "loading",  type: "boolean",           required: false, description: "Shows spinner." },
-      { name: "size",     type: "'sm' | 'md' | 'lg'", required: false, description: "Height 30 / 36 / 42px (default: 'md')." },
-      { name: "icon",     type: "ReactNode",         required: false, description: "Leading icon element." },
-      { name: "onClick",  type: "() => void",        required: false, description: "Click handler." },
-    ],
-    usage: '<SecondaryButton label="Run check" icon={<RefreshIcon />} />',
-  },
-  {
-    name: "TextButton",
-    domain: "Actions",
-    tier: "atom",
-    description: "Ghost text-link button. Used for 'Learn more', 'Report to engineering team'. No border or background.",
-    composedOf: [],
-    props: [
-      { name: "label",    type: "string",  required: true,  description: "Button label." },
-      { name: "disabled", type: "boolean", required: false, description: "Mutes and prevents clicks." },
-      { name: "onClick",  type: "() => void", required: false, description: "Click handler." },
-    ],
-    usage: '<TextButton label="Learn more" onClick={openGuide} />',
+    usage: '<Button variant="primary" label="Continue" />',
   },
 
   // ── Status & Feedback ──────────────────────────────────────────
@@ -1013,6 +983,22 @@ export function SecondaryButton({ label, disabled, loading, size, icon, onClick 
  */
 export function TextButton({ label, disabled, onClick }) {
   return <button type="button" className="btn btn-g" disabled={disabled} onClick={onClick}>{label}</button>;
+}
+
+/**
+ * Unified button — choose the style via the variant prop.
+ *
+ * @param {'primary'|'secondary'|'text'} [variant] - Visual style (default: 'primary').
+ * @param {string}   label       - Button label text.
+ * @param {boolean}  [disabled]  - Prevents interaction.
+ * @param {boolean}  [loading]   - Shows spinner (primary and secondary only).
+ * @param {'sm'|'md'|'lg'} [size] - Height preset (primary and secondary only).
+ * @param {function} [onClick]   - Click handler.
+ */
+export function Button({ variant = "primary", label, disabled, loading, size, onClick }) {
+  if (variant === "secondary") return <SecondaryButton label={label} disabled={disabled} loading={loading} size={size} onClick={onClick} />;
+  if (variant === "text")      return <TextButton      label={label} disabled={disabled} onClick={onClick} />;
+  return                               <PrimaryButton  label={label} disabled={disabled} loading={loading} size={size} onClick={onClick} />;
 }
 
 // ═══════════════════════════════════════════════════════════════════
