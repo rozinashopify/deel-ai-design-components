@@ -569,6 +569,24 @@ function _hslToHex(h, s, l) {
   return `#${toH(r)}${toH(g)}${toH(b)}`;
 }
 
+/** Ensure a custom border colour stays subtle in the given mode.
+ *  Borders need the opposite logic to primary: high lightness in light mode
+ *  (where they sit on white surfaces) and low lightness in dark mode
+ *  (where they sit on near-black surfaces).
+ *
+ *  Calibrated against the theme defaults:
+ *    light default border ≈ L 0.90  (#E4E4E7)
+ *    dark  default border ≈ L 0.24  (#3F3F46)
+ */
+function _adjustBorderForMode(hex, isDark) {
+  if (!hex || hex.length < 7) return hex;
+  const [h, s, l] = _hexToHsl(hex);
+  // Dark mode:  cap lightness at 0.35 so the border stays dark on near-black surfaces
+  // Light mode: floor lightness at 0.87 so the border stays light on near-white surfaces
+  const adjusted = isDark ? Math.min(l, 0.35) : Math.max(l, 0.87);
+  return _hslToHex(h, s, adjusted);
+}
+
 /** Ensure a custom primary colour is legible in the given mode. */
 function _adjustPrimaryForMode(hex, isDark) {
   if (!hex || hex.length < 7) return hex;
@@ -618,6 +636,9 @@ export const APPEARANCE_DEFAULTS = {
   /** Primary action colour — buttons, focus rings, active chart bars.
    *  Leave empty ("") to respect each theme's built-in primary token. */
   primaryColor: "",
+  /** Border colour used on inputs, cards, and secondary buttons.
+   *  Leave empty ("") to respect each theme's built-in border token. */
+  borderColor: "",
   /** Main body font family. Accepts any web-safe font or Google Fonts name. */
   fontFamily: "Inter",
   /** Monospace font family — used for IDs, code snippets, and numeric fields. */
@@ -655,6 +676,7 @@ export function applyAppearance(baseTokens, appearance = {}, isDark = false) {
     t.btnText        = _contrastText(adjusted);
     t.ring           = _hexToRgba(adjusted, 0.18);
   }
+  if (appearance.borderColor)           t.border = _adjustBorderForMode(appearance.borderColor, isDark);
   if (appearance.fontFamily)            t._fontFamily = appearance.fontFamily;
   if (appearance.monospaceFontFamily)   t._monoFont   = appearance.monospaceFontFamily;
   if (appearance.borderRadius !== undefined) t._borderRadius = appearance.borderRadius;
@@ -666,18 +688,35 @@ export function applyAppearance(baseTokens, appearance = {}, isDark = false) {
 // Call makeLibraryCSS(tokens, isDark) and inject the result via
 // <style dangerouslySetInnerHTML={{ __html: ... }} />
 // ═══════════════════════════════════════════════════════════════════
+// Google Fonts slug map — extend when adding new fonts to the appearance picker
+const _GF_SLUGS = {
+  "Inter":             "Inter:wght@300;400;500;600",
+  "DM Sans":           "DM+Sans:wght@300;400;500;600",
+  "Geist":             "Geist:wght@300;400;500;600",
+  "Sora":              "Sora:wght@300;400;500;600",
+  "Plus Jakarta Sans": "Plus+Jakarta+Sans:wght@300;400;500;600",
+  "JetBrains Mono":    "JetBrains+Mono:wght@400;500",
+};
+
 export const makeLibraryCSS = (t, isDark) => {
   const br = t._borderRadius !== undefined ? t._borderRadius : 6;
   const ff = t._fontFamily ? `'${t._fontFamily}', -apple-system, sans-serif` : "'Inter', -apple-system, sans-serif";
   const mf = t._monoFont ? `'${t._monoFont}', 'JetBrains Mono', monospace` : "'JetBrains Mono', monospace";
+  const bodyFont = t._fontFamily || "Inter";
+  const monoFont = t._monoFont  || "JetBrains Mono";
+  const bodySlug = _GF_SLUGS[bodyFont] ?? `${bodyFont.replace(/ /g, "+")}:wght@300;400;500;600`;
+  const monoSlug = _GF_SLUGS[monoFont] ?? `${monoFont.replace(/ /g, "+")}:wght@400;500`;
+  const fontFamilies = bodyFont === monoFont
+    ? `family=${bodySlug}`
+    : `family=${bodySlug}&family=${monoSlug}`;
   return `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?${fontFamilies}&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: ${ff}; -webkit-font-smoothing: antialiased; }
 
   /* ── TextInput ── */
   .fi { display: flex; flex-direction: column; gap: 4px; }
-  .fl { font-size: 12px; font-weight: 500; color: ${t.textMain}; }
+  .fl { font-family: ${ff}; font-size: 12px; font-weight: 500; color: ${t.textMain}; }
   .fl .req { color: ${t.error}; margin-left: 1px; }
   .fi input, .fi textarea {
     width: 100%; padding: 0 11px;
@@ -2376,7 +2415,7 @@ export function EORContractCreationFlow({
   };
 
   return (
-    <div style={{ background: "var(--bg, #FAFAFA)", fontFamily: "'Inter', sans-serif", width: "100%" }}>
+    <div style={{ background: "var(--bg, #FAFAFA)", width: "100%" }}>
       {/* Top bar */}
       {showHeader && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 28px", background: "var(--surface, #FFF)", borderBottom: "1px solid var(--border, #E4E4E7)" }}>

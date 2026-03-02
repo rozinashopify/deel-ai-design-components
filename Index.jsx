@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   COMPONENT_MANIFEST,
   makeLibraryCSS,
@@ -122,6 +123,28 @@ const darkTokens = {
 };
 
 // ─────────────────────────────────────────────────────────────────
+// CSS HELPERS
+// ─────────────────────────────────────────────────────────────────
+
+// Browsers require all @import rules to appear before any other rules in a
+// stylesheet. When multiple CSS factory functions are concatenated, their
+// @imports end up scattered throughout the string and get silently dropped.
+// This helper extracts every @import, deduplicates them, and hoists them to
+// the very top so the combined output is always valid.
+function combineCSS(...parts) {
+  // @import url('...') ends at the ) of url(), then an optional semicolon.
+  // We cannot use [^;]+ because Google Fonts URLs contain semicolons inside
+  // the weight ranges (e.g. wght@300;400;500;600).
+  const IMPORT_RE = /@import\s+url\([^)]+\)\s*;?/g;
+  const imports = [], rules = [];
+  for (const css of parts) {
+    imports.push(...(css.match(IMPORT_RE) || []));
+    rules.push(css.replace(IMPORT_RE, ""));
+  }
+  return [...new Set(imports)].join("\n") + rules.join("");
+}
+
+// ─────────────────────────────────────────────────────────────────
 // GLOBAL STYLES
 // ─────────────────────────────────────────────────────────────────
 const makeCSS = (t, isDark) => `
@@ -133,7 +156,7 @@ const makeCSS = (t, isDark) => `
     min-height: 100vh;
     background: ${t.bg};
     color: ${t.textMain};
-    font-family: 'Inter', sans-serif;
+    font-family: inherit;
     transition: background 0.18s, color 0.18s;
   }
 
@@ -2340,6 +2363,10 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const apResizingRef  = useRef(false);
   const apStartXRef    = useRef(0);
   const apStartWRef    = useRef(260);
+  const [fontPopOpen, setFontPopOpen] = useState(false);
+  const fontTriggerRef = useRef(null);   // wrapper div — used to measure position
+  const fontDropRef    = useRef(null);   // portal dropdown — used for click-outside
+  const fontPopRectRef = useRef(null);   // cached getBoundingClientRect when opening
 
   // Appearance state: use lifted state if provided, otherwise local
   const [localAp, setLocalAp] = useState({ ...APPEARANCE_DEFAULTS });
@@ -2347,8 +2374,21 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const setAp = setAppearanceProp ?? setLocalAp;
 
   const isApCustomised = !!(ap.primaryColor)
+    || !!(ap.borderColor)
     || ap.fontFamily !== APPEARANCE_DEFAULTS.fontFamily
     || ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius;
+
+  useEffect(() => {
+    if (!fontPopOpen) return;
+    const handle = (e) => {
+      if (
+        !fontTriggerRef.current?.contains(e.target) &&
+        !fontDropRef.current?.contains(e.target)
+      ) setFontPopOpen(false);
+    };
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [fontPopOpen]);
 
   // Effective primary = custom (adjusted) if set, else the theme token default
   const effectivePrimary = ap.primaryColor || (dark ? darkTokens.primary : lightTokens.primary);
@@ -2363,9 +2403,11 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
 
   const generatedCode  = generatePlaygroundCode(name, liveProps);
   const importCode     = `import { ${name} } from "./ComponentLibrary"`;
+  const effectiveBorder = ap.borderColor || t.border;
   const appearanceSnippet = (() => {
     const lines = [];
     if (ap.primaryColor) lines.push(`  primaryColor: "${ap.primaryColor}",`);
+    if (ap.borderColor)  lines.push(`  borderColor: "${ap.borderColor}",`);
     if (ap.fontFamily !== APPEARANCE_DEFAULTS.fontFamily) lines.push(`  fontFamily: "${ap.fontFamily}",`);
     if (ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius) lines.push(`  borderRadius: ${ap.borderRadius},`);
     const baseVar = dark ? "darkTokens" : "lightTokens";
@@ -2443,25 +2485,85 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
             )}
           </div>
 
+          {/* Border colour */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.textDisabled }}>Border colour</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <input
+                type="color"
+                value={effectiveBorder}
+                onChange={e => setAp(prev => ({ ...prev, borderColor: e.target.value }))}
+                style={{ width: 28, height: 28, border: `1px solid ${t.border}`, borderRadius: 5, padding: 2, cursor: "pointer", background: t.inputBg, flexShrink: 0 }}
+              />
+              <input
+                type="text"
+                value={effectiveBorder}
+                onChange={e => { const v = e.target.value; if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setAp(prev => ({ ...prev, borderColor: v })); }}
+                onBlur={e => { if (!/^#[0-9a-fA-F]{6}$/.test(e.target.value)) setAp(prev => ({ ...prev, borderColor: "" })); }}
+                style={{ flex: 1, height: 28, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 500, color: t.textMain, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 5, padding: "0 7px", outline: "none", minWidth: 0 }}
+              />
+              {ap.borderColor && (
+                <button type="button" onClick={() => setAp(prev => ({ ...prev, borderColor: "" }))} style={{ background: "transparent", border: "none", cursor: "pointer", color: t.textDisabled, fontSize: 13, padding: 0, lineHeight: 1, flexShrink: 0 }} title="Reset to theme default">✕</button>
+              )}
+            </div>
+            {!ap.borderColor && (
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled }}>theme default</span>
+            )}
+          </div>
+
           {/* Font family */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.textDisabled }}>Font family</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {["Inter", "DM Sans", "Geist", "Sora", "Plus Jakarta Sans"].map(font => (
-                <button
-                  key={font}
-                  type="button"
-                  onClick={() => setAp(prev => ({ ...prev, fontFamily: font }))}
-                  style={{
-                    fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, textAlign: "left",
-                    padding: "5px 10px", borderRadius: 6, border: `1px solid ${ap.fontFamily === font ? t.primary : t.border}`,
-                    background: ap.fontFamily === font ? t.primary + "14" : "transparent",
-                    color: ap.fontFamily === font ? t.primary : t.textMuted,
-                    cursor: "pointer", transition: "all .1s",
-                  }}
-                >{font}</button>
-              ))}
+            <div ref={fontTriggerRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!fontPopOpen && fontTriggerRef.current) {
+                    fontPopRectRef.current = fontTriggerRef.current.getBoundingClientRect();
+                  }
+                  setFontPopOpen(o => !o);
+                }}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                  padding: "5px 10px", borderRadius: 6, border: `1px solid ${fontPopOpen ? t.primary : t.border}`,
+                  background: t.inputBg, color: t.textMain, fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500,
+                  cursor: "pointer", transition: "border-color .1s", boxShadow: fontPopOpen ? `0 0 0 3px ${t.ring}` : "none",
+                }}
+              >
+                {ap.fontFamily}
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ flexShrink: 0, color: t.textMuted, transform: fontPopOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}>
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             </div>
+            {fontPopOpen && fontPopRectRef.current && createPortal(
+              <div ref={fontDropRef} style={{
+                position: "fixed",
+                top: fontPopRectRef.current.bottom + 4,
+                left: fontPopRectRef.current.left,
+                width: fontPopRectRef.current.width,
+                zIndex: 9999,
+                background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8,
+                boxShadow: t.shadowMd, padding: 4, display: "flex", flexDirection: "column", gap: 1,
+              }}>
+                {["Inter", "DM Sans", "Geist", "Sora", "Plus Jakarta Sans"].map(font => (
+                  <button
+                    key={font}
+                    type="button"
+                    onClick={() => { setAp(prev => ({ ...prev, fontFamily: font })); setFontPopOpen(false); }}
+                    style={{
+                      width: "100%", textAlign: "left", padding: "6px 10px", borderRadius: 5, border: "none",
+                      background: ap.fontFamily === font ? t.primary + "14" : "transparent",
+                      color: ap.fontFamily === font ? t.primary : t.textMain,
+                      fontFamily: "'Inter', sans-serif", fontSize: 12.5,
+                      fontWeight: ap.fontFamily === font ? 600 : 400,
+                      cursor: "pointer", transition: "background .1s",
+                    }}
+                  >{font}</button>
+                ))}
+              </div>,
+              document.body
+            )}
           </div>
 
           {/* Border radius */}
@@ -2542,7 +2644,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
 
   return (
     <>
-      {!embedded && <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(applyAppearance(t, ap, dark), dark) + makeCatalogCSS(t) }} />}
+      {!embedded && <style dangerouslySetInnerHTML={{ __html: combineCSS(makeCSS(t, dark), makeLibraryCSS(applyAppearance(t, ap, dark), dark), makeCatalogCSS(t)) }} />}
 
       {/* ── Back bar (non-embedded) ── */}
       {!embedded && (
@@ -3246,7 +3348,7 @@ function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) }} />
+      <style dangerouslySetInnerHTML={{ __html: combineCSS(makeCSS(t, dark), makeLibraryCSS(t, dark)) }} />
       <div style={{ minHeight: "100vh", background: t.bg, color: t.textMain, fontFamily: "'Inter', sans-serif" }}>
 
         {/* ── Topbar ── */}
@@ -3590,7 +3692,7 @@ export default function DeelDesignSystemIndex() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(appliedT, dark) + makeCatalogCSS(t) }} />
+      <style dangerouslySetInnerHTML={{ __html: combineCSS(makeCSS(t, dark), makeLibraryCSS(appliedT, dark), makeCatalogCSS(t)) }} />
       <div className="shell">
 
         {/* ── Top bar ── */}
