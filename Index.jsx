@@ -2073,10 +2073,13 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const [expandedEx,   setExpandedEx]   = useState({});
   const [copiedEx,     setCopiedEx]     = useState({});
   const [controlsWidth, setControlsWidth] = useState(300);
-  const [apPanelOpen,  setApPanelOpen]  = useState(false);
-  const resizingRef = useRef(false);
-  const startXRef   = useRef(0);
-  const startWRef   = useRef(300);
+  const [apWidth,      setApWidth]      = useState(260);
+  const resizingRef    = useRef(false);
+  const startXRef      = useRef(0);
+  const startWRef      = useRef(300);
+  const apResizingRef  = useRef(false);
+  const apStartXRef    = useRef(0);
+  const apStartWRef    = useRef(260);
 
   // Appearance state: use lifted state if provided, otherwise local
   const [localAp, setLocalAp] = useState({ ...APPEARANCE_DEFAULTS });
@@ -2111,6 +2114,120 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
     const onUp   = () => { resizingRef.current = false; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
     window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp); e.preventDefault();
   };
+
+  const onApResizeDown = (e) => {
+    apResizingRef.current = true; apStartXRef.current = e.clientX; apStartWRef.current = apWidth;
+    const onMove = (ev) => { if (!apResizingRef.current) return; const d = apStartXRef.current - ev.clientX; setApWidth(Math.max(200, Math.min(480, apStartWRef.current + d))); };
+    const onUp   = () => { apResizingRef.current = false; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp); e.preventDefault();
+  };
+
+  // Appearance side-panel controls (reused in preview tab)
+  const AppearancePanel = () => (
+    <div style={{ flex: `0 0 ${apWidth}px`, width: apWidth, overflow: "auto", background: t.surface, display: "flex", position: "relative" }}>
+      {/* Resize handle */}
+      <div
+        onMouseDown={onApResizeDown}
+        style={{ width: 4, flexShrink: 0, cursor: "col-resize", background: "transparent", transition: "background .15s" }}
+        onMouseEnter={e => e.currentTarget.style.background = t.border}
+        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+      />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {/* Panel header */}
+        <div style={{ padding: "12px 16px 10px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled }}>Appearance</span>
+          {isApCustomised && (
+            <button
+              type="button"
+              onClick={() => setAp({ ...APPEARANCE_DEFAULTS })}
+              style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: t.textMuted, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 5, padding: "2px 9px", cursor: "pointer" }}
+            >↺ Reset</button>
+          )}
+        </div>
+        {/* Controls */}
+        <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 18 }}>
+
+          {/* Primary colour */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.textDisabled }}>Primary colour</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <input
+                type="color"
+                value={ap.primaryColor || effectivePrimary}
+                onChange={e => setAp(prev => ({ ...prev, primaryColor: e.target.value }))}
+                style={{ width: 28, height: 28, border: `1px solid ${t.border}`, borderRadius: 5, padding: 2, cursor: "pointer", background: t.inputBg, flexShrink: 0 }}
+              />
+              <input
+                type="text"
+                value={ap.primaryColor || effectivePrimary}
+                onChange={e => { const v = e.target.value; if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setAp(prev => ({ ...prev, primaryColor: v })); }}
+                onBlur={e => { if (!/^#[0-9a-fA-F]{6}$/.test(e.target.value)) setAp(prev => ({ ...prev, primaryColor: "" })); }}
+                style={{ flex: 1, height: 28, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 500, color: t.textMain, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 5, padding: "0 7px", outline: "none", minWidth: 0 }}
+              />
+              {ap.primaryColor && (
+                <button type="button" onClick={() => setAp(prev => ({ ...prev, primaryColor: "" }))} style={{ background: "transparent", border: "none", cursor: "pointer", color: t.textDisabled, fontSize: 13, padding: 0, lineHeight: 1, flexShrink: 0 }} title="Reset to theme default">✕</button>
+              )}
+            </div>
+            {!ap.primaryColor && (
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled }}>theme default</span>
+            )}
+          </div>
+
+          {/* Font family */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.textDisabled }}>Font family</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {["Inter", "DM Sans", "Geist", "Sora", "Plus Jakarta Sans"].map(font => (
+                <button
+                  key={font}
+                  type="button"
+                  onClick={() => setAp(prev => ({ ...prev, fontFamily: font }))}
+                  style={{
+                    fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, textAlign: "left",
+                    padding: "5px 10px", borderRadius: 6, border: `1px solid ${ap.fontFamily === font ? t.primary : t.border}`,
+                    background: ap.fontFamily === font ? t.primary + "14" : "transparent",
+                    color: ap.fontFamily === font ? t.primary : t.textMuted,
+                    cursor: "pointer", transition: "all .1s",
+                  }}
+                >{font}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Border radius */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.textDisabled }}>
+              Border radius — {ap.borderRadius}px
+            </span>
+            <input
+              type="range"
+              min={0} max={20} step={1}
+              value={ap.borderRadius}
+              onChange={e => setAp(prev => ({ ...prev, borderRadius: Number(e.target.value) }))}
+              style={{ width: "100%", accentColor: effectivePrimary, cursor: "pointer" }}
+            />
+            <div style={{ display: "flex", gap: 3 }}>
+              {[0, 4, 8, 14, 20].map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setAp(prev => ({ ...prev, borderRadius: v }))}
+                  style={{
+                    flex: 1, height: 26, border: `1px solid ${ap.borderRadius === v ? t.primary : t.border}`,
+                    background: ap.borderRadius === v ? t.primary + "14" : "transparent",
+                    color: ap.borderRadius === v ? t.primary : t.textMuted,
+                    borderRadius: `${v}px`, fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+                    fontWeight: 600, cursor: "pointer", transition: "all .1s",
+                  }}
+                >{v}</button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
 
   // ── Inline sub-components ────────────────────────────────────
   const SectionTitle = ({ children, id }) => (
@@ -2207,126 +2324,6 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
           </div>
         </div>
 
-        {/* ── Appearance customiser bar ── */}
-        <div style={{ background: t.surface, borderBottom: `1px solid ${t.border}` }}>
-          {/* Toggle row */}
-          <button
-            type="button"
-            onClick={() => setApPanelOpen(o => !o)}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              width: "100%", padding: "10px 48px",
-              background: "transparent", border: "none", cursor: "pointer",
-              fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500,
-              color: isApCustomised ? t.primary : t.textMuted,
-              textAlign: "left",
-            }}
-          >
-            <span style={{ width: 10, height: 10, borderRadius: "50%", background: effectivePrimary, border: `1.5px solid ${t.border}`, flexShrink: 0, display: "inline-block" }} />
-            <span>Appearance</span>
-            {isApCustomised && (
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", background: t.primary + "18", color: t.primary, padding: "1.5px 7px", borderRadius: 4 }}>customised</span>
-            )}
-            <span style={{ marginLeft: "auto", fontSize: 11, color: t.textDisabled }}>{apPanelOpen ? "▲" : "▼"}</span>
-          </button>
-
-          {/* Expanded controls */}
-          {apPanelOpen && (
-            <div style={{ padding: "0 48px 20px", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-end" }}>
-
-              {/* Primary colour */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>Primary colour</label>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input
-                    type="color"
-                    value={ap.primaryColor || effectivePrimary}
-                    onChange={e => setAp(prev => ({ ...prev, primaryColor: e.target.value }))}
-                    style={{ width: 32, height: 32, border: `1px solid ${t.border}`, borderRadius: 6, padding: 2, cursor: "pointer", background: t.inputBg }}
-                  />
-                  <input
-                    type="text"
-                    value={ap.primaryColor || effectivePrimary}
-                    onChange={e => { const v = e.target.value; if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setAp(prev => ({ ...prev, primaryColor: v })); }}
-                    onBlur={e => { if (!/^#[0-9a-fA-F]{6}$/.test(e.target.value)) setAp(prev => ({ ...prev, primaryColor: "" })); }}
-                    style={{ width: 80, height: 32, fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 500, color: t.textMain, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "0 8px", outline: "none" }}
-                  />
-                  {ap.primaryColor && (
-                    <button type="button" onClick={() => setAp(prev => ({ ...prev, primaryColor: "" }))} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: t.textDisabled, background: "transparent", border: "none", cursor: "pointer", padding: "0 2px" }} title="Reset to theme default">✕</button>
-                  )}
-                  {!ap.primaryColor && (
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled, letterSpacing: "0.05em" }}>theme default</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Font family */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>Font family</label>
-                <div style={{ display: "flex", gap: 4 }}>
-                  {["Inter", "DM Sans", "Geist", "Sora", "Plus Jakarta Sans"].map(font => (
-                    <button
-                      key={font}
-                      type="button"
-                      onClick={() => setAp(prev => ({ ...prev, fontFamily: font }))}
-                      style={{
-                        fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 500,
-                        padding: "4px 10px", borderRadius: 6, border: `1px solid ${ap.fontFamily === font ? t.primary : t.border}`,
-                        background: ap.fontFamily === font ? t.primary + "12" : t.inputBg,
-                        color: ap.fontFamily === font ? t.primary : t.textMuted,
-                        cursor: "pointer", whiteSpace: "nowrap", transition: "all .1s",
-                      }}
-                    >{font}</button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Border radius */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  Border radius — <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{ap.borderRadius}px</span>
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <input
-                    type="range"
-                    min={0} max={20} step={1}
-                    value={ap.borderRadius}
-                    onChange={e => setAp(prev => ({ ...prev, borderRadius: Number(e.target.value) }))}
-                    style={{ width: 160, accentColor: effectivePrimary, cursor: "pointer" }}
-                  />
-                  <div style={{ display: "flex", gap: 3 }}>
-                    {[0, 4, 8, 14, 20].map(v => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setAp(prev => ({ ...prev, borderRadius: v }))}
-                        style={{
-                          width: 26, height: 26, border: `1px solid ${ap.borderRadius === v ? t.primary : t.border}`,
-                          background: ap.borderRadius === v ? t.primary + "12" : t.inputBg,
-                          color: ap.borderRadius === v ? t.primary : t.textMuted,
-                          borderRadius: `${v}px`, fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-                          fontWeight: 600, cursor: "pointer", transition: "all .1s",
-                        }}
-                      >{v}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Reset button */}
-              {isApCustomised && (
-                <button
-                  type="button"
-                  onClick={() => setAp({ ...APPEARANCE_DEFAULTS })}
-                  style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: t.textMuted, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 6, padding: "6px 14px", cursor: "pointer", transition: "all .12s", alignSelf: "flex-end" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = t.textMuted; e.currentTarget.style.color = t.textMain; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.textMuted; }}
-                >↺ Reset defaults</button>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* ── Scrollable sections ── */}
         <div style={{ padding: "48px 48px 96px", display: "flex", flexDirection: "column", gap: 56 }}>
 
@@ -2347,10 +2344,13 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
             </div>
 
             {activeTab === "preview" ? (
-              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden" }}>
-                <div style={{ padding: isFlow ? 0 : "52px 40px", background: t.bg, display: "flex", alignItems: isFlow ? "flex-start" : "center", justifyContent: isFlow ? "flex-start" : "center", minHeight: isFlow ? undefined : 240, overflow: "auto" }}>
+              <div style={{ border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", display: "flex" }}>
+                {/* Preview area */}
+                <div style={{ flex: 1, padding: isFlow ? 0 : "52px 40px", background: t.bg, display: "flex", alignItems: isFlow ? "flex-start" : "center", justifyContent: isFlow ? "flex-start" : "center", minHeight: isFlow ? undefined : 280, overflow: "auto", borderRight: `1px solid ${t.border}` }}>
                   {COMPONENT_DEMOS[name] || config.render(liveProps)}
                 </div>
+                {/* Appearance side panel */}
+                <AppearancePanel />
               </div>
             ) : (
               /* Playground: interactive controls + live preview + generated code */
