@@ -2073,6 +2073,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const [expandedEx,   setExpandedEx]   = useState({});
   const [copiedEx,       setCopiedEx]       = useState({});
   const [copiedApSnippet, setCopiedApSnippet] = useState(false);
+  const [copiedCode,      setCopiedCode]      = useState(false);
   const [controlsWidth, setControlsWidth] = useState(300);
   const [apWidth,      setApWidth]      = useState(260);
   const resizingRef    = useRef(false);
@@ -2364,9 +2365,9 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                 {appearancePanelJSX}
               </div>
             ) : (
-              /* Playground: interactive controls + live preview + generated code */
+              /* Playground: interactive controls + live preview */
               <div style={{ border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                <div style={{ display: "flex", minHeight: 300, borderBottom: `1px solid ${t.border}` }}>
+                <div style={{ display: "flex", minHeight: 300 }}>
                   {/* Live preview */}
                   <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 32px", background: t.bg, borderRight: `1px solid ${t.border}`, overflow: "auto" }}>
                     {config.render(liveProps)}
@@ -2394,8 +2395,16 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                     </div>
                   </div>
                 </div>
-                {/* Generated code */}
-                <CodeBlock code={generatedCode} copied={false} onCopy={() => copyText(generatedCode, () => {})} />
+              </div>
+            )}
+
+            {/* ── Generated code snippet ── */}
+            {activeTab === "playground" && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled }}>Code</span>
+                </div>
+                <CodeBlock code={generatedCode} copied={copiedCode} onCopy={() => copyText(generatedCode, setCopiedCode)} />
               </div>
             )}
 
