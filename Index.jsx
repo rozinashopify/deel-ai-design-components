@@ -42,8 +42,13 @@ const lightTokens = {
   textDisabled: "#A1A1AA",
   error:        "#EF4444",
   errorBg:      "#FEF2F2",
+  errorBorder:  "#FECACA",
   success:      "#16A34A",
   successBg:    "#F0FDF4",
+  successBorder:"#BBF7D0",
+  warning:      "#D97706",
+  warningBg:    "#FFFBEB",
+  warningBorder:"#FDE68A",
   mandatory:    "#EA580C",
   mandatoryBg:  "#FFF7ED",
   purple:       "#7C3AED",
@@ -83,8 +88,13 @@ const darkTokens = {
   textDisabled: "#52525B",
   error:        "#F87171",
   errorBg:      "#2A1515",
+  errorBorder:  "#7F1D1D",
   success:      "#4ADE80",
   successBg:    "#0D2818",
+  successBorder:"#14532D",
+  warning:      "#FCD34D",
+  warningBg:    "#1C1500",
+  warningBorder:"#713F12",
   mandatory:    "#FB923C",
   mandatoryBg:  "#271100",
   purple:       "#A78BFA",
@@ -1354,7 +1364,7 @@ const COMPONENT_PLAYGROUND_CONFIG = {
 // ─────────────────────────────────────────────────────────────────
 // COMPONENT PLAYGROUND
 // ─────────────────────────────────────────────────────────────────
-function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library" }) {
+function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library", embedded = false }) {
   const config   = COMPONENT_PLAYGROUND_CONFIG[name] ?? { defaults: {}, render: () => null };
   const manifest = COMPONENT_MANIFEST.find(c => c.name === name);
 
@@ -1407,9 +1417,10 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) + makeCatalogCSS(t) }} />
+      {!embedded && <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) + makeCatalogCSS(t) }} />}
 
       {/* ── Back bar ── */}
+      {!embedded && (
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "11px 28px", background: t.surface, borderBottom: `1px solid ${t.border}`,
@@ -1450,6 +1461,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
           <div className="track"><div className="thumb" /></div>
         </button>
       </div>
+      )}
 
       {/* ── Playground body ── */}
       <div style={{ display: "flex", flexDirection: "column", minHeight: "calc(100vh - 53px)", background: t.bg }}>
@@ -1811,6 +1823,65 @@ const makeCatalogCSS = (t) => `
     padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: ${t.textMuted};
     line-height: 1.65; overflow-x: auto; white-space: pre; margin: 0;
   }
+
+  /* ── Sidebar layout ── */
+  .lib-sidebar-layout {
+    display: flex;
+    align-items: flex-start;
+  }
+  .lib-sidebar {
+    width: 226px;
+    flex-shrink: 0;
+    border-right: 1px solid ${t.border};
+    background: ${t.surface};
+    position: sticky;
+    top: 53px;
+    height: calc(100vh - 53px);
+    overflow-y: auto;
+    padding: 20px 0 40px;
+  }
+  .lib-sidebar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: ${t.textDisabled};
+    padding: 16px 14px 6px 16px;
+    display: block;
+  }
+  .lib-sidebar-section { margin-bottom: 6px; }
+  .lib-sidebar-section-hdr {
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px; font-weight: 600;
+    color: ${t.textMain};
+    padding: 6px 14px 3px;
+    letter-spacing: -0.01em;
+  }
+  .lib-sidebar-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 6px;
+    margin: 1px 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: ${t.textMuted};
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    width: calc(100% - 12px);
+    transition: background .1s, color .1s;
+  }
+  .lib-sidebar-item:hover {
+    background: ${t.surfaceHover};
+    color: ${t.textMain};
+  }
+  .lib-sidebar-item.active {
+    background: ${t.surfaceHover};
+    color: ${t.textMain};
+    font-weight: 500;
+  }
+  .lib-content { flex: 1; min-width: 0; }
 `;
 
 // ─────────────────────────────────────────────────────────────────
@@ -2306,6 +2377,50 @@ function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────
+// SIDEBAR NAV
+// ─────────────────────────────────────────────────────────────────
+const TIER_ORDER = ["atom", "molecule", "ai-molecule", "block", "flow"];
+const TIER_LABELS = {
+  "atom":        "Atoms",
+  "molecule":    "Molecules",
+  "ai-molecule": "AI Molecules",
+  "block":       "Blocks",
+  "flow":        "Flows",
+};
+
+function SidebarNav({ active, onSelect, t }) {
+  return (
+    <div className="lib-sidebar">
+      {TIER_ORDER.map(tier => {
+        const comps = COMPONENT_MANIFEST.filter(c => c.tier === tier);
+        if (!comps.length) return null;
+        const { color, bg } = TIER_COLORS[tier] ?? TIER_COLORS.atom;
+        return (
+          <div key={tier} className="lib-sidebar-section">
+            <div className="lib-sidebar-label" style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              {TIER_LABELS[tier]}
+              <span style={{ marginLeft: "auto", fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled, fontWeight: 400 }}>
+                {comps.length}
+              </span>
+            </div>
+            {comps.map(comp => (
+              <button
+                key={comp.name}
+                type="button"
+                className={`lib-sidebar-item${active === comp.name ? " active" : ""}`}
+                onClick={() => onSelect(comp.name)}
+              >
+                {comp.name}
+              </button>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function DeelDesignSystemIndex() {
   const [dark, setDark] = useState(false);
   const [currentDemo, setCurrentDemo] = useState(null); // string: component name
@@ -2314,20 +2429,6 @@ export default function DeelDesignSystemIndex() {
   const [activeDomain, setActiveDomain] = useState("All");
   const t = dark ? darkTokens : lightTokens;
   const wc = WAVE_COLORS(t);
-
-  // ── Per-component playground view ──
-  if (currentDemo !== null) {
-    return (
-      <ComponentPlayground
-        key={currentDemo}
-        name={currentDemo}
-        dark={dark}
-        setDark={setDark}
-        backLabel={demoSource === "docs" ? "Library" : "Home"}
-        onBack={() => { setCurrentDemo(null); setShowDocs(demoSource === "docs"); window.scrollTo(0, 0); }}
-      />
-    );
-  }
 
   // ── Landing page ──
   if (!showDocs) {
@@ -2338,7 +2439,7 @@ export default function DeelDesignSystemIndex() {
         t={t}
         wc={wc}
         onOpenDocs={() => { setShowDocs(true); window.scrollTo(0, 0); }}
-        onOpenComponent={(name) => { setDemoSource("landing"); setCurrentDemo(name); window.scrollTo(0, 0); }}
+        onOpenComponent={(name) => { setShowDocs(true); setDemoSource("docs"); setCurrentDemo(name); window.scrollTo(0, 0); }}
       />
     );
   }
@@ -2354,7 +2455,7 @@ export default function DeelDesignSystemIndex() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeCatalogCSS(t) }} />
+      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) + makeCatalogCSS(t) }} />
       <div className="shell">
 
         {/* ── Top bar ── */}
@@ -2388,6 +2489,26 @@ export default function DeelDesignSystemIndex() {
             </button>
           </div>
         </div>
+
+        {/* ── Sidebar layout ── */}
+        <div className="lib-sidebar-layout">
+          <SidebarNav
+            active={currentDemo}
+            onSelect={(name) => { setDemoSource("docs"); setCurrentDemo(name); window.scrollTo(0, 0); }}
+            t={t}
+          />
+
+          <div className="lib-content">
+            {currentDemo ? (
+              <ComponentPlayground
+                key={currentDemo}
+                name={currentDemo}
+                dark={dark}
+                setDark={setDark}
+                embedded
+                onBack={() => { setCurrentDemo(null); window.scrollTo(0, 0); }}
+              />
+            ) : (<>
 
         {/* ── Hero ── */}
         <div className="lib-hero">
@@ -2546,6 +2667,10 @@ const context = JSON.stringify(COMPONENT_MANIFEST, null, 2);
         <div className="lib-foot">
           <span>Deel Component Library · {COMPONENT_MANIFEST.length} components · {DOMAINS.length - 1} domains</span>
           <span>atom → molecule → ai-molecule → block → flow ✦</span>
+        </div>
+
+            </>)}
+          </div>
         </div>
 
       </div>
