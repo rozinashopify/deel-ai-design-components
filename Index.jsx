@@ -2376,7 +2376,9 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const isApCustomised = !!(ap.primaryColor)
     || !!(ap.borderColor)
     || ap.fontFamily !== APPEARANCE_DEFAULTS.fontFamily
-    || ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius;
+    || ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius
+    || ap.fontScale !== APPEARANCE_DEFAULTS.fontScale
+    || ap.spacingScale !== APPEARANCE_DEFAULTS.spacingScale;
 
   useEffect(() => {
     if (!fontPopOpen) return;
@@ -2410,6 +2412,8 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
     if (ap.borderColor)  lines.push(`  borderColor: "${ap.borderColor}",`);
     if (ap.fontFamily !== APPEARANCE_DEFAULTS.fontFamily) lines.push(`  fontFamily: "${ap.fontFamily}",`);
     if (ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius) lines.push(`  borderRadius: ${ap.borderRadius},`);
+    if (ap.fontScale !== APPEARANCE_DEFAULTS.fontScale) lines.push(`  fontScale: ${ap.fontScale},`);
+    if (ap.spacingScale !== APPEARANCE_DEFAULTS.spacingScale) lines.push(`  spacingScale: ${ap.spacingScale},`);
     const baseVar = dark ? "darkTokens" : "lightTokens";
     const obj = lines.length ? `{\n${lines.join("\n")}\n}` : "{}";
     return `import { applyAppearance, ${baseVar} } from "./ComponentLibrary";\n\nconst tokens = applyAppearance(${baseVar}, ${obj}, ${dark});`;
@@ -2593,6 +2597,44 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                   }}
                 >{v}</button>
               ))}
+            </div>
+          </div>
+
+          {/* Font scale */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.textDisabled }}>
+              Font scale — {ap.fontScale}×
+            </span>
+            <input
+              type="range"
+              min={0.75} max={1.5} step={0.05}
+              value={ap.fontScale}
+              onChange={e => setAp(prev => ({ ...prev, fontScale: Number(e.target.value) }))}
+              style={{ width: "100%", accentColor: effectivePrimary, cursor: "pointer" }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled }}>0.75×</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: ap.fontScale === 1 ? t.primary : t.textDisabled, fontWeight: ap.fontScale === 1 ? 600 : 400 }}>1×</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled }}>1.5×</span>
+            </div>
+          </div>
+
+          {/* Spacing scale */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.textDisabled }}>
+              Spacing scale — {ap.spacingScale}×
+            </span>
+            <input
+              type="range"
+              min={0.5} max={2} step={0.05}
+              value={ap.spacingScale}
+              onChange={e => setAp(prev => ({ ...prev, spacingScale: Number(e.target.value) }))}
+              style={{ width: "100%", accentColor: effectivePrimary, cursor: "pointer" }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled }}>0.5×</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: ap.spacingScale === 1 ? t.primary : t.textDisabled, fontWeight: ap.spacingScale === 1 ? 600 : 400 }}>1×</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: t.textDisabled }}>2×</span>
             </div>
           </div>
 
@@ -3130,6 +3172,8 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
     fontFamily:          "${ap.fontFamily}",
     monospaceFontFamily: "${ap.monospaceFontFamily}",
     borderRadius:        ${ap.borderRadius},
+    fontScale:           ${ap.fontScale},
+    spacingScale:        ${ap.spacingScale},
     includeLogo:         ${ap.includeLogo},
     includeCloseButton:  ${ap.includeCloseButton},
   },
@@ -3145,6 +3189,8 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
   };
 
   const br = Number(ap.borderRadius);
+  const fsc = ap.fontScale ?? 1;
+  const ssc = ap.spacingScale ?? 1;
   const font = `'${ap.fontFamily}', -apple-system, sans-serif`;
   const monoFont = `'${ap.monospaceFontFamily}', 'Courier New', monospace`;
 
@@ -3194,32 +3240,32 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
         background: t.bg, display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         {ap.includeLogo
-          ? <span style={{ fontFamily: monoFont, fontSize: 12, fontWeight: 600, color: t.textMain, background: t.surface, border: `1px solid ${t.border}`, padding: "3px 8px", borderRadius: Math.max(0, br - 2) }}>deel-kit</span>
+          ? <span style={{ fontFamily: monoFont, fontSize: 12 * fsc, fontWeight: 600, color: t.textMain, background: t.surface, border: `1px solid ${t.border}`, padding: "3px 8px", borderRadius: Math.max(0, br - 2) }}>deel-kit</span>
           : <span />}
         {ap.includeCloseButton
-          ? <button type="button" style={{ background: "none", border: "none", cursor: "pointer", color: t.textMuted, fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
+          ? <button type="button" style={{ background: "none", border: "none", cursor: "pointer", color: t.textMuted, fontSize: 18 * fsc, lineHeight: 1, padding: 2 }}>×</button>
           : <span />}
       </div>
       {/* Body */}
-      <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: t.textMain, letterSpacing: "-0.03em", fontFamily: font }}>Bank accounts</div>
-        <div style={{ fontSize: 13, color: t.textMuted, lineHeight: 1.6 }}>You can deposit and split your wages across up to 7 bank accounts.</div>
+      <div style={{ padding: `${18 * ssc}px ${16 * ssc}px`, display: "flex", flexDirection: "column", gap: 14 * ssc }}>
+        <div style={{ fontSize: 20 * fsc, fontWeight: 700, color: t.textMain, letterSpacing: "-0.03em", fontFamily: font }}>Bank accounts</div>
+        <div style={{ fontSize: 13 * fsc, color: t.textMuted, lineHeight: 1.6 }}>You can deposit and split your wages across up to 7 bank accounts.</div>
         {/* Account row */}
-        <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: br, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: br, padding: `${10 * ssc}px ${12 * ssc}px`, display: "flex", alignItems: "center", gap: 10 * ssc }}>
           <div style={{ width: 36, height: 36, borderRadius: Math.max(0, br - 2), background: "#1B3A6B", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ fontFamily: monoFont, fontSize: 9, fontWeight: 700, color: "#fff" }}>UMB</span>
+            <span style={{ fontFamily: monoFont, fontSize: 9 * fsc, fontWeight: 700, color: "#fff" }}>UMB</span>
           </div>
-          <span style={{ fontFamily: font, fontSize: 13, fontWeight: 500, color: t.textMain }}>UMB Bank · 8641</span>
+          <span style={{ fontFamily: font, fontSize: 13 * fsc, fontWeight: 500, color: t.textMain }}>UMB Bank · 8641</span>
           <div style={{ marginLeft: "auto", width: 16, height: 16, borderRadius: "50%", background: "#16A34A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#fff", fontSize: 9, fontWeight: 700 }}>✓</span>
+            <span style={{ color: "#fff", fontSize: 9 * fsc, fontWeight: 700 }}>✓</span>
           </div>
         </div>
         {/* Outline action */}
-        <button type="button" style={{ fontFamily: font, fontSize: 13, fontWeight: 500, color: t.textMain, background: "transparent", border: `1px solid ${t.border}`, borderRadius: br, padding: "9px 14px", cursor: "pointer", width: "100%" }}>
+        <button type="button" style={{ fontFamily: font, fontSize: 13 * fsc, fontWeight: 500, color: t.textMain, background: "transparent", border: `1px solid ${t.border}`, borderRadius: br, padding: `${9 * ssc}px ${14 * ssc}px`, cursor: "pointer", width: "100%" }}>
           + Add bank account
         </button>
         {/* Primary CTA */}
-        <button type="button" style={{ fontFamily: font, fontSize: 13, fontWeight: 600, color: "#fff", background: effectivePrimaryColor, border: "none", borderRadius: br, padding: "10px 14px", cursor: "pointer", width: "100%" }}>
+        <button type="button" style={{ fontFamily: font, fontSize: 13 * fsc, fontWeight: 600, color: "#fff", background: effectivePrimaryColor, border: "none", borderRadius: br, padding: `${10 * ssc}px ${14 * ssc}px`, cursor: "pointer", width: "100%" }}>
           Continue →
         </button>
       </div>
@@ -3281,6 +3327,32 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
                 onChange={e => update("borderRadius", Number(e.target.value))}
                 style={{ width: "100%", accentColor: effectivePrimaryColor, cursor: "pointer" }}
               />
+            </ControlRow>
+
+            <ControlRow label={`fontScale — ${ap.fontScale}×`}>
+              <input
+                type="range" min={0.75} max={1.5} step={0.05} value={ap.fontScale}
+                onChange={e => update("fontScale", Number(e.target.value))}
+                style={{ width: "100%", accentColor: effectivePrimaryColor, cursor: "pointer" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textDisabled }}>0.75×</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: ap.fontScale === 1 ? effectivePrimaryColor : t.textDisabled, fontWeight: ap.fontScale === 1 ? 600 : 400 }}>1× default</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textDisabled }}>1.5×</span>
+              </div>
+            </ControlRow>
+
+            <ControlRow label={`spacingScale — ${ap.spacingScale}×`}>
+              <input
+                type="range" min={0.5} max={2} step={0.05} value={ap.spacingScale}
+                onChange={e => update("spacingScale", Number(e.target.value))}
+                style={{ width: "100%", accentColor: effectivePrimaryColor, cursor: "pointer" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textDisabled }}>0.5×</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: ap.spacingScale === 1 ? effectivePrimaryColor : t.textDisabled, fontWeight: ap.spacingScale === 1 ? 600 : 400 }}>1× default</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textDisabled }}>2×</span>
+              </div>
             </ControlRow>
 
             <ControlRow label="includeLogo">

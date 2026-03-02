@@ -649,6 +649,12 @@ export const APPEARANCE_DEFAULTS = {
   includeLogo: true,
   /** Show the × dismiss button when the component is mounted as a modal. */
   includeCloseButton: true,
+  /** Relative font scale multiplier applied to all text in the component.
+   *  1 = default sizes, 0.875 = smaller, 1.125 = larger. Range 0.75–1.5. */
+  fontScale: 1,
+  /** Relative spacing scale multiplier applied to all gap and padding values.
+   *  1 = default spacing, 0.75 = tighter, 1.5 = more spacious. Range 0.5–2. */
+  spacingScale: 1,
 };
 
 /**
@@ -679,7 +685,9 @@ export function applyAppearance(baseTokens, appearance = {}, isDark = false) {
   if (appearance.borderColor)           t.border = _adjustBorderForMode(appearance.borderColor, isDark);
   if (appearance.fontFamily)            t._fontFamily = appearance.fontFamily;
   if (appearance.monospaceFontFamily)   t._monoFont   = appearance.monospaceFontFamily;
-  if (appearance.borderRadius !== undefined) t._borderRadius = appearance.borderRadius;
+  if (appearance.borderRadius !== undefined)   t._borderRadius   = appearance.borderRadius;
+  if (appearance.fontScale !== undefined)      t._fontScale      = appearance.fontScale;
+  if (appearance.spacingScale !== undefined)   t._spacingScale   = appearance.spacingScale;
   return t;
 }
 
@@ -700,6 +708,8 @@ const _GF_SLUGS = {
 
 export const makeLibraryCSS = (t, isDark) => {
   const br = t._borderRadius !== undefined ? t._borderRadius : 6;
+  const fsc = t._fontScale ?? 1;
+  const ssc = t._spacingScale ?? 1;
   const ff = t._fontFamily ? `'${t._fontFamily}', -apple-system, sans-serif` : "'Inter', -apple-system, sans-serif";
   const mf = t._monoFont ? `'${t._monoFont}', 'JetBrains Mono', monospace` : "'JetBrains Mono', monospace";
   const bodyFont = t._fontFamily || "Inter";
@@ -709,7 +719,7 @@ export const makeLibraryCSS = (t, isDark) => {
   const fontFamilies = bodyFont === monoFont
     ? `family=${bodySlug}`
     : `family=${bodySlug}&family=${monoSlug}`;
-  return `
+  const css = `
   @import url('https://fonts.googleapis.com/css2?${fontFamilies}&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: ${ff}; -webkit-font-smoothing: antialiased; }
@@ -1029,7 +1039,21 @@ export const makeLibraryCSS = (t, isDark) => {
   @keyframes sp { to { transform: rotate(360deg); } }
   .shimmer { height: 44px; border-radius: 8px; background: linear-gradient(90deg,${t.surfaceHover} 25%,${t.border} 50%,${t.surfaceHover} 75%); background-size: 200% 100%; animation: shim 1.4s infinite; }
   @keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-`;};
+`;
+  let out = css;
+  if (fsc !== 1) out = out.replace(/font-size:\s*([\d.]+)px/g, (_, n) => `font-size: ${Math.round(+n * fsc * 10) / 10}px`);
+  if (ssc !== 1) {
+    const sp = v => { const m = v.match(/^([\d.]+)px$/); return m ? `${Math.round(+m[1] * ssc * 10) / 10}px` : v; };
+    out = out.replace(/\bgap:\s*([\d.]+)px/g, (_, n) => `gap: ${Math.round(+n * ssc * 10) / 10}px`);
+    out = out.replace(/\bpadding:\s*((?:(?:[\d.]+px|0)\s*)+)/g, (_, vals) =>
+      `padding: ${vals.trim().split(/\s+/).map(sp).join(' ')}`
+    );
+    out = out.replace(/\bpadding-(top|right|bottom|left):\s*([\d.]+px)/g, (_, side, val) =>
+      `padding-${side}: ${sp(val)}`
+    );
+  }
+  return out;
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // SHARED ICONS
@@ -1187,7 +1211,7 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
  * @param {Function}    [onInfoClick] - Renders a ⓘ icon button when provided; called on click.
  * @param {ReactNode}   [children]  - Form fields or any content inside the card.
  */
-export function SectionCard({ title, showInfoButton, onInfoClick, children }) {
+export function SectionCard({ title, showInfoButton, onInfoClick, bodyGap, children }) {
   const showBtn = showInfoButton || !!onInfoClick;
   const showHeader = !!(title || showBtn);
   return (
@@ -1211,7 +1235,7 @@ export function SectionCard({ title, showInfoButton, onInfoClick, children }) {
         )}
       </div>
       )}
-      {children && <div className="sc-body">{children}</div>}
+      {children && <div className="sc-body" style={bodyGap !== undefined ? { gap: bodyGap } : undefined}>{children}</div>}
     </div>
   );
 }
@@ -2221,7 +2245,7 @@ export function AddPersonBlock({
       </div>
 
       {/* ── 1. Team information ── */}
-      <SectionCard title="Team information" showInfoButton>
+      <SectionCard title="Team information" showInfoButton bodyGap={20}>
         <DropdownSelect label="Entity" required
           options={ENTITY_OPTIONS} value={defaultEntity} />
         <DropdownSelect label="Group" required
@@ -2229,7 +2253,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 2. Employee personal details ── */}
-      <SectionCard title="Employee personal details">
+      <SectionCard title="Employee personal details" bodyGap={20}>
         <ToggleRow
           label="I don't know the worker's personal details yet"
           description="Get a cost estimate without providing worker details"
@@ -2267,7 +2291,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 3. Workplace information ── */}
-      <SectionCard title="Workplace information">
+      <SectionCard title="Workplace information" bodyGap={20}>
         <div>
           <DropdownSelect label="Job Position" optional placeholder="Job Position (optional)"
             options={JOB_POSITION_OPTIONS} />
@@ -2288,7 +2312,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 4. Organizational structure ── */}
-      <SectionCard title="Organizational structure">
+      <SectionCard title="Organizational structure" bodyGap={20}>
         <DropdownSelect label="Department" optional placeholder="Department (optional)"
           options={DEPARTMENT_OPTIONS} />
         <DropdownSelect label="Teams" optional placeholder="Teams (optional)"
@@ -2296,7 +2320,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 5. Hiring objective ── */}
-      <SectionCard title="Hiring objective">
+      <SectionCard title="Hiring objective" bodyGap={20}>
         <DropdownSelect
           label="What's your hiring objective?"
           required
