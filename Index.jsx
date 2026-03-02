@@ -1362,290 +1362,983 @@ const COMPONENT_PLAYGROUND_CONFIG = {
 };
 
 // ─────────────────────────────────────────────────────────────────
-// COMPONENT PLAYGROUND
+// PER-COMPONENT EXAMPLES
+// Each entry: { id, title, description, code, render }
 // ─────────────────────────────────────────────────────────────────
-function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library", embedded = false }) {
+const COMPONENT_EXAMPLES = {
+  TextInput: [
+    {
+      id: "basic", title: "Basic",
+      description: "A text input with a label and placeholder.",
+      code: `import { TextInput } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <TextInput label="Worker ID" placeholder="e.g. EMP-2024-260" />
+  )
+}`,
+      render: () => <div style={{ maxWidth: 380 }}><TextInput label="Worker ID" placeholder="e.g. EMP-2024-260" /></div>,
+    },
+    {
+      id: "states", title: "States",
+      description: "Supports required, error, and disabled states.",
+      code: `import { TextInput } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 380 }}>
+      <TextInput label="Required field" required helperText="This field is mandatory" />
+      <TextInput label="Error state" value="invalid@" error helperText="Enter a valid email address" />
+      <TextInput label="Disabled" value="Read-only value" disabled />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380, display: "flex", flexDirection: "column", gap: 16 }}>
+          <TextInput label="Required field" required helperText="This field is mandatory" />
+          <TextInput label="Error state" value="invalid@" error helperText="Enter a valid email address" />
+          <TextInput label="Disabled" value="Read-only value" disabled />
+        </div>
+      ),
+    },
+  ],
+
+  DropdownSelect: [
+    {
+      id: "basic", title: "Basic",
+      description: "A select with a label and a list of options.",
+      code: `import { DropdownSelect } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <DropdownSelect
+      label="Job title"
+      options={[
+        { value: "ea",  label: "Executive Assistant" },
+        { value: "pm",  label: "Product Manager" },
+        { value: "swe", label: "Software Engineer" },
+      ]}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380 }}>
+          <DropdownSelect label="Job title" options={[
+            { value: "ea",  label: "Executive Assistant" },
+            { value: "pm",  label: "Product Manager" },
+            { value: "swe", label: "Software Engineer" },
+          ]} />
+        </div>
+      ),
+    },
+    {
+      id: "states", title: "States",
+      description: "Add optional to show a hint label; disabled prevents interaction.",
+      code: `import { DropdownSelect } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 380 }}>
+      <DropdownSelect label="Department" optional options={[
+        { value: "eng", label: "Engineering" },
+        { value: "ops", label: "Operations" },
+      ]} />
+      <DropdownSelect label="Country (locked)" value="us" disabled options={[
+        { value: "us", label: "United States" },
+      ]} />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380, display: "flex", flexDirection: "column", gap: 16 }}>
+          <DropdownSelect label="Department" optional options={[
+            { value: "eng", label: "Engineering" }, { value: "ops", label: "Operations" },
+          ]} />
+          <DropdownSelect label="Country (locked)" value="us" disabled options={[{ value: "us", label: "United States" }]} />
+        </div>
+      ),
+    },
+  ],
+
+  RadioOption: [
+    {
+      id: "interactive", title: "Interactive",
+      description: "Full-width tappable rows — pass selected and onClick for controlled behaviour.",
+      code: `import { RadioOption } from "./ComponentLibrary"
+import { useState } from "react"
+
+export function Demo() {
+  const [type, setType] = useState("full")
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380 }}>
+      <RadioOption label="Full-time" selected={type === "full"} onClick={() => setType("full")} />
+      <RadioOption label="Part-time" selected={type === "part"} onClick={() => setType("part")} />
+    </div>
+  )
+}`,
+      render: () => {
+        function RadioDemo() {
+          const [type, setType] = useState("full");
+          return (
+            <div style={{ maxWidth: 380, display: "flex", flexDirection: "column", gap: 10 }}>
+              <RadioOption label="Full-time" selected={type === "full"} onClick={() => setType("full")} />
+              <RadioOption label="Part-time" selected={type === "part"} onClick={() => setType("part")} />
+            </div>
+          );
+        }
+        return <RadioDemo />;
+      },
+    },
+    {
+      id: "sublabel", title: "With sublabel",
+      description: "Add a sublabel for a secondary description line. Supports disabled state.",
+      code: `import { RadioOption } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380 }}>
+      <RadioOption label="Full-time"   sublabel="40 hrs/week · standard contract" selected />
+      <RadioOption label="Part-time"   sublabel="Custom hours · flexible contract" />
+      <RadioOption label="Contractor"  sublabel="1099 / B2B" disabled />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380, display: "flex", flexDirection: "column", gap: 10 }}>
+          <RadioOption label="Full-time"  sublabel="40 hrs/week · standard contract" selected />
+          <RadioOption label="Part-time"  sublabel="Custom hours · flexible contract" />
+          <RadioOption label="Contractor" sublabel="1099 / B2B" disabled />
+        </div>
+      ),
+    },
+  ],
+
+  FormFieldGroup: [
+    {
+      id: "single-col", title: "Single column",
+      description: "Default single-column layout.",
+      code: `import { FormFieldGroup } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <FormFieldGroup
+      title="Contact details"
+      fields={[
+        { type: "text",   label: "First name", required: true, placeholder: "Alex" },
+        { type: "text",   label: "Last name",  required: true, placeholder: "Johnson" },
+        { type: "text",   label: "Email",      placeholder: "alex@company.com" },
+      ]}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 420 }}>
+          <FormFieldGroup title="Contact details" fields={[
+            { type: "text", label: "First name", required: true, placeholder: "Alex" },
+            { type: "text", label: "Last name",  required: true, placeholder: "Johnson" },
+            { type: "text", label: "Email",      placeholder: "alex@company.com" },
+          ]} />
+        </div>
+      ),
+    },
+    {
+      id: "two-col", title: "Two columns",
+      description: "Pass columns={2} to place fields in a responsive two-column grid.",
+      code: `import { FormFieldGroup } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <FormFieldGroup
+      title="Workplace information"
+      description="These details appear on the EOR contract."
+      columns={2}
+      fields={[
+        { type: "text",   label: "First name", required: true, placeholder: "Alex" },
+        { type: "text",   label: "Last name",  required: true, placeholder: "Johnson" },
+        { type: "text",   label: "Worker ID",  value: "EMP-2024-260" },
+        { type: "select", label: "Department", optional: true,
+          options: [
+            { value: "eng", label: "Engineering" },
+            { value: "ops", label: "Operations" },
+          ]
+        },
+      ]}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 560 }}>
+          <FormFieldGroup
+            title="Workplace information"
+            description="These details appear on the EOR contract."
+            columns={2}
+            fields={[
+              { type: "text",   label: "First name", required: true, placeholder: "Alex" },
+              { type: "text",   label: "Last name",  required: true, placeholder: "Johnson" },
+              { type: "text",   label: "Worker ID",  value: "EMP-2024-260" },
+              { type: "select", label: "Department", optional: true,
+                options: [{ value: "eng", label: "Engineering" }, { value: "ops", label: "Operations" }] },
+            ]}
+          />
+        </div>
+      ),
+    },
+  ],
+
+  Buttons: [
+    {
+      id: "variants", title: "Variants",
+      description: "Three visual styles — primary (filled CTA), secondary (outlined), and text (ghost).",
+      code: `import { Button } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+      <Button variant="primary"   label="Continue" />
+      <Button variant="secondary" label="Cancel" />
+      <Button variant="text"      label="Learn more" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <Button variant="primary"   label="Continue" />
+          <Button variant="secondary" label="Cancel" />
+          <Button variant="text"      label="Learn more" />
+        </div>
+      ),
+    },
+    {
+      id: "sizes", title: "Sizes",
+      description: "Use the size prop to change button height: sm (30px), md (36px, default), lg (42px).",
+      code: `import { Button } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+      <Button variant="primary" label="Small"   size="sm" />
+      <Button variant="primary" label="Medium"  size="md" />
+      <Button variant="primary" label="Large"   size="lg" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <Button variant="primary" label="Small"  size="sm" />
+          <Button variant="primary" label="Medium" size="md" />
+          <Button variant="primary" label="Large"  size="lg" />
+        </div>
+      ),
+    },
+    {
+      id: "loading-disabled", title: "Loading & Disabled",
+      description: "The loading prop shows a spinner; disabled prevents all interaction.",
+      code: `import { Button } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+      <Button variant="primary"   label="Saving…"  loading />
+      <Button variant="secondary" label="Loading…" loading />
+      <Button variant="primary"   label="Disabled" disabled />
+      <Button variant="secondary" label="Disabled" disabled />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <Button variant="primary"   label="Saving…"  loading />
+          <Button variant="secondary" label="Loading…" loading />
+          <Button variant="primary"   label="Disabled" disabled />
+          <Button variant="secondary" label="Disabled" disabled />
+        </div>
+      ),
+    },
+  ],
+
+  StatusBadge: [
+    {
+      id: "variants", title: "Variants",
+      description: "Four semantic variants — each carries distinct colour and default label text.",
+      code: `import { StatusBadge } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+      <StatusBadge variant="mandatory" />
+      <StatusBadge variant="new" />
+      <StatusBadge variant="completed" />
+      <StatusBadge variant="failed" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+          <StatusBadge variant="mandatory" />
+          <StatusBadge variant="new" />
+          <StatusBadge variant="completed" />
+          <StatusBadge variant="failed" />
+        </div>
+      ),
+    },
+    {
+      id: "custom", title: "Custom label and dot",
+      description: "Override the default label text with label prop. Hide the dot with dot={false}.",
+      code: `import { StatusBadge } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+      <StatusBadge variant="mandatory" label="Required by law" />
+      <StatusBadge variant="completed" label="Job details" />
+      <StatusBadge variant="new" dot={false} label="Feature preview" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+          <StatusBadge variant="mandatory" label="Required by law" />
+          <StatusBadge variant="completed" label="Job details" />
+          <StatusBadge variant="new" dot={false} label="Feature preview" />
+        </div>
+      ),
+    },
+  ],
+
+  AutosaveWidget: [
+    {
+      id: "saved", title: "Saved state",
+      description: "Shows a green dot and the last-saved timestamp when the draft is up-to-date.",
+      code: `import { AutosaveWidget } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ maxWidth: 280 }}>
+      <AutosaveWidget status="saved" lastSaved="2 minutes ago" />
+    </div>
+  )
+}`,
+      render: () => <div style={{ maxWidth: 280 }}><AutosaveWidget status="saved" lastSaved="2 minutes ago" /></div>,
+    },
+    {
+      id: "saving", title: "Saving state",
+      description: "Shows an amber pulsing spinner while the draft is being persisted.",
+      code: `import { AutosaveWidget } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ maxWidth: 280 }}>
+      <AutosaveWidget status="saving" />
+    </div>
+  )
+}`,
+      render: () => <div style={{ maxWidth: 280 }}><AutosaveWidget status="saving" /></div>,
+    },
+  ],
+
+  HiringGuideBanner: [
+    {
+      id: "info", title: "Info variant",
+      description: "The default blue-tinted variant draws attention at the top of the contract flow.",
+      code: `import { HiringGuideBanner } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <HiringGuideBanner
+      country="United States"
+      flags={["🌍", "🇺🇸"]}
+      variant="info"
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 560 }}>
+          <HiringGuideBanner country="United States" flags={["🌍", "🇺🇸"]} variant="info" />
+        </div>
+      ),
+    },
+    {
+      id: "surface", title: "Surface variant",
+      description: "A neutral card-style variant, ideal inside dense layouts.",
+      code: `import { HiringGuideBanner } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <HiringGuideBanner
+      country="Germany"
+      flags={["🌍", "🇩🇪"]}
+      variant="surface"
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 560 }}>
+          <HiringGuideBanner country="Germany" flags={["🌍", "🇩🇪"]} variant="surface" />
+        </div>
+      ),
+    },
+  ],
+
+  StepperRail: [
+    {
+      id: "step1", title: "Step 1 active",
+      description: "First step is in progress; all remaining steps are in a future state.",
+      code: `import { StepperRail } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <StepperRail
+      steps={[
+        { label: "Personal details" },
+        { label: "Job details" },
+        { label: "Compensation" },
+        { label: "Benefits" },
+      ]}
+      currentStep={1}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 260 }}>
+          <StepperRail steps={[{ label: "Personal details" }, { label: "Job details" }, { label: "Compensation" }, { label: "Benefits" }]} currentStep={1} />
+        </div>
+      ),
+    },
+    {
+      id: "step3", title: "With completed steps",
+      description: "Completed steps show a check mark and are clickable to navigate back.",
+      code: `import { StepperRail } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <StepperRail
+      steps={[
+        { label: "Personal details" },
+        { label: "Job details" },
+        { label: "Compensation" },
+        { label: "Benefits" },
+      ]}
+      currentStep={3}
+      onStepClick={(n) => console.log("Go to step", n)}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 260 }}>
+          <StepperRail steps={[{ label: "Personal details" }, { label: "Job details" }, { label: "Compensation" }, { label: "Benefits" }]} currentStep={3} onStepClick={() => {}} />
+        </div>
+      ),
+    },
+  ],
+
+  ComplianceCheckCard: [
+    {
+      id: "all-states", title: "All states",
+      description: "Four states: checking (shimmer), pass (green), warn (amber), fail (red).",
+      code: `import { ComplianceCheckCard } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 560 }}>
+      <ComplianceCheckCard rule="Scope is relevant to the job title." status="pass" />
+      <ComplianceCheckCard
+        rule="Scope should not include recruiting language."
+        status="warn"
+        detail="Indirect reference detected — consider rephrasing."
+      />
+      <ComplianceCheckCard
+        rule="No required education requirements."
+        status="fail"
+        detail='"Must have a degree" detected and must be removed.'
+      />
+      <ComplianceCheckCard rule="Scope does not reference reporting lines." status="checking" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: 8 }}>
+          <ComplianceCheckCard rule="Scope is relevant to the job title." status="pass" />
+          <ComplianceCheckCard rule="Scope should not include recruiting language." status="warn" detail="Indirect reference detected — consider rephrasing." />
+          <ComplianceCheckCard rule="No required education requirements." status="fail" detail='"Must have a degree" detected and must be removed.' />
+          <ComplianceCheckCard rule="Scope does not reference reporting lines." status="checking" />
+        </div>
+      ),
+    },
+  ],
+
+  ComplianceCheckPanel: [
+    {
+      id: "with-results", title: "With results",
+      description: "Pass a results array — each item is rendered as a ComplianceCheckCard row.",
+      code: `import { ComplianceCheckPanel } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <ComplianceCheckPanel
+      results={[
+        { rule: "Scope is relevant to the job title.",       status: "pass" },
+        { rule: "No recruiting or hiring language.",         status: "warn", detail: "Indirect ref detected — rephrase." },
+        { rule: "No required education requirements.",       status: "fail", detail: '"Must have a degree" detected.' },
+        { rule: "Scope does not reference reporting lines.", status: "checking" },
+      ]}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 600 }}>
+          <ComplianceCheckPanel results={[
+            { rule: "Scope is relevant to the job title.",       status: "pass" },
+            { rule: "No recruiting or hiring language.",         status: "warn", detail: "Indirect ref detected — rephrase." },
+            { rule: "No required education requirements.",       status: "fail", detail: '"Must have a degree" detected.' },
+            { rule: "Scope does not reference reporting lines.", status: "checking" },
+          ]} />
+        </div>
+      ),
+    },
+    {
+      id: "pre-run", title: "Pre-run state",
+      description: "Without results the panel shows an empty state with the Run check CTA.",
+      code: `import { ComplianceCheckPanel } from "./ComponentLibrary"
+
+export function Demo() {
+  return <ComplianceCheckPanel results={[]} />
+}`,
+      render: () => <div style={{ maxWidth: 600 }}><ComplianceCheckPanel results={[]} /></div>,
+    },
+  ],
+
+  MarketRateChart: [
+    {
+      id: "annual", title: "Annual",
+      description: "Shows the salary histogram for annual gross pay in the selected market.",
+      code: `import { MarketRateChart } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <MarketRateChart
+      salary={77293}
+      period="annual"
+      country="United States"
+      seniority="Mid"
+      jobTitle="Executive Assistant"
+    />
+  )
+}`,
+      render: () => <div style={{ maxWidth: 560 }}><MarketRateChart salary={77293} period="annual" country="United States" seniority="Mid" jobTitle="Executive Assistant" /></div>,
+    },
+    {
+      id: "monthly", title: "Monthly",
+      description: "Pass period=\"monthly\" to default to monthly salary figures.",
+      code: `import { MarketRateChart } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <MarketRateChart
+      salary={120000}
+      period="monthly"
+      country="Germany"
+      seniority="Senior"
+      jobTitle="Product Manager"
+    />
+  )
+}`,
+      render: () => <div style={{ maxWidth: 560 }}><MarketRateChart salary={120000} period="monthly" country="Germany" seniority="Senior" jobTitle="Product Manager" /></div>,
+    },
+  ],
+
+  JobDescriptionBlock: [
+    {
+      id: "default", title: "Default",
+      description: "Pre-fill the block with defaultTitle, defaultSeniority, and defaultScope.",
+      code: `import { JobDescriptionBlock } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <JobDescriptionBlock
+      defaultTitle="Executive Assistant"
+      defaultSeniority="mid"
+      onSave={(state) => console.log(state)}
+    />
+  )
+}`,
+      render: () => <JobDescriptionBlock defaultTitle="Executive Assistant" defaultSeniority="mid" />,
+    },
+  ],
+
+  CompensationBlock: [
+    {
+      id: "default", title: "Default",
+      description: "Full compensation section with employment type toggle, salary input, and market rate chart.",
+      code: `import { CompensationBlock } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <CompensationBlock
+      defaultSalary={77293}
+      defaultEmploymentType="full"
+      country="United States"
+    />
+  )
+}`,
+      render: () => <CompensationBlock defaultSalary={77293} defaultEmploymentType="full" country="United States" />,
+    },
+    {
+      id: "no-chart", title: "Without market insights",
+      description: "Pass showMarketInsights={false} to hide the salary benchmarking chart.",
+      code: `import { CompensationBlock } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <CompensationBlock
+      defaultSalary={60000}
+      showMarketInsights={false}
+      country="Germany"
+    />
+  )
+}`,
+      render: () => <CompensationBlock defaultSalary={60000} showMarketInsights={false} country="Germany" />,
+    },
+  ],
+
+  BenefitsBlock: [
+    {
+      id: "us", title: "United States",
+      description: "Mandatory Healthcare, Pension, and Life Insurance for US workers shown as warnings until added.",
+      code: `import { BenefitsBlock } from "./ComponentLibrary"
+
+export function Demo() {
+  return <BenefitsBlock country="United States" />
+}`,
+      render: () => <BenefitsBlock country="United States" />,
+    },
+    {
+      id: "germany", title: "Germany",
+      description: "Country-specific mandatory benefit set differs from US defaults.",
+      code: `import { BenefitsBlock } from "./ComponentLibrary"
+
+export function Demo() {
+  return <BenefitsBlock country="Germany" />
+}`,
+      render: () => <BenefitsBlock country="Germany" />,
+    },
+  ],
+
+  EORContractCreationFlow: [
+    {
+      id: "full", title: "Full flow",
+      description: "4-step EOR contract creation — Personal details, Job, Compensation, and Benefits.",
+      code: `import { EORContractCreationFlow } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <EORContractCreationFlow
+      country="United States"
+      showHeader={true}
+      headerTitle="Create new EOR contract"
+      headerSubtitle="Full-time · United States"
+      onComplete={(data) => console.log(data)}
+    />
+  )
+}`,
+      render: () => (
+        <EORContractCreationFlow
+          country="United States"
+          showHeader
+          headerTitle="Create new EOR contract"
+          headerSubtitle="Full-time · United States"
+        />
+      ),
+    },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────
+// COMPONENT DOC PAGE  (shadcn-style documentation view)
+// ─────────────────────────────────────────────────────────────────
+function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library", embedded = false, onSelectComponent }) {
   const config   = COMPONENT_PLAYGROUND_CONFIG[name] ?? { defaults: {}, render: () => null };
   const manifest = COMPONENT_MANIFEST.find(c => c.name === name);
+  const examples = COMPONENT_EXAMPLES[name] ?? [];
 
-  const [liveProps, setLiveProps] = useState({ ...config.defaults });
-  const [copied,    setCopied]    = useState(false);
-  const [controlsWidth, setControlsWidth] = useState(280);
+  // Prev/Next within the manifest order
+  const allCompNames = COMPONENT_MANIFEST.map(c => c.name);
+  const currentIdx   = allCompNames.indexOf(name);
+  const prevName     = currentIdx > 0 ? allCompNames[currentIdx - 1] : null;
+  const nextName     = currentIdx < allCompNames.length - 1 ? allCompNames[currentIdx + 1] : null;
+
+  const [liveProps,    setLiveProps]    = useState({ ...config.defaults });
+  const [activeTab,    setActiveTab]    = useState("preview"); // "preview" | "playground"
+  const [copiedImport, setCopiedImport] = useState(false);
+  const [copiedUsage,  setCopiedUsage]  = useState(false);
+  const [expandedEx,   setExpandedEx]   = useState({});
+  const [copiedEx,     setCopiedEx]     = useState({});
+  const [controlsWidth, setControlsWidth] = useState(300);
   const resizingRef = useRef(false);
   const startXRef   = useRef(0);
-  const startWRef   = useRef(280);
-
-  const onResizeMouseDown = (e) => {
-    resizingRef.current = true;
-    startXRef.current   = e.clientX;
-    startWRef.current   = controlsWidth;
-    const onMove = (ev) => {
-      if (!resizingRef.current) return;
-      const delta = startXRef.current - ev.clientX;
-      setControlsWidth(Math.max(200, Math.min(600, startWRef.current + delta)));
-    };
-    const onUp = () => {
-      resizingRef.current = false;
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    e.preventDefault();
-  };
+  const startWRef   = useRef(300);
 
   const t = dark ? darkTokens : lightTokens;
   const { color: tierColor, bg: tierBg } = TIER_COLORS[manifest?.tier] ?? TIER_COLORS.atom;
   const isFlow = manifest?.tier === "flow";
 
-  // Props that have a recognised control AND appear in config.defaults
   const controllableProps = (manifest?.props ?? [])
     .map(p => ({ ...p, control: inferControlType(p.type) }))
     .filter(p => p.control !== null && Object.prototype.hasOwnProperty.call(config.defaults, p.name));
 
-  const showControls = !isFlow || controllableProps.length > 0;
+  const generatedCode  = generatePlaygroundCode(name, liveProps);
+  const importCode     = `import { ${name} } from "./ComponentLibrary"`;
+  const setProp        = (key, val) => setLiveProps(prev => ({ ...prev, [key]: val }));
+  const copyText       = (text, setter) => { navigator.clipboard.writeText(text).then(() => { setter(true); setTimeout(() => setter(false), 1800); }).catch(() => {}); };
+  const toggleEx       = (id) => setExpandedEx(prev => ({ ...prev, [id]: !prev[id] }));
+  const copyEx         = (id, code) => copyText(code, (v) => setCopiedEx(prev => ({ ...prev, [id]: v })));
 
-  const generatedCode = generatePlaygroundCode(name, liveProps);
+  const onResizeDown = (e) => {
+    resizingRef.current = true; startXRef.current = e.clientX; startWRef.current = controlsWidth;
+    const onMove = (ev) => { if (!resizingRef.current) return; const d = startXRef.current - ev.clientX; setControlsWidth(Math.max(220, Math.min(640, startWRef.current + d))); };
+    const onUp   = () => { resizingRef.current = false; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp); e.preventDefault();
+  };
 
-  const setProp = (key, val) => setLiveProps(prev => ({ ...prev, [key]: val }));
+  // ── Inline sub-components ────────────────────────────────────
+  const SectionTitle = ({ children, id }) => (
+    <h2 id={id} style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: "-0.025em", color: t.textMain, margin: "0 0 18px", paddingBottom: 14, borderBottom: `1px solid ${t.border}` }}>
+      {children}
+    </h2>
+  );
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedCode)
-      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); })
-      .catch(() => {});
+  const CodeBlock = ({ code, copied, onCopy, minHeight = 56 }) => (
+    <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderBottom: `1px solid ${t.border}`, background: t.surface }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled }}>Code</span>
+        <button type="button" onClick={onCopy} style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: copied ? t.success : t.textMuted, background: "transparent", border: `1px solid ${copied ? t.success : t.border}`, borderRadius: 6, padding: "3px 12px", cursor: "pointer", transition: "all .15s", display: "flex", alignItems: "center", gap: 5 }}>
+          {copied ? "✓ Copied" : "Copy"}
+        </button>
+      </div>
+      <pre style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, lineHeight: 1.75, padding: "16px 20px", margin: 0, overflowX: "auto", minHeight, background: t.bg }}>
+        {syntaxHighlightCode(code, t)}
+      </pre>
+    </div>
+  );
+
+  const NavBtn = ({ compName, direction }) => {
+    const compManifest = COMPONENT_MANIFEST.find(c => c.name === compName);
+    const { color: nc, bg: nb } = TIER_COLORS[compManifest?.tier] ?? TIER_COLORS.atom;
+    return (
+      <button
+        type="button"
+        onClick={() => { onSelectComponent?.(compName); window.scrollTo(0, 0); }}
+        style={{ display: "flex", flexDirection: direction === "prev" ? "row" : "row-reverse", alignItems: "center", gap: 10, fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500, color: t.textMain, background: t.surface, border: `1px solid ${t.border}`, padding: "11px 18px", borderRadius: 10, cursor: "pointer", flex: 1, maxWidth: 280, textAlign: direction === "prev" ? "left" : "right", transition: "border-color .12s, background .12s" }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = t.textMuted; e.currentTarget.style.background = t.surfaceHover; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = t.border;    e.currentTarget.style.background = t.surface; }}
+      >
+        <span style={{ fontSize: 17, color: t.textDisabled, flexShrink: 0, lineHeight: 1 }}>{direction === "prev" ? "←" : "→"}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <span style={{ fontSize: 10, color: t.textDisabled, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace" }}>{direction === "prev" ? "Previous" : "Next"}</span>
+          <span>{compName}</span>
+        </div>
+      </button>
+    );
   };
 
   return (
     <>
       {!embedded && <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) + makeCatalogCSS(t) }} />}
 
-      {/* ── Back bar ── */}
+      {/* ── Back bar (non-embedded) ── */}
       {!embedded && (
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "11px 28px", background: t.surface, borderBottom: `1px solid ${t.border}`,
-        boxShadow: t.shadow, position: "sticky", top: 0, zIndex: 100, gap: 12,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            type="button" onClick={onBack}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, background: "transparent",
-              border: `1px solid ${t.border}`, borderRadius: 7, padding: "5px 11px",
-              cursor: "pointer", color: t.textMain,
-              fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500,
-            }}
-          >
-            <BackArrow /> {backLabel}
-          </button>
-          <span style={{ color: t.textDisabled }}>/</span>
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: t.textMain, letterSpacing: "-0.01em" }}>{name}</span>
-          <span style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 500,
-            letterSpacing: "0.08em", textTransform: "uppercase",
-            color: tierColor, background: tierBg, padding: "2.5px 8px", borderRadius: 4,
-          }}>
-            {manifest?.tier}
-          </span>
-          <span style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.textMuted,
-            background: t.surfaceHover, border: `1px solid ${t.border}`,
-            padding: "2.5px 9px", borderRadius: 4,
-          }}>
-            {manifest?.domain}
-          </span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 28px", background: t.surface, borderBottom: `1px solid ${t.border}`, boxShadow: t.shadow, position: "sticky", top: 0, zIndex: 100, gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button type="button" onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 7, padding: "5px 11px", cursor: "pointer", color: t.textMain, fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500 }}>
+              <BackArrow /> {backLabel}
+            </button>
+            <span style={{ color: t.textDisabled }}>/</span>
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: t.textMain, letterSpacing: "-0.01em" }}>{name}</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: tierColor, background: tierBg, padding: "2.5px 8px", borderRadius: 4 }}>{manifest?.tier}</span>
+          </div>
+          <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">{dark ? <Moon /> : <Sun />}{dark ? "Dark" : "Light"}<div className="track"><div className="thumb" /></div></button>
         </div>
-        <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">
-          {dark ? <Moon /> : <Sun />}
-          {dark ? "Dark" : "Light"}
-          <div className="track"><div className="thumb" /></div>
-        </button>
-      </div>
       )}
 
-      {/* ── Playground body ── */}
-      <div style={{ display: "flex", flexDirection: "column", minHeight: "calc(100vh - 53px)", background: t.bg }}>
+      {/* ── Doc page body ── */}
+      <div style={{ background: t.bg, minHeight: embedded ? undefined : "calc(100vh - 53px)" }}>
 
-        {/* Preview + Controls row */}
-        <div style={{
-          display: "flex", flex: 1,
-          borderBottom: `1px solid ${t.border}`,
-          minHeight: 380,
-        }}>
-
-          {/* Live preview */}
-          <div style={{
-            flex: 1,
-            display: "flex",
-            alignItems: isFlow ? "flex-start" : "center",
-            justifyContent: isFlow ? "flex-start" : "center",
-            padding: isFlow ? 0 : "52px 40px",
-            background: t.bg,
-            borderRight: showControls ? `1px solid ${t.border}` : "none",
-            overflow: "auto",
-          }}>
-            {config.render(liveProps)}
+        {/* ── Page header ── */}
+        <div style={{ padding: "44px 48px 36px", background: t.surface, borderBottom: `1px solid ${t.border}` }}>
+          {/* Prev / Next top nav */}
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 32 }}>
+            {prevName ? <NavBtn compName={prevName} direction="prev" /> : <span />}
+            {nextName ? <NavBtn compName={nextName} direction="next" /> : <span />}
           </div>
 
-          {/* Controls panel */}
-          {showControls && (
-            <div style={{
-              flex: `0 0 ${controlsWidth}px`, width: controlsWidth, overflow: "auto",
-              background: t.surface,
-              display: "flex", flexDirection: "row",
-              position: "relative",
-            }}>
-              {/* Resize handle */}
-              <div
-                onMouseDown={onResizeMouseDown}
-                style={{
-                  width: 4, flexShrink: 0, cursor: "col-resize",
-                  background: "transparent",
-                  transition: "background .15s",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = t.border}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              />
-              {/* Panel content */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
-              {/* Panel header */}
-              <div style={{
-                padding: "14px 24px 12px", borderBottom: `1px solid ${t.border}`,
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-              }}>
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500,
-                  letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled,
-                }}>Controls</span>
-                <button
-                  type="button"
-                  onClick={() => setLiveProps({ ...config.defaults })}
-                  style={{
-                    fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500,
-                    color: t.textMuted, background: "transparent",
-                    border: `1px solid ${t.border}`, borderRadius: 6,
-                    padding: "3px 10px", cursor: "pointer",
-                  }}
-                >
-                  Reset
-                </button>
+          {/* Title + actions row */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.04em", color: t.textMain, margin: "0 0 12px", fontFamily: "'Inter', sans-serif" }}>{name}</h1>
+              {/* Tier + domain + composed-of tags */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14, alignItems: "center" }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.07em", textTransform: "uppercase", color: tierColor, background: tierBg, padding: "3px 9px", borderRadius: 5 }}>{manifest?.tier}</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textMuted, background: t.surfaceHover, border: `1px solid ${t.border}`, padding: "3px 9px", borderRadius: 5 }}>{manifest?.domain}</span>
+                {manifest?.composedOf?.length > 0 && manifest.composedOf.map(dep => (
+                  <span key={dep} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.textMuted, background: t.bg, border: `1px solid ${t.border}`, padding: "3px 9px", borderRadius: 5 }}>+{dep}</span>
+                ))}
               </div>
+              <p style={{ fontSize: 14.5, color: t.textMuted, lineHeight: 1.65, maxWidth: 660, margin: 0, fontFamily: "'Inter', sans-serif" }}>{manifest?.description}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => copyText(importCode, setCopiedImport)}
+              style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500, color: copiedImport ? t.success : t.textMain, background: t.surface, border: `1px solid ${copiedImport ? t.success : t.border}`, padding: "7px 16px", borderRadius: 8, cursor: "pointer", flexShrink: 0, transition: "all .15s" }}
+            >
+              {copiedImport ? "✓ Copied!" : "Copy import"}
+            </button>
+          </div>
+        </div>
 
-              {/* Control rows */}
-              {controllableProps.length === 0 ? (
-                <div style={{
-                  padding: "28px 24px", color: t.textMuted,
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 12, lineHeight: 1.7,
-                }}>
-                  No configurable props.
-                  <div style={{ fontSize: 11, color: t.textDisabled, marginTop: 4 }}>
-                    Complex props (ReactNode, arrays, functions) are not interactive.
+        {/* ── Scrollable sections ── */}
+        <div style={{ padding: "48px 48px 96px", display: "flex", flexDirection: "column", gap: 56 }}>
+
+          {/* ── Preview / Playground ── */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 14, borderBottom: `1px solid ${t.border}`, marginBottom: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: "-0.025em", color: t.textMain, margin: 0 }}>Preview</h2>
+              {controllableProps.length > 0 && (
+                <div style={{ display: "flex", gap: 2, background: t.surfaceHover, border: `1px solid ${t.border}`, borderRadius: 8, padding: 2 }}>
+                  {["preview", "playground"].map(tab => (
+                    <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+                      style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500, padding: "5px 16px", borderRadius: 6, border: "none", cursor: "pointer", transition: "background .12s, color .12s", background: activeTab === tab ? t.surface : "transparent", color: activeTab === tab ? t.textMain : t.textMuted, boxShadow: activeTab === tab ? t.shadow : "none" }}>
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {activeTab === "preview" ? (
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ padding: isFlow ? 0 : "52px 40px", background: t.bg, display: "flex", alignItems: isFlow ? "flex-start" : "center", justifyContent: isFlow ? "flex-start" : "center", minHeight: isFlow ? undefined : 240, overflow: "auto" }}>
+                  {COMPONENT_DEMOS[name] || config.render(liveProps)}
+                </div>
+              </div>
+            ) : (
+              /* Playground: interactive controls + live preview + generated code */
+              <div style={{ border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", minHeight: 300, borderBottom: `1px solid ${t.border}` }}>
+                  {/* Live preview */}
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 32px", background: t.bg, borderRight: `1px solid ${t.border}`, overflow: "auto" }}>
+                    {config.render(liveProps)}
+                  </div>
+                  {/* Controls */}
+                  <div style={{ flex: `0 0 ${controlsWidth}px`, width: controlsWidth, overflow: "auto", background: t.surface, display: "flex", position: "relative" }}>
+                    <div onMouseDown={onResizeDown} style={{ width: 4, flexShrink: 0, cursor: "col-resize", background: "transparent", transition: "background .15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = t.border} onMouseLeave={e => e.currentTarget.style.background = "transparent"} />
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                      <div style={{ padding: "12px 20px 10px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled }}>Controls</span>
+                        <button type="button" onClick={() => setLiveProps({ ...config.defaults })} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: t.textMuted, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>Reset</button>
+                      </div>
+                      {controllableProps.length === 0 ? (
+                        <div style={{ padding: "24px 20px", color: t.textMuted, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, lineHeight: 1.7 }}>No configurable props.</div>
+                      ) : controllableProps.map(p => (
+                        <div key={p.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 20px", borderBottom: `1px solid ${t.border}`, gap: 16 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: p.required ? t.error : t.textMain, fontWeight: 500 }}>{p.name}</span>
+                            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple }}>{p.type.length > 28 ? p.type.slice(0, 26) + "…" : p.type}</span>
+                          </div>
+                          {renderControlWidget(p.name, p.control, liveProps[p.name], setProp, t)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ) : (
-                controllableProps.map(p => (
-                  <div key={p.name} style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "11px 24px", borderBottom: `1px solid ${t.border}`, gap: 16,
-                  }}>
-                    {/* Label + type */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5,
-                        color: p.required ? t.error : t.textMain, fontWeight: 500,
-                      }}>
-                        {p.name}{p.required ? <span style={{ color: t.error }}> *</span> : ""}
-                      </span>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple,
-                      }}>
-                        {p.type.length > 28 ? p.type.slice(0, 26) + "…" : p.type}
-                      </span>
+                {/* Generated code */}
+                <CodeBlock code={generatedCode} copied={false} onCopy={() => copyText(generatedCode, () => {})} />
+              </div>
+            )}
+          </div>
+
+          {/* ── Installation ── */}
+          <div>
+            <SectionTitle>Installation</SectionTitle>
+            <CodeBlock code={importCode} copied={copiedImport} onCopy={() => copyText(importCode, setCopiedImport)} minHeight={42} />
+          </div>
+
+          {/* ── Usage ── */}
+          {manifest?.usage && (
+            <div>
+              <SectionTitle>Usage</SectionTitle>
+              <CodeBlock code={manifest.usage} copied={copiedUsage} onCopy={() => copyText(manifest.usage, setCopiedUsage)} />
+            </div>
+          )}
+
+          {/* ── Examples ── */}
+          {examples.length > 0 && (
+            <div>
+              <SectionTitle>Examples</SectionTitle>
+              <div style={{ display: "flex", flexDirection: "column", gap: 48 }}>
+                {examples.map((ex) => (
+                  <div key={ex.id}>
+                    {/* Example header */}
+                    <h3 style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: "-0.02em", color: t.textMain, margin: "0 0 6px" }}>{ex.title}</h3>
+                    <p style={{ fontSize: 13.5, color: t.textMuted, lineHeight: 1.6, margin: "0 0 16px", fontFamily: "'Inter', sans-serif" }}>{ex.description}</p>
+                    {/* Live preview */}
+                    <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", marginBottom: 10 }}>
+                      <div style={{ padding: "32px 28px", background: t.bg, display: "flex", alignItems: "center", justifyContent: "flex-start", overflow: "auto" }}>
+                        {ex.render()}
+                      </div>
                     </div>
-                    {/* Control widget */}
-                    {renderControlWidget(p.name, p.control, liveProps[p.name], setProp, t)}
+                    {/* View Code toggle */}
+                    <button
+                      type="button"
+                      onClick={() => toggleEx(ex.id)}
+                      style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500, color: t.textMuted, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 7, padding: "5px 14px", cursor: "pointer", marginBottom: expandedEx[ex.id] ? 10 : 0, transition: "border-color .12s", display: "inline-flex", alignItems: "center", gap: 6 }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = t.textMuted}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = t.border}
+                    >
+                      {expandedEx[ex.id] ? "▲ Hide Code" : "▾ View Code"}
+                    </button>
+                    {expandedEx[ex.id] && (
+                      <CodeBlock code={ex.code} copied={copiedEx[ex.id]} onCopy={() => copyEx(ex.id, ex.code)} />
+                    )}
                   </div>
-                ))
-              )}
+                ))}
               </div>
             </div>
           )}
-        </div>
 
-        {/* ── Code panel ── */}
-        <div style={{ background: t.surface, borderTop: `1px solid ${t.border}` }}>
-          {/* Panel header */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "12px 24px 10px", borderBottom: `1px solid ${t.border}`,
-          }}>
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500,
-              letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled,
-            }}>
-              Code
-            </span>
-            <button
-              type="button" onClick={handleCopy}
-              style={{
-                fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500,
-                color: copied ? t.success : t.textMuted,
-                background: "transparent",
-                border: `1px solid ${copied ? t.success : t.border}`,
-                borderRadius: 7, padding: "4px 14px", cursor: "pointer",
-                transition: "color .15s, border-color .15s",
-                display: "flex", alignItems: "center", gap: 6,
-              }}
-            >
-              {copied ? "✓ Copied!" : "Copy"}
-            </button>
-          </div>
-
-          {/* Code block */}
-          <pre style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 13, lineHeight: 1.75,
-            padding: "18px 24px 22px", margin: 0,
-            overflow: "auto", background: t.bg,
-            minHeight: 64,
-          }}>
-            {syntaxHighlightCode(generatedCode, t)}
-          </pre>
-        </div>
-
-        {/* Prop reference table */}
-        {manifest && manifest.props.length > 0 && (
-          <div style={{ padding: "28px 24px 40px", background: t.bg }}>
-            <div style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500,
-              letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled,
-              marginBottom: 14,
-            }}>
-              All props ({manifest.props.length})
-            </div>
-            <div style={{
-              background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, overflow: "hidden",
-              boxShadow: t.shadow,
-            }}>
-              {manifest.props.map((p, i) => (
-                <div key={p.name} style={{
-                  display: "flex", alignItems: "baseline", gap: 16,
-                  padding: "10px 20px",
-                  borderBottom: i < manifest.props.length - 1 ? `1px solid ${t.border}` : "none",
-                  flexWrap: "wrap",
-                }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: t.info, minWidth: 160, flexShrink: 0 }}>
-                    {p.name}{p.required && <span style={{ color: t.error }}> *</span>}
-                  </span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: t.purple, minWidth: 120, flexShrink: 0 }}>
-                    {p.type.length > 32 ? p.type.slice(0, 30) + "…" : p.type}
-                  </span>
-                  <span style={{ fontSize: 12, color: t.textMuted, lineHeight: 1.5 }}>{p.description}</span>
+          {/* ── API Reference ── */}
+          {manifest && manifest.props.length > 0 && (
+            <div>
+              <SectionTitle>API Reference</SectionTitle>
+              <h3 style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: "-0.01em", color: t.textMain, margin: "0 0 14px" }}>{name}</h3>
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", boxShadow: t.shadow }}>
+                {/* Header row */}
+                <div style={{ display: "flex", padding: "10px 20px", background: t.surfaceHover, borderBottom: `1px solid ${t.border}` }}>
+                  {["Prop", "Type", "Description"].map((h, i) => (
+                    <span key={h} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: t.textDisabled, flex: i === 0 ? "0 0 180px" : i === 1 ? "0 0 220px" : 1 }}>{h}</span>
+                  ))}
                 </div>
-              ))}
+                {manifest.props.map((p, i) => (
+                  <div key={p.name} style={{ display: "flex", alignItems: "baseline", padding: "12px 20px", borderBottom: i < manifest.props.length - 1 ? `1px solid ${t.border}` : "none", flexWrap: "wrap", gap: 4 }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: t.info, flex: "0 0 180px", minWidth: 0 }}>
+                      {p.name}{p.required && <span style={{ color: t.error }}>*</span>}
+                    </span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: t.purple, flex: "0 0 220px", lineHeight: 1.55, minWidth: 0 }}>
+                      {p.type}
+                    </span>
+                    <span style={{ fontSize: 12.5, color: t.textMuted, lineHeight: 1.55, flex: 1, minWidth: 200 }}>{p.description}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
+          {/* ── Bottom Prev/Next ── */}
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, paddingTop: 8, borderTop: `1px solid ${t.border}` }}>
+            {prevName ? <NavBtn compName={prevName} direction="prev" /> : <span />}
+            {nextName ? <NavBtn compName={nextName} direction="next" /> : <span />}
+          </div>
+
+        </div>
       </div>
     </>
   );
@@ -2507,6 +3200,7 @@ export default function DeelDesignSystemIndex() {
                 setDark={setDark}
                 embedded
                 onBack={() => { setCurrentDemo(null); window.scrollTo(0, 0); }}
+                onSelectComponent={(n) => { setCurrentDemo(n); window.scrollTo(0, 0); }}
               />
             ) : (<>
 
