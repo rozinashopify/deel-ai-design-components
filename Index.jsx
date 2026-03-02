@@ -10,7 +10,7 @@ import {
   TextInput, DropdownSelect, RadioOption, ToggleRow, SectionCard,
   // ── Molecules
   FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
-  AutosaveWidget, HiringGuideBanner,
+  AutosaveWidget, ContextBanner, HiringGuideBanner,
   // ── Navigation
   StepperRail,
   // ── Compliance
@@ -18,7 +18,7 @@ import {
   // ── Market Intelligence
   MarketRateChart,
   // ── Blocks
-  JobDescriptionBlock, CompensationBlock, BenefitsBlock,
+  JobDescriptionBlock, CompensationBlock, BenefitsBlock, AddPersonBlock,
   // ── Flows
   EORContractCreationFlow,
 } from "./ComponentLibrary.jsx";
@@ -476,7 +476,7 @@ const WAVES = [
       { icon: "⊞", name: "FormFieldGroup",    desc: "Labelled group of 1–4 inputs with shared title & description" },
       { icon: "☰", name: "StepperRail",       desc: "Vertical progress rail — tracks completed, active, upcoming steps" },
       { icon: "💾", name: "AutosaveWidget",    desc: "Right-rail card — saved/saving state + delete draft CTA" },
-      { icon: "ℹ", name: "HiringGuideBanner", desc: "Dismissable country-specific onboarding guide banner" },
+      { icon: "ⓘ", name: "ContextBanner", desc: "Guide / Insight / Promo — unified contextual banner with 3 variants" },
     ],
   },
   {
@@ -499,11 +499,12 @@ const WAVES = [
     name: "Blocks",
     subtitle: "Wave 4",
     file: "Deel_Blocks_Wave4.jsx",
-    tag: "3 blocks · fully interactive",
+    tag: "4 blocks · fully interactive",
     tagKey: "blocks",
     desc: "Full form sections — drop-in step content for the EOR creation flow. Each block is a self-contained, interactive unit combining multiple molecules.",
     ai: true,
     components: [
+      { icon: "🧑‍💼", name: "AddPersonBlock",      desc: "Team info + personal details + workplace + org structure + hiring objective" },
       { icon: "📋", name: "JobDescriptionBlock",  desc: "Job title + seniority + scope textarea + AI compliance panel" },
       { icon: "💰", name: "CompensationBlock",    desc: "Employment type + salary + market rate chart + bonus slot" },
       { icon: "🏥", name: "BenefitsBlock",        desc: "Mandatory & optional benefits, country-aware warnings" },
@@ -721,25 +722,35 @@ function MiniAutosave({ t }) {
   );
 }
 
-function MiniHiringBanner({ t }) {
+function MiniContextBanner({ t }) {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return (
-    <button type="button" style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, color:t.info, background:"transparent", border:"none", cursor:"pointer" }} onClick={() => setDismissed(false)}>↩ Restore banner</button>
+    <button type="button" style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, color:t.info, background:"transparent", border:"none", cursor:"pointer" }} onClick={() => setDismissed(false)}>↩ Restore</button>
   );
   return (
-    <div style={{ background:t.infoBg, border:"1px solid #BFDBFE", borderRadius:10, padding:"12px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, width:"100%" }}>
-      <div style={{ display:"flex", alignItems:"center", gap:8, flex:1, minWidth:0 }}>
-        <div style={{ display:"flex", flexShrink:0 }}>
-          {"🌍🇺🇸".match(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu)?.map((f,i) => (
-            <span key={i} style={{ fontSize:15, marginLeft: i ? -4 : 0 }}>{f}</span>
-          ))}
+    <div style={{ display:"flex", flexDirection:"column", gap:7, width:"100%" }}>
+      {/* guide */}
+      <div style={{ background:t.infoBg, border:"1px solid #BFDBFE", borderRadius:10, padding:"10px 13px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, flex:1, minWidth:0 }}>
+          <span style={{ fontSize:14 }}>🌍🇺🇸</span>
+          <div style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, color:t.textMain, lineHeight:1.4 }}>View Deel’s hiring guide for <strong>US</strong>. <span style={{ color:t.info, fontWeight:500 }}>View ↗</span></div>
         </div>
-        <div style={{ fontFamily:"Inter,sans-serif", fontSize:12, color:t.textMain, lineHeight:1.4 }}>
-          Hiring in <strong>United States</strong>?{" "}
-          <span style={{ color:t.info, fontWeight:500, cursor:"pointer" }}>View hiring guide →</span>
-        </div>
+        <button type="button" onClick={() => setDismissed(true)} style={{ background:"none", border:"none", cursor:"pointer", color:t.textMuted, fontSize:14, padding:2 }}>×</button>
       </div>
-      <button type="button" onClick={() => setDismissed(true)} style={{ background:"none", border:"none", cursor:"pointer", color:t.textMuted, fontSize:16, lineHeight:1, padding:2 }}>×</button>
+      {/* insight */}
+      <div style={{ background:"#F5F3FF", border:"1px solid #DDD6FE", borderRadius:10, padding:"10px 13px", display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ width:26, height:26, borderRadius:6, background:"#EDE9FE", color:"#7C3AED", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, flexShrink:0 }}>✶</div>
+        <div style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, color:t.textMain, lineHeight:1.4 }}><strong style={{ color:"#6D28D9" }}>Deel Insight:</strong> Severance in the US ranges 0–26 weeks. <span style={{ color:t.info, fontWeight:500 }}>Learn more ↗</span></div>
+      </div>
+      {/* promo */}
+      <div style={{ background:t.surface, border:`1px solid ${t.border}`, borderRadius:10, padding:"12px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+        <div style={{ flex:1 }}>
+          <div style={{ fontFamily:"Inter,sans-serif", fontSize:12, fontWeight:700, color:t.textMain, marginBottom:2 }}>Foreign Entity Setup</div>
+          <div style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, color:t.textMuted }}>Set up entities with Deel.</div>
+          <div style={{ marginTop:6 }}><span style={{ fontFamily:"Inter,sans-serif", fontSize:11, fontWeight:500, padding:"4px 9px", border:`1px solid ${t.border}`, borderRadius:5, color:t.textMain, display:"inline-block" }}>Learn more ↗</span></div>
+        </div>
+        <span style={{ fontSize:22 }}>🌍🏢</span>
+      </div>
     </div>
   );
 }
@@ -813,6 +824,34 @@ function MiniMarketChart({ t }) {
       </div>
       <div style={{ display:"flex", justifyContent:"space-between", fontFamily:"Inter,sans-serif", fontSize:10, color:t.textMuted }}>
         <span>Low</span><span>Median</span><span>High</span>
+      </div>
+    </div>
+  );
+}
+
+function MiniAddPersonBlock({ t }) {
+  const inputS  = { fontFamily:"Inter,sans-serif", fontSize:11.5, padding:"5px 8px", border:`1px solid ${t.border}`, borderRadius:7, background:t.inputBg, color:t.textMain, width:"100%" };
+  const labelS  = { fontFamily:"Inter,sans-serif", fontSize:10.5, fontWeight:600, color:t.textMain, marginBottom:3, display:"block" };
+  const cardS   = { background:t.surface, border:`1px solid ${t.border}`, borderRadius:10, padding:"10px 12px", display:"flex", flexDirection:"column", gap:7 };
+  const titleS  = { fontFamily:"Inter,sans-serif", fontSize:12, fontWeight:700, color:t.textMain };
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%" }}>
+      <div style={cardS}>
+        <span style={titleS}>Team information</span>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:7 }}>
+          <div><span style={labelS}>Entity <span style={{ color:t.error }}>*</span></span><select style={inputS}><option>Deel Inc.</option></select></div>
+          <div><span style={labelS}>Group</span><select style={inputS}><option>Global Ops</option></select></div>
+        </div>
+      </div>
+      <div style={cardS}>
+        <span style={titleS}>Personal details</span>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:7 }}>
+          <div><span style={labelS}>Country <span style={{ color:t.error }}>*</span></span><select style={inputS}><option>United States</option></select></div>
+          <div><span style={labelS}>State</span><select style={inputS}><option>California</option></select></div>
+        </div>
+      </div>
+      <div style={{ background:t.purpleBg, border:`1px solid ${t.purple}30`, borderRadius:8, padding:"7px 10px" }}>
+        <span style={{ fontFamily:"Inter,sans-serif", fontSize:11, color:t.purple }}>✦ Invite link will be sent when contract is activated</span>
       </div>
     </div>
   );
@@ -946,10 +985,11 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"FormFieldGroup",         wave:"Wave 2", waveKey:"mol",    composed:"TextInput × n + DropdownSelect × n",              preview:<MiniFormFieldGroup t={t} /> },
   { name:"StepperRail",            wave:"Wave 2", waveKey:"mol",    composed:"StepIndicator + connector + StatusBadge",         preview:<MiniStepperRail t={t} /> },
   { name:"AutosaveWidget",         wave:"Wave 2", waveKey:"mol",    composed:"InfoIcon + status dot + SecondaryButton",         preview:<MiniAutosave t={t} /> },
-  { name:"HiringGuideBanner",      wave:"Wave 2", waveKey:"mol",    composed:"Flags + body + TextButton + × dismiss",           preview:<MiniHiringBanner t={t} /> },
+  { name:"ContextBanner",          wave:"Wave 2", waveKey:"mol",    composed:"guide / insight / promo variants",                  preview:<MiniContextBanner t={t} /> },
   { name:"ComplianceCheckCard",    wave:"Wave 3", waveKey:"ai",     composed:"rule text + StatusBadge + detail line",           preview:<MiniComplianceCard t={t} /> },
   { name:"ComplianceCheckPanel",   wave:"Wave 3", waveKey:"ai",     composed:"AI banner + CheckCard × n + shimmer",             preview:<MiniCompliancePanel t={t} /> },
   { name:"MarketRateChart",        wave:"Wave 3", waveKey:"ai",     composed:"period toggle + histogram + bubble + axis",       preview:<MiniMarketChart t={t} /> },
+  { name:"AddPersonBlock",         wave:"Wave 4", waveKey:"blocks", composed:"SectionCard × 5 + DropdownSelect + TextInput + ToggleRow + ContextBanner", preview:<MiniAddPersonBlock t={t} /> },
   { name:"JobDescriptionBlock",    wave:"Wave 4", waveKey:"blocks", composed:"Select × 3 + Textarea + ComplianceCheckPanel",    preview:<MiniJobDescBlock t={t} /> },
   { name:"CompensationBlock",      wave:"Wave 4", waveKey:"blocks", composed:"RadioOption × 2 + SalaryInput + MarketRateChart", preview:<MiniCompensation t={t} /> },
   { name:"BenefitsBlock",          wave:"Wave 4", waveKey:"blocks", composed:"BenefitCard × n + StatusBadge + MandatoryBanner", preview:<MiniBenefits t={t} /> },
@@ -1133,10 +1173,11 @@ const COMPONENT_DEMOS = {
       <AutosaveWidget status="saved" lastSaved="2 minutes ago" />
     </div>
   ),
-  HiringGuideBanner: (
+  ContextBanner: (
     <div style={{ maxWidth: 600, display: "flex", flexDirection: "column", gap: 12 }}>
-      <HiringGuideBanner country="United States" flags={["🌍", "🇺🇸"]} variant="info" />
-      <HiringGuideBanner country="Germany"       flags={["🌍", "🇩🇪"]} variant="surface" />
+      <ContextBanner variant="guide" country="United States" />
+      <ContextBanner variant="insight" body="Severance in the United States typically ranges from 0–26 weeks depending on tenure." />
+      <ContextBanner variant="promo" title="Foreign Entity Setup" body="Set up a foreign entity with Deel — we handle compliance, payroll, and local filings." />
     </div>
   ),
 
@@ -1185,6 +1226,7 @@ const COMPONENT_DEMOS = {
   ),
 
   // Blocks
+  AddPersonBlock:       <div style={{ maxWidth: 700 }}><AddPersonBlock /></div>,
   JobDescriptionBlock: <div style={{ maxWidth: 700 }}><JobDescriptionBlock /></div>,
   CompensationBlock:   <div style={{ maxWidth: 700 }}><CompensationBlock /></div>,
   BenefitsBlock:       <div style={{ maxWidth: 700 }}><BenefitsBlock /></div>,
@@ -1426,9 +1468,27 @@ const COMPONENT_PLAYGROUND_CONFIG = {
     defaults: { status: "saved", lastSaved: "2 minutes ago" },
     render: (p) => <AutosaveWidget {...p} />,
   },
-  HiringGuideBanner: {
-    defaults: { country: "United States", variant: "info" },
-    render: (p) => <HiringGuideBanner {...p} flags={["🌍", "🇺🇸"]} />,
+  ContextBanner: {
+    defaults: {
+      variant:   "guide",
+      country:   "United States",
+      title:     "",
+      body:      "",
+      ctaLabel:  "",
+      dismissable: true,
+    },
+    render: (p) => (
+      <div style={{ maxWidth: 580 }}>
+        <ContextBanner
+          variant={p.variant}
+          country={p.country || undefined}
+          title={p.title || undefined}
+          body={p.body || undefined}
+          ctaLabel={p.ctaLabel || undefined}
+          dismissable={p.dismissable}
+        />
+      </div>
+    ),
   },
   StepperRail: {
     defaults: {
@@ -1508,6 +1568,7 @@ const COMPONENT_PLAYGROUND_CONFIG = {
     defaults: { salary: 77293, period: "annual", country: "United States", seniority: "Mid", jobTitle: "Executive Assistant" },
     render: (p) => <MarketRateChart {...p} />,
   },
+  AddPersonBlock:          { defaults: {}, render: () => <AddPersonBlock /> },
   JobDescriptionBlock:     { defaults: {}, render: () => <JobDescriptionBlock /> },
   CompensationBlock:       { defaults: {}, render: () => <CompensationBlock /> },
   BenefitsBlock:           { defaults: {}, render: () => <BenefitsBlock /> },
@@ -1896,44 +1957,64 @@ export function Demo() {
     },
   ],
 
-  HiringGuideBanner: [
+  ContextBanner: [
     {
-      id: "info", title: "Info variant",
-      description: "The default blue-tinted variant draws attention at the top of the contract flow.",
-      code: `import { HiringGuideBanner } from "./ComponentLibrary"
+      id: "guide", title: "Guide variant",
+      description: "Dismissable country-specific hiring guide link. Blue-tinted with stacked flag imagery and an × button.",
+      code: `import { ContextBanner } from "./ComponentLibrary"
 
 export function Demo() {
   return (
-    <HiringGuideBanner
+    <ContextBanner
+      variant="guide"
       country="United States"
-      flags={["🌍", "🇺🇸"]}
-      variant="info"
+      media={["🌍", "🇺🇸"]}
+      onDismiss={() => console.log("dismissed")}
     />
   )
 }`,
       render: () => (
         <div style={{ maxWidth: 560 }}>
-          <HiringGuideBanner country="United States" flags={["🌍", "🇺🇸"]} variant="info" />
+          <ContextBanner variant="guide" country="United States" media={["🌍", "🇺🇸"]} />
         </div>
       ),
     },
     {
-      id: "surface", title: "Surface variant",
-      description: "A neutral card-style variant, ideal inside dense layouts.",
-      code: `import { HiringGuideBanner } from "./ComponentLibrary"
+      id: "insight", title: "Insight variant",
+      description: "Inline AI callout with purple mascot icon, bold 'Deel Insight:' prefix, and a text link CTA. No dismiss button.",
+      code: `import { ContextBanner } from "./ComponentLibrary"
 
 export function Demo() {
   return (
-    <HiringGuideBanner
-      country="Germany"
-      flags={["🌍", "🇩🇪"]}
-      variant="surface"
+    <ContextBanner
+      variant="insight"
+      body="Severance in the United States typically ranges from 0–26 weeks depending on tenure."
     />
   )
 }`,
       render: () => (
         <div style={{ maxWidth: 560 }}>
-          <HiringGuideBanner country="Germany" flags={["🌍", "🇩🇪"]} variant="surface" />
+          <ContextBanner variant="insight" body="Severance in the United States typically ranges from 0–26 weeks depending on tenure." />
+        </div>
+      ),
+    },
+    {
+      id: "promo", title: "Promo variant",
+      description: "Persistent upsell tile with imagery on the right and an outlined 'Learn more ↗' button. No dismiss.",
+      code: `import { ContextBanner } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <ContextBanner
+      variant="promo"
+      title="Foreign Entity Setup"
+      body="Set up a foreign entity with Deel — we handle compliance, payroll, and local filings."
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 560 }}>
+          <ContextBanner variant="promo" title="Foreign Entity Setup" body="Set up a foreign entity with Deel — we handle compliance, payroll, and local filings." />
         </div>
       ),
     },
@@ -2103,6 +2184,23 @@ export function Demo() {
   )
 }`,
       render: () => <div style={{ maxWidth: 560 }}><MarketRateChart salary={120000} period="monthly" country="Germany" seniority="Senior" jobTitle="Product Manager" /></div>,
+    },
+  ],
+
+  AddPersonBlock: [
+    {
+      id: "default", title: "Default",
+      description: "Add-person step block: team info, personal details, workplace, org structure, and hiring objective.",
+      code: `import { AddPersonBlock } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <AddPersonBlock
+      onSave={(state) => console.log(state)}
+    />
+  )
+}`,
+      render: () => <AddPersonBlock />,
     },
   ],
 

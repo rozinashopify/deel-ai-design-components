@@ -370,6 +370,29 @@ export const COMPONENT_MANIFEST = [
     usage: '<BenefitsBlock country="Germany" onAddBenefit={handleBenefitAdd} />',
   },
 
+  // ── Blocks (continued) ──────────────────────────────────────────
+  {
+    name: "AddPersonBlock",
+    domain: "Blocks",
+    tier: "block",
+    description:
+      "First-step 'Add person' form for EOR contract creation. Six SectionCards: Team information (entity + group), Employee personal details (toggle + email + name + citizenship + country + insight banner + state), Workplace information (job position + manager + report + worker ID + external ID), Organizational structure (department + teams), and Hiring objective (objective dropdown + promo banner). The personal-details card collapses when the 'I don't know…' toggle is enabled.",
+    composedOf: ["SectionCard", "DropdownSelect", "TextInput", "ToggleRow", "ContextBanner"],
+    props: [
+      { name: "defaultEntity",    type: "string",  required: false, description: "Pre-selected entity value (default: 'AU entity - Payroll Connect')." },
+      { name: "defaultGroup",     type: "string",  required: false, description: "Pre-selected group value (default: 'AU - Payroll Connect - group')." },
+      { name: "defaultCountry",   type: "string",  required: false, description: "Pre-selected employment country option value (default: 'us')." },
+      { name: "defaultState",     type: "string",  required: false, description: "Pre-selected state dropdown value." },
+      { name: "workerIdValue",    type: "string",  required: false, description: "Read-only worker ID shown in Workplace information (default: '260')." },
+      { name: "onSave",           type: "(data: object) => void", required: false, description: "Called with the form state when the user completes the section." },
+    ],
+    usage: `<AddPersonBlock
+  defaultCountry="us"
+  defaultState="mo"
+  workerIdValue="260"
+/>`,
+  },
+
   // ── Flows ─────────────────────────────────────────────────────
   {
     name: "EORContractCreationFlow",
@@ -1034,7 +1057,7 @@ export function TextInput({ label, placeholder, value, required, disabled, error
  * @param {boolean}  [disabled]    - Prevents interaction.
  * @param {function} [onChange]    - Called with the new value string.
  */
-export function DropdownSelect({ label, placeholder = "Select…", options = [], value, optional, disabled, onChange }) {
+export function DropdownSelect({ label, placeholder = "Select…", options = [], value, optional, required, disabled, onChange }) {
   const [v, setV] = useState(value ?? "");
   const handleChange = e => { setV(e.target.value); onChange?.(e.target.value); };
   return (
@@ -1042,6 +1065,7 @@ export function DropdownSelect({ label, placeholder = "Select…", options = [],
       {label && (
         <label className="fl">
           {label}
+          {required && <span className="req">*</span>}
           {optional && <span style={{ fontWeight: 400, opacity: .65 }}> (optional)</span>}
         </label>
       )}
@@ -2043,6 +2067,212 @@ export function BenefitsBlock({ country = "United States", benefits, onAddBenefi
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// AddPersonBlock — step 1 of the EOR contract creation flow
+// ──────────────────────────────────────────────────────────────────
+
+const ENTITY_OPTIONS = [
+  { value: "au_payroll",  label: "AU entity - Payroll Connect" },
+  { value: "us_payroll",  label: "US entity - Payroll Connect" },
+  { value: "de_payroll",  label: "DE entity - Payroll Connect" },
+];
+const GROUP_OPTIONS = [
+  { value: "au_group", label: "AU - Payroll Connect - group" },
+  { value: "us_group", label: "US - Payroll Connect - group" },
+  { value: "de_group", label: "DE - Payroll Connect - group" },
+];
+const COUNTRY_OPTIONS = [
+  { value: "us", label: "🇺🇸  United States" },
+  { value: "de", label: "🇩🇪  Germany" },
+  { value: "gb", label: "🇬🇧  United Kingdom" },
+  { value: "au", label: "🇦🇺  Australia" },
+  { value: "ca", label: "🇨🇦  Canada" },
+  { value: "fr", label: "🇫🇷  France" },
+];
+const US_STATE_OPTIONS = [
+  { value: "al", label: "Alabama" },
+  { value: "ak", label: "Alaska" },
+  { value: "az", label: "Arizona" },
+  { value: "ar", label: "Arkansas" },
+  { value: "ca", label: "California" },
+  { value: "co", label: "Colorado" },
+  { value: "fl", label: "Florida" },
+  { value: "ga", label: "Georgia" },
+  { value: "il", label: "Illinois" },
+  { value: "mo", label: "Missouri" },
+  { value: "ny", label: "New York" },
+  { value: "tx", label: "Texas" },
+  { value: "wa", label: "Washington" },
+];
+const JOB_POSITION_OPTIONS = [
+  { value: "pm",       label: "Product Manager" },
+  { value: "eng",      label: "Software Engineer" },
+  { value: "design",   label: "UX Designer" },
+  { value: "ea",       label: "Executive Assistant" },
+  { value: "analyst",  label: "Business Analyst" },
+];
+const PEOPLE_OPTIONS = [
+  { value: "alex",  label: "Alex Johnson" },
+  { value: "sam",   label: "Sam Lee" },
+  { value: "priya", label: "Priya Patel" },
+  { value: "marco", label: "Marco Rossi" },
+];
+const DEPARTMENT_OPTIONS = [
+  { value: "eng",     label: "Engineering" },
+  { value: "design",  label: "Design" },
+  { value: "product", label: "Product" },
+  { value: "hr",      label: "Human Resources" },
+  { value: "finance", label: "Finance" },
+];
+const TEAM_OPTIONS = [
+  { value: "platform", label: "Platform" },
+  { value: "growth",   label: "Growth" },
+  { value: "infra",    label: "Infrastructure" },
+  { value: "cx",       label: "Customer Experience" },
+];
+const HIRING_OBJECTIVE_OPTIONS = [
+  { value: "temp_eor",  label: "Temporary EOR while we set up an entity" },
+  { value: "new_hc",   label: "New headcount" },
+  { value: "backfill", label: "Backfill" },
+  { value: "convert",  label: "Convert contractor" },
+  { value: "longterm", label: "Long-term EOR with Deel" },
+];
+
+/**
+ * Step 1 of the EOR contract creation flow — 'Add person' multi-section form.
+ * Six SectionCards assembled from existing atoms and molecules.
+ *
+ * Sections:
+ *   1. Team information — Entity + Group dropdowns
+ *   2. Employee personal details — toggle, email, name, citizenship, country, insight banner, state
+ *   3. Workplace information — job position, manager, report, worker ID, external ID
+ *   4. Organizational structure — department, teams
+ *   5. Hiring objective — objective dropdown + promo banner
+ *
+ * @param {string}   [defaultEntity]   - Pre-selected entity value.
+ * @param {string}   [defaultGroup]    - Pre-selected group value.
+ * @param {string}   [defaultCountry]  - Pre-selected country option value (default: 'us').
+ * @param {string}   [defaultState]    - Pre-selected state dropdown value.
+ * @param {string}   [workerIdValue]   - Read-only Worker ID (default: '260').
+ * @param {function} [onSave]          - (formData: object) => void.
+ */
+export function AddPersonBlock({
+  defaultEntity    = "au_payroll",
+  defaultGroup     = "au_group",
+  defaultCountry   = "us",
+  defaultState     = "",
+  workerIdValue    = "260",
+  onSave,
+}) {
+  const [skipDetails,      setSkipDetails]      = useState(false);
+  const [hiringObjective,  setHiringObjective]  = useState("temp_eor");
+  const [employmentCountry, setEmploymentCountry] = useState(defaultCountry);
+  const showState = employmentCountry === "us";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Page heading */}
+      <div>
+        <div className="block-title">Add person</div>
+        <div className="block-subtitle">Create a new contract for your EOR employee</div>
+      </div>
+
+      {/* ── 1. Team information ── */}
+      <SectionCard title="Team information" showInfoButton>
+        <DropdownSelect label="Entity" required
+          options={ENTITY_OPTIONS} value={defaultEntity} />
+        <DropdownSelect label="Group" required
+          options={GROUP_OPTIONS} value={defaultGroup} />
+      </SectionCard>
+
+      {/* ── 2. Employee personal details ── */}
+      <SectionCard title="Employee personal details">
+        <ToggleRow
+          label="I don't know the worker's personal details yet"
+          description="Get a cost estimate without providing worker details"
+          checked={skipDetails}
+          onChange={setSkipDetails}
+        />
+        {!skipDetails && (
+          <>
+            <TextInput
+              label="Personal email" required
+              placeholder="devon.parisian@letsdeel.co"
+              helperText="We will use this email address for inviting your worker to complete their onboarding."
+            />
+            <TextInput label="Legal first name" required placeholder="Devon" />
+            <TextInput label="Legal last name" required placeholder="Parisian" />
+            <DropdownSelect label="Employee's citizenship" required
+              options={COUNTRY_OPTIONS} value={defaultCountry} />
+            <div>
+              <DropdownSelect label="Employment country" required
+                options={COUNTRY_OPTIONS} value={employmentCountry}
+                onChange={setEmploymentCountry} />
+            </div>
+            <ContextBanner
+              variant="insight"
+              body="Severance in the United States can range from at least 2 to 4 weeks salary."
+              ctaLabel="Learn more"
+            />
+            {showState && (
+              <DropdownSelect label="Select state" required
+                placeholder="Select state…"
+                options={US_STATE_OPTIONS} value={defaultState} />
+            )}
+          </>
+        )}
+      </SectionCard>
+
+      {/* ── 3. Workplace information ── */}
+      <SectionCard title="Workplace information">
+        <div>
+          <DropdownSelect label="Job Position" optional placeholder="Job Position (optional)"
+            options={JOB_POSITION_OPTIONS} />
+          <div className="fhint" style={{ marginTop: 4 }}>Assign a vacant job position to this worker</div>
+        </div>
+        <div>
+          <DropdownSelect label="Manager" optional placeholder="Manager (optional)"
+            options={PEOPLE_OPTIONS} />
+          <div className="fhint" style={{ marginTop: 4 }}>You can search by name or email</div>
+        </div>
+        <div>
+          <DropdownSelect label="Report" optional placeholder="Report (optional)"
+            options={PEOPLE_OPTIONS} />
+          <div className="fhint" style={{ marginTop: 4 }}>You can search by name or email</div>
+        </div>
+        <TextInput label="Worker ID" required value={workerIdValue} disabled />
+        <TextInput label="External worker ID" placeholder="External worker ID (optional)" />
+      </SectionCard>
+
+      {/* ── 4. Organizational structure ── */}
+      <SectionCard title="Organizational structure">
+        <DropdownSelect label="Department" optional placeholder="Department (optional)"
+          options={DEPARTMENT_OPTIONS} />
+        <DropdownSelect label="Teams" optional placeholder="Teams (optional)"
+          options={TEAM_OPTIONS} />
+      </SectionCard>
+
+      {/* ── 5. Hiring objective ── */}
+      <SectionCard title="Hiring objective">
+        <DropdownSelect
+          label="What's your hiring objective?"
+          required
+          options={HIRING_OBJECTIVE_OPTIONS}
+          value={hiringObjective}
+          onChange={setHiringObjective}
+        />
+        <ContextBanner
+          variant="promo"
+          title="Set up a foreign entity with Deel"
+          body="We handle compliance, payroll, and local filings so you can focus on growing your team."
+          ctaLabel="Learn more"
+          media={["🇺🇸", "🌍", "🇦🇺"]}
+        />
+      </SectionCard>
     </div>
   );
 }

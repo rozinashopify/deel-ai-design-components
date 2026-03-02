@@ -268,6 +268,54 @@ const makeCSS = (t, isDark) => `
   .benefit-grid { display:flex; flex-direction:column; gap:10px; }
   .benefit-section-label { font-size:11.5px; font-weight:600; color:${t.textMuted}; letter-spacing:.04em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; padding-bottom:6px; border-bottom:1px solid ${t.border}; margin-bottom:2px; }
 
+  /* ═══════════════════════════════════════════
+     ATOMS: SectionCard, ToggleRow
+  ═══════════════════════════════════════════ */
+  .sc { background:${t.surface}; border:1px solid ${t.border}; border-radius:14px; padding:20px 20px 24px; box-shadow:${t.shadow}; display:flex; flex-direction:column; gap:14px; }
+  .sc-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .sc-title { font-size:15px; font-weight:600; color:${t.textMain}; letter-spacing:-.01em; }
+  .sc-info-btn { display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:${t.textMuted}; padding:3px; border-radius:5px; transition:color .12s,background .12s; flex-shrink:0; }
+  .sc-info-btn:hover { color:${t.textMain}; background:${t.surfaceHover}; }
+  .sc-body { display:flex; flex-direction:column; gap:12px; }
+  .trow { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 14px; border:1px solid ${t.border}; border-radius:10px; background:${t.surface}; cursor:pointer; user-select:none; }
+  .trow:hover { border-color:${t.textMuted}; }
+  .trow-text { flex:1; min-width:0; }
+  .trow-label { font-size:13.5px; font-weight:500; color:${t.textMain}; line-height:1.4; }
+  .trow-desc { font-size:12px; color:${t.textMuted}; margin-top:2px; line-height:1.4; }
+  .trow-track { width:36px; height:20px; border-radius:999px; flex-shrink:0; position:relative; transition:background .18s; }
+  .trow-track.on { background:${t.primary}; }
+  .trow-track.off { background:${t.border}; }
+  .trow-thumb { position:absolute; top:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:left .18s; }
+  .trow-track.on .trow-thumb { left:18px; }
+  .trow-track.off .trow-thumb { left:2px; }
+
+  /* ═══════════════════════════════════════════
+     MOLECULE: ContextBanner
+  ═══════════════════════════════════════════ */
+  .ctxb { border-radius:12px; display:flex; align-items:center; gap:12px; transition:opacity .2s; }
+  .ctxb.guide-v   { padding:13px 15px; background:${t.infoBg}; border:1px solid ${isDark?t.info+"33":"#BFDBFE"}; }
+  .ctxb.insight-v { padding:11px 15px; background:${isDark?"#1b1e2e":"#F5F3FF"}; border:1px solid ${isDark?"#6366f133":"#DDD6FE"}; }
+  .ctxb.promo-v   { padding:15px 18px; background:${t.surface}; border:1px solid ${t.border}; box-shadow:${t.shadow}; justify-content:space-between; }
+  .ctxb-media { display:flex; align-items:center; flex-shrink:0; }
+  .ctxb-media-item { width:22px; height:22px; border-radius:50%; border:1.5px solid ${t.surface}; font-size:13px; display:flex; align-items:center; justify-content:center; background:${t.surfaceHover}; }
+  .ctxb-media-item:nth-child(n+2) { margin-left:-6px; }
+  .ctxb-mascot { width:28px; height:28px; border-radius:7px; background:${isDark?"#312e81":"#EDE9FE"}; color:${isDark?"#a5b4fc":"#7C3AED"}; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .ctxb-content { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+  .ctxb-body-row { font-size:13px; color:${t.textMain}; line-height:1.45; }
+  .ctxb-label { font-weight:700; color:${isDark?"#a5b4fc":"#6D28D9"}; }
+  .ctxb-link { color:${t.info}; font-weight:500; text-decoration:none; cursor:pointer; }
+  .ctxb-link:hover { text-decoration:underline; }
+  .ctxb-btn { display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:12.5px; font-weight:500; padding:6px 12px; border:1px solid ${t.border}; border-radius:6px; color:${t.textMain}; background:none; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s; width:fit-content; }
+  .ctxb-btn:hover { background:${t.surfaceHover}; border-color:${t.textMuted}; }
+  .ctxb-dismiss { background:none; border:none; cursor:pointer; color:${t.textMuted}; display:flex; align-items:center; padding:3px; border-radius:4px; flex-shrink:0; transition:color .1s; }
+  .ctxb-dismiss:hover { color:${t.textMain}; background:${t.surfaceHover}; }
+  .ctxb-gone { opacity:.4; pointer-events:none; }
+
+  /* ═══════════════════════════════════════════
+     BLOCK 4 — AddPersonBlock
+  ═══════════════════════════════════════════ */
+  .apb-field-hint { font-size:11.5px; color:${t.textMuted}; margin-top:4px; line-height:1.45; }
+
   /* footer */
   .foot { display:flex; justify-content:space-between; align-items:center; padding-top:20px; border-top:1px solid ${t.border}; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:${t.textMuted}; }
 `;
@@ -285,6 +333,8 @@ const Refresh = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none
 const Check   = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1.5 6 4.5 9 10.5 3"/></svg>;
 const Plus    = () => <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="6.5" y1="1.5" x2="6.5" y2="11.5"/><line x1="1.5" y1="6.5" x2="11.5" y2="6.5"/></svg>;
 const Disk    = () => <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><rect x="1" y="1" width="9" height="9" rx="1.5"/><rect x="3" y="1" width="5" height="3.5" rx=".5" fill="currentColor" stroke="none"/><rect x="2.5" y="6" width="6" height="3" rx=".5"/></svg>;
+const X       = () => <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="2.5" y1="2.5" x2="10.5" y2="10.5"/><line x1="10.5" y1="2.5" x2="2.5" y2="10.5"/></svg>;
+const ExtLink = () => <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 2H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6.5"/><polyline points="7 1 10 1 10 4"/><line x1="5" y1="6" x2="10" y2="1"/></svg>;
 
 // ─────────────────────────────────────────────────────────────────
 // SHARED PRIMITIVES (re-used across blocks)
@@ -299,14 +349,15 @@ function Field({ label, placeholder, value, required, disabled }) {
     </div>
   );
 }
-function Select({ label, placeholder, options = [], value, disabled, optional }) {
+function Select({ label, placeholder, options = [], value, disabled, optional, required, onChange }) {
   const [v, setV] = useState(value ?? "");
+  const handleChange = e => { setV(e.target.value); onChange?.(e.target.value); };
   return (
     <div className="fi">
-      {label && <label className="fl">{label}{optional && <span style={{ fontWeight:400,opacity:.65 }}> (optional)</span>}</label>}
+      {label && <label className="fl">{label}{required && <span className="req">*</span>}{optional && <span style={{ fontWeight:400,opacity:.65 }}> (optional)</span>}</label>}
       <div className="selw">
         <select className={!v ? "ph" : ""} disabled={disabled} value={v}
-          onChange={e => setV(e.target.value)}>
+          onChange={handleChange}>
           <option value="" disabled>{placeholder ?? label}</option>
           {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -325,6 +376,121 @@ function Radio({ label, selected, onClick }) {
 }
 
 function fmtK(n) { return n >= 1000 ? `$${(n/1000).toFixed(1).replace(/\.0$/,"")}k` : `$${n}`; }
+
+// ─────────────────────────────────────────────────────────────────
+// SECTION CARD  (atom)
+// ─────────────────────────────────────────────────────────────────
+function SectionCard({ title, showInfoButton, children }) {
+  return (
+    <div className="sc">
+      {(title || showInfoButton) && (
+        <div className="sc-header">
+          {title && <span className="sc-title">{title}</span>}
+          {showInfoButton && (
+            <button type="button" className="sc-info-btn" aria-label="More information">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                <circle cx="8" cy="8" r="6.5"/>
+                <line x1="8" y1="7.5" x2="8" y2="11"/>
+                <circle cx="8" cy="5.5" r=".8" fill="currentColor" stroke="none"/>
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
+      <div className="sc-body">{children}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TOGGLE ROW  (atom)
+// ─────────────────────────────────────────────────────────────────
+function ToggleRow({ label, description, checked: controlledChecked, onChange }) {
+  const [internal, setInternal] = useState(controlledChecked ?? false);
+  const isOn = controlledChecked !== undefined ? controlledChecked : internal;
+  const toggle = () => {
+    const next = !isOn;
+    if (controlledChecked === undefined) setInternal(next);
+    onChange?.(next);
+  };
+  return (
+    <div className="trow" role="switch" aria-checked={isOn} tabIndex={0}
+      onClick={toggle} onKeyDown={e => (e.key === " " || e.key === "Enter") && toggle()}>
+      <div className="trow-text">
+        <div className="trow-label">{label}</div>
+        {description && <div className="trow-desc">{description}</div>}
+      </div>
+      <div className={`trow-track ${isOn ? "on" : "off"}`}>
+        <div className="trow-thumb" />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CONTEXT BANNER  (molecule — guide / insight / promo)
+// ─────────────────────────────────────────────────────────────────
+function ContextBanner({ variant = "guide", title, body, country, media, ctaLabel, ctaUrl = "#", ctaStyle, dismissable, onDismiss }) {
+  const [dismissed, setDismissed] = useState(false);
+  const isGuide   = variant === "guide";
+  const isInsight = variant === "insight";
+  const isPromo   = variant === "promo";
+
+  const resolvedBody  = body ?? (isGuide
+    ? `View Deel's global hiring guide for ${country ?? "your country"}.`
+    : isInsight
+    ? "Severance in the United States can range from at least 2 to 4 weeks salary."
+    : "Set up a foreign entity with Deel — we handle compliance, payroll, and local filings.");
+  const resolvedTitle = title !== undefined ? title : (isInsight ? "Deel Insight:" : null);
+  const resolvedMedia = media ?? (isInsight ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
+  const resolvedCta   = ctaLabel ?? (isGuide ? "View" : "Learn more");
+  const resolvedStyle = ctaStyle ?? (isPromo ? "button" : "link");
+  const canDismiss    = dismissable ?? isGuide;
+
+  const MediaStack = ({ items }) => (
+    <div className="ctxb-media">
+      {(items ?? []).map((f, i) => <div key={i} className="ctxb-media-item">{f}</div>)}
+    </div>
+  );
+
+  return (
+    <div className={`ctxb ${variant}-v${dismissed ? " ctxb-gone" : ""}`}>
+      {!isPromo && (isInsight
+        ? <div className="ctxb-mascot">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 .5L9.9 4.8 14.5 5.5 11 8.9l.8 4.6L8 11.4l-3.8 2.1.8-4.6L1.5 5.5l4.6-.7z"/>
+            </svg>
+          </div>
+        : resolvedMedia && <MediaStack items={resolvedMedia} />
+      )}
+      <div className="ctxb-content">
+        <div className="ctxb-body-row">
+          {resolvedTitle && <span className="ctxb-label">{resolvedTitle} </span>}
+          <span>{resolvedBody}</span>
+          {resolvedStyle === "link" && (
+            <button type="button" onClick={() => window.open(ctaUrl, "_blank", "noreferrer")}
+              style={{ marginLeft:4, verticalAlign:"middle", display:"inline-flex", alignItems:"center",
+                gap:3, fontSize:12.5, fontFamily:"inherit", fontWeight:500, background:"none",
+                border:"none", cursor:"pointer", color:"inherit", textDecoration:"underline", textDecorationColor:"rgba(0,0,0,.2)" }}>
+              {resolvedCta} <ExtLink />
+            </button>
+          )}
+        </div>
+        {resolvedStyle === "button" && (
+          <button type="button" className="ctxb-btn" onClick={() => window.open(ctaUrl, "_blank", "noreferrer")}>
+            {resolvedCta} ↗
+          </button>
+        )}
+      </div>
+      {isPromo && resolvedMedia && <MediaStack items={resolvedMedia} />}
+      {canDismiss && (
+        <button type="button" className="ctxb-dismiss" onClick={() => { setDismissed(true); onDismiss?.(); }} aria-label="Dismiss">
+          <X />
+        </button>
+      )}
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────
 // MARKET RATE MINI (reused inside CompensationBlock)
@@ -790,6 +956,166 @@ export function BenefitsBlock({ country = "United States" }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// BLOCK 4 — AddPersonBlock
+// ─────────────────────────────────────────────────────────────────
+const ENTITY_OPTS = [
+  { value:"au_payroll", label:"AU entity - Payroll Connect" },
+  { value:"us_payroll", label:"US entity - Payroll Connect" },
+  { value:"de_payroll", label:"DE entity - Payroll Connect" },
+];
+const GROUP_OPTS = [
+  { value:"au_group", label:"AU - Payroll Connect - group" },
+  { value:"us_group", label:"US - Payroll Connect - group" },
+  { value:"de_group", label:"DE - Payroll Connect - group" },
+];
+const COUNTRY_OPTS = [
+  { value:"us", label:"🇺🇸  United States" },
+  { value:"de", label:"🇩🇪  Germany" },
+  { value:"gb", label:"🇬🇧  United Kingdom" },
+  { value:"au", label:"🇦🇺  Australia" },
+  { value:"ca", label:"🇨🇦  Canada" },
+  { value:"fr", label:"🇫🇷  France" },
+];
+const US_STATE_OPTS = [
+  { value:"al", label:"Alabama" }, { value:"ak", label:"Alaska" },
+  { value:"az", label:"Arizona" }, { value:"ca", label:"California" },
+  { value:"co", label:"Colorado" }, { value:"fl", label:"Florida" },
+  { value:"il", label:"Illinois" }, { value:"mo", label:"Missouri" },
+  { value:"ny", label:"New York" }, { value:"tx", label:"Texas" },
+];
+const JOB_POS_OPTS = [
+  { value:"pm",  label:"Product Manager" },
+  { value:"eng", label:"Software Engineer" },
+  { value:"ea",  label:"Executive Assistant" },
+  { value:"des", label:"UX Designer" },
+];
+const PEOPLE_OPTS = [
+  { value:"alex",  label:"Alex Johnson" },
+  { value:"sam",   label:"Sam Lee" },
+  { value:"priya", label:"Priya Patel" },
+  { value:"marco", label:"Marco Rossi" },
+];
+const DEPT_OPTS = [
+  { value:"eng",     label:"Engineering" },
+  { value:"design",  label:"Design" },
+  { value:"product", label:"Product" },
+  { value:"hr",      label:"Human Resources" },
+];
+const TEAM_OPTS = [
+  { value:"platform", label:"Platform" },
+  { value:"growth",   label:"Growth" },
+  { value:"infra",    label:"Infrastructure" },
+  { value:"cx",       label:"Customer Experience" },
+];
+const OBJECTIVE_OPTS = [
+  { value:"temp_eor", label:"Temporary EOR while we set up an entity" },
+  { value:"new_hc",   label:"New headcount" },
+  { value:"backfill", label:"Backfill" },
+  { value:"convert",  label:"Convert contractor" },
+  { value:"longterm", label:"Long-term EOR with Deel" },
+];
+
+export function AddPersonBlock({
+  defaultEntity  = "au_payroll",
+  defaultGroup   = "au_group",
+  defaultCountry = "us",
+  defaultState   = "",
+  workerIdValue  = "260",
+  onSave,
+}) {
+  const [skipDetails,       setSkipDetails]       = useState(false);
+  const [employmentCountry, setEmploymentCountry] = useState(defaultCountry);
+  const [hiringObjective,   setHiringObjective]   = useState("temp_eor");
+  const showState = employmentCountry === "us";
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+      {/* Page heading */}
+      <div>
+        <div className="block-title">Add person</div>
+        <div className="block-subtitle">Create a new contract for your EOR employee</div>
+      </div>
+
+      {/* ── 1. Team information ── */}
+      <SectionCard title="Team information" showInfoButton>
+        <Select label="Entity" required options={ENTITY_OPTS} value={defaultEntity} />
+        <Select label="Group" required options={GROUP_OPTS} value={defaultGroup} />
+      </SectionCard>
+
+      {/* ── 2. Employee personal details ── */}
+      <SectionCard title="Employee personal details">
+        <ToggleRow
+          label="I don't know the worker's personal details yet"
+          description="Get a cost estimate without providing worker details"
+          checked={skipDetails}
+          onChange={setSkipDetails}
+        />
+        {!skipDetails && (
+          <>
+            <div className="fi">
+              <label className="fl">Personal email<span className="req">*</span></label>
+              <input placeholder="devon.parisian@letsdeel.co" />
+              <span className="fhint">We will use this email address for inviting your worker to complete their onboarding.</span>
+            </div>
+            <Field label="Legal first name" placeholder="Devon" required />
+            <Field label="Legal last name" placeholder="Parisian" required />
+            <Select label="Employee's citizenship" required options={COUNTRY_OPTS} value={defaultCountry} />
+            <Select label="Employment country" required options={COUNTRY_OPTS} value={employmentCountry}
+              onChange={setEmploymentCountry} />
+            <ContextBanner
+              variant="insight"
+              body="Severance in the United States can range from at least 2 to 4 weeks salary."
+              ctaLabel="Learn more"
+            />
+            {showState && (
+              <Select label="Select state" required placeholder="Select state…"
+                options={US_STATE_OPTS} value={defaultState} />
+            )}
+          </>
+        )}
+      </SectionCard>
+
+      {/* ── 3. Workplace information ── */}
+      <SectionCard title="Workplace information">
+        <div>
+          <Select label="Job Position" optional placeholder="Job Position (optional)" options={JOB_POS_OPTS} />
+          <div className="apb-field-hint">Assign a vacant job position to this worker</div>
+        </div>
+        <div>
+          <Select label="Manager" optional placeholder="Manager (optional)" options={PEOPLE_OPTS} />
+          <div className="apb-field-hint">You can search by name or email</div>
+        </div>
+        <div>
+          <Select label="Report" optional placeholder="Report (optional)" options={PEOPLE_OPTS} />
+          <div className="apb-field-hint">You can search by name or email</div>
+        </div>
+        <Field label="Worker ID" required value={workerIdValue} disabled />
+        <Field label="External worker ID" placeholder="External worker ID (optional)" />
+      </SectionCard>
+
+      {/* ── 4. Organizational structure ── */}
+      <SectionCard title="Organizational structure">
+        <Select label="Department" optional placeholder="Department (optional)" options={DEPT_OPTS} />
+        <Select label="Teams" optional placeholder="Teams (optional)" options={TEAM_OPTS} />
+      </SectionCard>
+
+      {/* ── 5. Hiring objective ── */}
+      <SectionCard title="Hiring objective">
+        <Select label="What's your hiring objective?" required
+          options={OBJECTIVE_OPTS} value={hiringObjective} onChange={setHiringObjective} />
+        <ContextBanner
+          variant="promo"
+          title="Set up a foreign entity with Deel"
+          body="We handle compliance, payroll, and local filings so you can focus on growing your team."
+          ctaLabel="Learn more"
+          media={["🇺🇸", "🌍", "🇦🇺"]}
+        />
+      </SectionCard>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // PREVIEW LAYOUT
 // ─────────────────────────────────────────────────────────────────
 function PropsTable({ rows }) {
@@ -855,7 +1181,7 @@ export default function DeelBlocksPreview() {
           </div>
           <div className="hdr-r">
             <span className="ai-tag">✦ AI-powered</span>
-            <span className="count-tag">3 blocks · fully interactive</span>
+            <span className="count-tag">4 blocks · fully interactive</span>
             <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">
               {dark ? <Moon /> : <Sun />}
               {dark ? "Dark" : "Light"}
@@ -932,6 +1258,29 @@ export default function DeelBlocksPreview() {
           </Card>
           <Card label="Interactive — click Add on any benefit" full>
             <BenefitsBlock country="United States" />
+          </Card>
+        </Sec>
+
+        {/* ── 04 AddPersonBlock ── */}
+        <Sec n={4} name="AddPersonBlock"
+          desc="Step 1 of the EOR contract creation flow — 'Add person' multi-section form. Five SectionCards cover: Team information, Employee personal details (with skip-details toggle, insight banner, and conditional state dropdown), Workplace information, Organizational structure, and Hiring objective (with promo banner). Built entirely from existing atoms and molecules."
+          composed="SectionCard (×5) + DropdownSelect (×10) + TextInput (×5) + ToggleRow (×1) + ContextBanner insight + ContextBanner promo"
+          props={[
+            ["defaultEntity",  "string",   false, "Pre-selected entity option value (default: 'au_payroll')"],
+            ["defaultGroup",   "string",   false, "Pre-selected group option value (default: 'au_group')"],
+            ["defaultCountry", "string",   false, "Pre-selected employment country value (default: 'us')"],
+            ["defaultState",   "string",   false, "Pre-selected state dropdown value"],
+            ["workerIdValue",  "string",   false, "Read-only Worker ID shown in Workplace information (default: '260')"],
+            ["onSave",         "function", false, "(formData: object) => void"],
+          ]}>
+          <Card label="Default — AU entity, personal details visible" wide>
+            <AddPersonBlock />
+          </Card>
+          <Card label="Pre-filled — US employee, Missouri state" wide>
+            <AddPersonBlock defaultCountry="us" defaultState="mo" />
+          </Card>
+          <Card label="Interactive — toggle details, change country" full>
+            <AddPersonBlock defaultCountry="us" workerIdValue="260" />
           </Card>
         </Sec>
 
