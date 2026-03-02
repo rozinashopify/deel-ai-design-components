@@ -296,6 +296,10 @@ const makeCSS = (t, isDark) => `
   .ctxb.guide-v   { padding:13px 15px; background:${t.infoBg}; border:1px solid ${isDark?t.info+"33":"#BFDBFE"}; }
   .ctxb.insight-v { padding:11px 15px; background:${isDark?"#1b1e2e":"#F5F3FF"}; border:1px solid ${isDark?"#6366f133":"#DDD6FE"}; }
   .ctxb.promo-v   { padding:15px 18px; background:${t.surface}; border:1px solid ${t.border}; box-shadow:${t.shadow}; justify-content:space-between; }
+  .ctxb.info-v    { padding:11px 13px; background:${t.infoBg}; border:1px solid ${isDark?t.info+"33":"#BFDBFE"}; align-items:flex-start; }
+  .ctxb-info-icon { color:${t.info}; flex-shrink:0; margin-top:1px; display:flex; }
+  .ctxb.info-v .ctxb-body-row { font-size:12.5px; line-height:1.5; }
+  .ctxb.info-v .ctxb-label { display:block; color:${t.textMain}; font-size:12.5px; font-weight:600; }
   .ctxb-media { display:flex; align-items:center; flex-shrink:0; }
   .ctxb-media-item { width:22px; height:22px; border-radius:50%; border:1.5px solid ${t.surface}; font-size:13px; display:flex; align-items:center; justify-content:center; background:${t.surfaceHover}; }
   .ctxb-media-item:nth-child(n+2) { margin-left:-6px; }
@@ -349,7 +353,7 @@ function Field({ label, placeholder, value, required, disabled }) {
     </div>
   );
 }
-function Select({ label, placeholder, options = [], value, disabled, optional, required, onChange }) {
+function Select({ label, placeholder, options = [], value, disabled, optional, required, helperText, onChange }) {
   const [v, setV] = useState(value ?? "");
   const handleChange = e => { setV(e.target.value); onChange?.(e.target.value); };
   return (
@@ -363,6 +367,7 @@ function Select({ label, placeholder, options = [], value, disabled, optional, r
         </select>
         <span className="chev"><Chevron /></span>
       </div>
+      {helperText && <span className="fhint">{helperText}</span>}
     </div>
   );
 }
@@ -430,22 +435,26 @@ function ToggleRow({ label, description, checked: controlledChecked, onChange })
 // ─────────────────────────────────────────────────────────────────
 // CONTEXT BANNER  (molecule — guide / insight / promo)
 // ─────────────────────────────────────────────────────────────────
-function ContextBanner({ variant = "guide", title, body, country, media, ctaLabel, ctaUrl = "#", ctaStyle, dismissable, onDismiss }) {
+function ContextBanner({ variant = "guide", title, body, country, media, ctaLabel, ctaUrl = "#", ctaStyle, onCtaClick, dismissable, onDismiss }) {
   const [dismissed, setDismissed] = useState(false);
   const isGuide   = variant === "guide";
   const isInsight = variant === "insight";
   const isPromo   = variant === "promo";
+  const isInfo    = variant === "info";
 
   const resolvedBody  = body ?? (isGuide
     ? `View Deel's global hiring guide for ${country ?? "your country"}.`
     : isInsight
     ? "Severance in the United States can range from at least 2 to 4 weeks salary."
+    : isInfo
+    ? ""
     : "Set up a foreign entity with Deel — we handle compliance, payroll, and local filings.");
   const resolvedTitle = title !== undefined ? title : (isInsight ? "Deel Insight:" : null);
-  const resolvedMedia = media ?? (isInsight ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
+  const resolvedMedia = media ?? (isInsight || isInfo ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
   const resolvedCta   = ctaLabel ?? (isGuide ? "View" : "Learn more");
   const resolvedStyle = ctaStyle ?? (isPromo ? "button" : "link");
   const canDismiss    = dismissable ?? isGuide;
+  const handleCtaClick = () => onCtaClick ? onCtaClick() : window.open(ctaUrl, "_blank", "noreferrer");
 
   const MediaStack = ({ items }) => (
     <div className="ctxb-media">
@@ -455,7 +464,9 @@ function ContextBanner({ variant = "guide", title, body, country, media, ctaLabe
 
   return (
     <div className={`ctxb ${variant}-v${dismissed ? " ctxb-gone" : ""}`}>
-      {!isPromo && (isInsight
+      {!isPromo && (isInfo
+        ? <span className="ctxb-info-icon"><Info /></span>
+        : isInsight
         ? <div className="ctxb-mascot">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 .5L9.9 4.8 14.5 5.5 11 8.9l.8 4.6L8 11.4l-3.8 2.1.8-4.6L1.5 5.5l4.6-.7z"/>
@@ -467,12 +478,12 @@ function ContextBanner({ variant = "guide", title, body, country, media, ctaLabe
         <div className="ctxb-body-row">
           {resolvedTitle && <span className="ctxb-label">{resolvedTitle} </span>}
           <span>{resolvedBody}</span>
-          {resolvedStyle === "link" && (
-            <button type="button" onClick={() => window.open(ctaUrl, "_blank", "noreferrer")}
+          {resolvedStyle === "link" && (!isInfo || ctaLabel) && (
+            <button type="button" onClick={handleCtaClick}
               style={{ marginLeft:4, verticalAlign:"middle", display:"inline-flex", alignItems:"center",
-                gap:3, fontSize:12.5, fontFamily:"inherit", fontWeight:500, background:"none",
+                gap: isInfo ? 0 : 3, fontSize:12.5, fontFamily:"inherit", fontWeight:500, background:"none",
                 border:"none", cursor:"pointer", color:"inherit", textDecoration:"underline", textDecorationColor:"rgba(0,0,0,.2)" }}>
-              {resolvedCta} <ExtLink />
+              {resolvedCta}{!isInfo && <ExtLink />}
             </button>
           )}
         </div>
@@ -642,18 +653,21 @@ export function JobDescriptionBlock({
 
       {/* Job scope */}
       <div>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
           <span style={{ fontSize:14, fontWeight:600 }}>Job scope</span>
           <button type="button" className="btn btn-s sm">Manage job scopes</button>
         </div>
-        <div className="info-box" style={{ marginBottom:12 }}>
-          <span className="info-box-icon"><Info /></span>
-          <div className="info-box-text">
-            <strong>Job scope guidelines</strong> — Always refer to your company as "the company". Do not include recruiting language or references to c-suite positions.{" "}
-            <a href="#">Learn more</a>
-          </div>
+        <div className="block-subtitle" style={{ marginBottom:12 }}>This information will form the basis of the employment agreement.</div>
+        <div style={{ marginBottom:12 }}>
+          <ContextBanner variant="info"
+            title="Job scope guidelines"
+            body='Always refer to your company as "the company". Do not include recruiting language or references to c-suite positions.'
+            ctaLabel="Learn more"
+            ctaUrl="#"
+          />
         </div>
         <Select placeholder="Job scope template (optional)" optional
+          helperText="Selecting a template will replace the current job scope."
           options={[{ value:"t1", label:"Customer Success Template" }]} />
         <div style={{ marginTop:12 }}>
           <div className="jdb-scope-header">
@@ -704,12 +718,11 @@ export function JobDescriptionBlock({
         {results.length > 0 && (
           <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:8 }}>
             {results.map((r,i) => <ComplianceCard key={i} {...r} />)}
-            <div className="info-box" style={{ marginTop:4 }}>
-              <span className="info-box-icon"><Info /></span>
-              <span className="info-box-text">
-                Think Deel reported false errors?{" "}
-                <a href="#" onClick={e => e.preventDefault()}>Report to our engineering team</a>
-              </span>
+            <div style={{ marginTop:4 }}>
+              <ContextBanner variant="info"
+                body="Think Deel reported false errors?"
+                ctaLabel="Report to our engineering team"
+              />
             </div>
           </div>
         )}
@@ -1193,7 +1206,7 @@ export default function DeelBlocksPreview() {
         {/* ── 01 JobDescriptionBlock ── */}
         <Sec n={1} name="JobDescriptionBlock"
           desc="Full job description section — job title, seniority, scope guidelines, scope textarea with character count, and the AI compliance check panel. The Run check button streams results in card-by-card. Drop into step 2 of the EOR creation flow."
-          composed="Select (×3) + Textarea + InfoBox + ComplianceCheckPanel (AI) + ComplianceCheckCard (×n)"
+          composed="Select (×3) + Textarea + ContextBanner info (×2) + ComplianceCheckPanel (AI) + ComplianceCheckCard (×n)"
           props={[
             ["defaultTitle",     "string",  false, "Pre-filled job title value"],
             ["defaultSeniority", "string",  false, "Pre-filled seniority key"],

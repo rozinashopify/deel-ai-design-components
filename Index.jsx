@@ -499,7 +499,7 @@ const WAVES = [
       { icon: "⊞", name: "FormFieldGroup",    desc: "Labelled group of 1–4 inputs with shared title & description" },
       { icon: "☰", name: "StepperRail",       desc: "Vertical progress rail — tracks completed, active, upcoming steps" },
       { icon: "💾", name: "AutosaveWidget",    desc: "Right-rail card — saved/saving state + delete draft CTA" },
-      { icon: "ⓘ", name: "ContextBanner", desc: "Guide / Insight / Promo — unified contextual banner with 3 variants" },
+      { icon: "ⓘ", name: "ContextBanner", desc: "Guide / Insight / Promo / Info — unified contextual banner with 4 variants" },
     ],
   },
   {
@@ -1201,6 +1201,8 @@ const COMPONENT_DEMOS = {
       <ContextBanner variant="guide" country="United States" />
       <ContextBanner variant="insight" body="Severance in the United States typically ranges from 0–26 weeks depending on tenure." />
       <ContextBanner variant="promo" title="Foreign Entity Setup" body="Set up a foreign entity with Deel — we handle compliance, payroll, and local filings." />
+      <ContextBanner variant="info" title="Job scope guidelines" body='Always refer to your company as "the company". Do not include recruiting language or references to c-suite positions.' ctaLabel="Learn more" ctaUrl="#" />
+      <ContextBanner variant="info" body="Think Deel reported false errors?" ctaLabel="Report to our engineering team" />
     </div>
   ),
 
@@ -1430,7 +1432,7 @@ const COMPONENT_PLAYGROUND_CONFIG = {
     render: (p) => <TextInput {...p} />,
   },
   DropdownSelect: {
-    defaults: { label: "Job title", disabled: false, optional: false, placeholder: "Select job title…" },
+    defaults: { label: "Job title", disabled: false, optional: false, placeholder: "Select job title…", helperText: "" },
     render: (p) => <DropdownSelect {...p} options={[
       { value: "ea",  label: "Executive Assistant" },
       { value: "pm",  label: "Product Manager" },
@@ -1699,6 +1701,38 @@ export function Demo() {
             { value: "eng", label: "Engineering" }, { value: "ops", label: "Operations" },
           ]} />
           <DropdownSelect label="Country (locked)" value="us" disabled options={[{ value: "us", label: "United States" }]} />
+        </div>
+      ),
+    },
+    {
+      id: "helperText", title: "Helper text",
+      description: "Use helperText to surface a hint below the select — for example guidance on where to manage options.",
+      code: `import { DropdownSelect } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <DropdownSelect
+      label="Job scope template"
+      helperText="Search or select one from the list above or create a new one under manage job scopes"
+      options={[
+        { value: "full", label: "Full-time" },
+        { value: "part", label: "Part-time" },
+        { value: "con",  label: "Contractor" },
+      ]}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380 }}>
+          <DropdownSelect
+            label="Job scope template"
+            helperText="Search or select one from the list above or create a new one under manage job scopes"
+            options={[
+              { value: "full", label: "Full-time" },
+              { value: "part", label: "Part-time" },
+              { value: "con",  label: "Contractor" },
+            ]}
+          />
         </div>
       ),
     },
@@ -2038,6 +2072,37 @@ export function Demo() {
       render: () => (
         <div style={{ maxWidth: 560 }}>
           <ContextBanner variant="promo" title="Foreign Entity Setup" body="Set up a foreign entity with Deel — we handle compliance, payroll, and local filings." />
+        </div>
+      ),
+    },
+    {
+      id: "info", title: "Info variant",
+      description: "Non-dismissable inline note with an ⓘ icon and blue tint. Optional bold title renders as a block heading above the body. CTA is a plain text link (no external icon). Use for field guidelines and in-page callbacks like reporting false positives.",
+      code: `import { ContextBanner } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <>
+      <ContextBanner
+        variant="info"
+        title="Job scope guidelines"
+        body='Always refer to your company as "the company". Do not include recruiting language or references to c-suite positions.'
+        ctaLabel="Learn more"
+        ctaUrl="#"
+      />
+      <ContextBanner
+        variant="info"
+        body="Think Deel reported false errors?"
+        ctaLabel="Report to our engineering team"
+        onCtaClick={() => console.log("report")}
+      />
+    </>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: 8 }}>
+          <ContextBanner variant="info" title="Job scope guidelines" body='Always refer to your company as "the company". Do not include recruiting language or references to c-suite positions.' ctaLabel="Learn more" ctaUrl="#" />
+          <ContextBanner variant="info" body="Think Deel reported false errors?" ctaLabel="Report to our engineering team" />
         </div>
       ),
     },

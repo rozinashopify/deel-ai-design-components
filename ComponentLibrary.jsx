@@ -23,7 +23,7 @@
  * ─── DOMAINS ───────────────────────────────────────────────────────
  *  Forms               · TextInput, DropdownSelect, RadioOption, FormFieldGroup
  *  Actions             · PrimaryButton, SecondaryButton, TextButton
- *  Status & Feedback   · StatusBadge, AutosaveWidget, ContextBanner (guide / insight / promo variants)
+ *  Status & Feedback   · StatusBadge, AutosaveWidget, ContextBanner (guide / insight / promo / info variants)
  *  Navigation          · StepperRail
  *  Compliance          · ComplianceCheckCard, ComplianceCheckPanel
  *  Market Intelligence · MarketRateChart
@@ -75,6 +75,7 @@ export const COMPONENT_MANIFEST = [
       { name: "value",       type: "string",            required: false, description: "Controlled selected value." },
       { name: "optional",    type: "boolean",           required: false, description: "Appends '(optional)' to the label." },
       { name: "disabled",    type: "boolean",           required: false, description: "Prevents interaction." },
+      { name: "helperText",  type: "string",            required: false, description: "Hint text shown below the select." },
       { name: "onChange",    type: "(value: string) => void", required: false, description: "Called on selection change." },
     ],
     usage: '<DropdownSelect label="Job title" options={[{ value: "ea", label: "Executive Assistant" }]} />',
@@ -209,23 +210,25 @@ export const COMPONENT_MANIFEST = [
     domain: "Status & Feedback",
     tier: "molecule",
     description:
-      "Unified contextual banner covering three semantic use cases via the variant prop: 'guide' (dismissable country hiring-guide link with flag imagery), 'insight' (inline AI callout with mascot + bold 'Deel Insight:' prefix + text link), and 'promo' (persistent upsell tile with imagery on the right + outlined button CTA). Replaces the separate HiringGuideBanner, InsightCallout, and PromoBanner components.",
+      "Unified contextual banner covering four semantic use cases via the variant prop: 'guide' (dismissable country hiring-guide link with flag imagery), 'insight' (inline AI callout with mascot + bold 'Deel Insight:' prefix + text link), 'promo' (persistent upsell tile with imagery on the right + outlined button CTA), and 'info' (non-dismissable inline note with ⓘ icon — used for field guidelines and reporting prompts). Replaces the separate HiringGuideBanner, InsightCallout, and PromoBanner components.",
     composedOf: ["TextButton"],
     props: [
-      { name: "variant",     type: "'guide' | 'insight' | 'promo'", required: false, description: "Semantic type — controls default styles, media placement, CTA style, and dismissable behaviour." },
-      { name: "title",       type: "string",   required: false, description: "Bold prefix label (auto: null for guide, 'Deel Insight:' for insight, 'Foreign Entity Setup' for promo)." },
+      { name: "variant",     type: "'guide' | 'insight' | 'promo' | 'info'", required: false, description: "Semantic type — controls default styles, icon/media, CTA style, and dismissable behaviour." },
+      { name: "title",       type: "string",   required: false, description: "Bold label. Auto: null for guide/info, 'Deel Insight:' for insight, 'Foreign Entity Setup' for promo. For info, renders as a block heading above the body." },
       { name: "body",        type: "string",   required: false, description: "Body copy. For guide variant the country prop auto-populates this." },
       { name: "country",     type: "string",   required: false, description: "Convenience for guide variant — inserts country name into default body copy." },
-      { name: "media",       type: "string[]", required: false, description: "Emoji or flag array. Placed left for guide/insight, right for promo. Insight uses a built-in mascot SVG when null." },
-      { name: "ctaLabel",    type: "string",   required: false, description: "CTA text. Defaults: 'View' for guide, 'Learn more' for others." },
+      { name: "media",       type: "string[]", required: false, description: "Emoji or flag array. Placed left for guide/insight, right for promo. Insight uses a built-in mascot SVG when null. Ignored for info." },
+      { name: "ctaLabel",    type: "string",   required: false, description: "CTA text. Defaults: 'View' for guide, 'Learn more' for others. For info, omit to render no CTA." },
       { name: "ctaUrl",      type: "string",   required: false, description: "href for the CTA (default: '#')." },
-      { name: "ctaStyle",    type: "'link' | 'button'", required: false, description: "CTA style. Default: 'button' for promo, 'link' for guide/insight." },
-      { name: "dismissable", type: "boolean",  required: false, description: "Show × dismiss button. Default: true for guide, false for insight/promo." },
+      { name: "ctaStyle",    type: "'link' | 'button'", required: false, description: "CTA style. Default: 'button' for promo, 'link' for guide/insight/info." },
+      { name: "onCtaClick",  type: "() => void", required: false, description: "Called when the CTA is clicked instead of opening ctaUrl. Use for in-page callbacks (e.g. report false positive)." },
+      { name: "dismissable", type: "boolean",  required: false, description: "Show × dismiss button. Default: true for guide, false for insight/promo/info." },
       { name: "onDismiss",   type: "() => void", required: false, description: "Called when × is clicked." },
     ],
     usage: `<ContextBanner variant="guide" country="Germany" onDismiss={handleDismiss} />
 <ContextBanner variant="insight" body="Severance in the US ranges from 0–26 weeks." />
-<ContextBanner variant="promo" title="Foreign Entity Setup" />`,
+<ContextBanner variant="promo" title="Foreign Entity Setup" />
+<ContextBanner variant="info" title="Job scope guidelines" body='Always refer to your company as "the company".' ctaLabel="Learn more" ctaUrl="#" />`,
   },
 
   // ── Navigation ────────────────────────────────────────────────
@@ -326,6 +329,7 @@ export const COMPONENT_MANIFEST = [
       { name: "showComplianceResults", type: "boolean", required: false, description: "Render compliance cards immediately (e.g. when returning to a step)." },
       { name: "complianceRunning",     type: "boolean", required: false, description: "Start in the running/shimmer state." },
       { name: "onSave",                type: "(state: { title: string; seniority: string; scope: string }) => void", required: false, description: "Called on Save scope click." },
+      { name: "onReport",              type: "() => void",                                                           required: false, description: "Called when the false-positive report link inside ComplianceCheckPanel is clicked." },
     ],
     usage: `<JobDescriptionBlock
   defaultTitle="Executive Assistant"
@@ -875,6 +879,10 @@ export const makeLibraryCSS = (t, isDark) => {
   .ctxb.guide-v   { padding: 14px 16px; background: ${t.infoBg}; border: 1px solid ${isDark ? t.info + "33" : "#BFDBFE"}; }
   .ctxb.insight-v { padding: 12px 16px; background: ${isDark ? "#1b1e2e" : "#F5F3FF"}; border: 1px solid ${isDark ? "#6366f133" : "#DDD6FE"}; }
   .ctxb.promo-v   { padding: 16px 20px; background: ${t.surface}; border: 1px solid ${t.border}; box-shadow: ${t.shadow}; justify-content: space-between; }
+  .ctxb.info-v    { padding: 11px 13px; background: ${t.infoBg}; border: 1px solid ${isDark ? t.info + "33" : "#BFDBFE"}; align-items: flex-start; }
+  .ctxb-info-icon { color: ${t.info}; flex-shrink: 0; margin-top: 1px; display: flex; }
+  .ctxb.info-v .ctxb-body-row { font-size: 12.5px; line-height: 1.5; }
+  .ctxb.info-v .ctxb-label { display: block; color: ${t.textMain}; font-size: 12.5px; font-weight: 600; }
   .ctxb-media { display: flex; align-items: center; flex-shrink: 0; }
   .ctxb-media-item { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid ${t.surface}; font-size: 13px; display: flex; align-items: center; justify-content: center; background: ${t.surfaceHover}; }
   .ctxb-media-item:nth-child(n+2) { margin-left: -6px; }
@@ -1118,9 +1126,10 @@ export function TextInput({ label, placeholder, value, required, disabled, error
  * @param {string}   [value]       - Controlled selected value.
  * @param {boolean}  [optional]    - Appends '(optional)' to the label.
  * @param {boolean}  [disabled]    - Prevents interaction.
+ * @param {string}   [helperText]  - Hint text rendered below the select.
  * @param {function} [onChange]    - Called with the new value string.
  */
-export function DropdownSelect({ label, placeholder = "Select…", options = [], value, optional, required, disabled, onChange }) {
+export function DropdownSelect({ label, placeholder = "Select…", options = [], value, optional, required, disabled, helperText, onChange }) {
   const [v, setV] = useState(value ?? "");
   const handleChange = e => { setV(e.target.value); onChange?.(e.target.value); };
   return (
@@ -1139,6 +1148,7 @@ export function DropdownSelect({ label, placeholder = "Select…", options = [],
         </select>
         <span className="chev"><Chevron /></span>
       </div>
+      {helperText && <span className="fhint">{helperText}</span>}
     </div>
   );
 }
@@ -1415,6 +1425,7 @@ export function ContextBanner({
   ctaLabel,
   ctaUrl = "#",
   ctaStyle,
+  onCtaClick,
   dismissable,
   onDismiss,
 }) {
@@ -1424,20 +1435,23 @@ export function ContextBanner({
   const isGuide   = variant === "guide";
   const isInsight = variant === "insight";
   const isPromo   = variant === "promo";
+  const isInfo    = variant === "info";
 
   const resolvedBody = body ?? (
     isGuide   ? `View Deel's global hiring guide for ${country ?? "your country"}.` :
     isInsight ? "Severance in the United States typically ranges from 0–26 weeks depending on tenure." :
+    isInfo    ? "" :
                 "Set up a foreign entity with Deel — we handle compliance, payroll, and local filings."
   );
   const resolvedTitle = title !== undefined ? title : (
     isInsight ? "Deel Insight:" :
     isPromo   ? "Foreign Entity Setup" : null
   );
-  const resolvedMedia       = media ?? (isInsight ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
+  const resolvedMedia       = media ?? (isInsight || isInfo ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
   const resolvedCtaLabel    = ctaLabel ?? (isGuide ? "View" : "Learn more");
   const resolvedCtaStyle    = ctaStyle ?? (isPromo ? "button" : "link");
   const resolvedDismissable = dismissable ?? isGuide;
+  const handleCtaClick      = () => onCtaClick ? onCtaClick() : window.open(ctaUrl, "_blank", "noreferrer");
 
   const MediaStack = ({ items }) => (
     <div className="ctxb-media">
@@ -1448,9 +1462,11 @@ export function ContextBanner({
   return (
     <div className={`ctxb ${variant}-v${dismissed ? " ctxb-gone" : ""}`}>
 
-      {/* Left media */}
+      {/* Left icon / media */}
       {!isPromo && (
-        isInsight
+        isInfo
+          ? <span className="ctxb-info-icon"><Info /></span>
+          : isInsight
           ? <div className="ctxb-mascot">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 .5L9.9 4.8 14.5 5.5 11 8.9l.8 4.6L8 11.4l-3.8 2.1.8-4.6L1.5 5.5l4.6-.7z"/>
@@ -1464,14 +1480,14 @@ export function ContextBanner({
         <div className="ctxb-body-row">
           {resolvedTitle && <span className="ctxb-label">{resolvedTitle} </span>}
           <span className="ctxb-body">{resolvedBody}</span>
-          {resolvedCtaStyle === "link" && (
+          {resolvedCtaStyle === "link" && (!isInfo || ctaLabel) && (
             <button
               type="button"
               className="btn btn-g"
-              style={{ paddingLeft: 4, paddingRight: 2, verticalAlign: "middle", display: "inline-flex" }}
-              onClick={() => window.open(ctaUrl, "_blank", "noreferrer")}
+              style={{ paddingLeft: 4, paddingRight: 2, verticalAlign: "middle", display: "inline-flex", alignItems: "center", gap: isInfo ? 0 : 3 }}
+              onClick={handleCtaClick}
             >
-              {resolvedCtaLabel} <ExternalLink />
+              {resolvedCtaLabel}{!isInfo && <ExternalLink />}
             </button>
           )}
         </div>
@@ -1768,6 +1784,7 @@ export function JobDescriptionBlock({
   showComplianceResults = false,
   complianceRunning = false,
   onSave,
+  onReport,
 }) {
   const [scope, setScope]     = useState(defaultScope);
   const [running, setRunning] = useState(complianceRunning);
@@ -1809,18 +1826,21 @@ export function JobDescriptionBlock({
       </div>
 
       <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>Job scope</span>
           <SecondaryButton label="Manage job scopes" size="sm" />
         </div>
-        <div className="info-box" style={{ marginBottom: 12 }}>
-          <span className="info-box-icon"><Info /></span>
-          <div className="info-box-text">
-            <strong>Job scope guidelines</strong> — Always refer to your company as "the company". Do not include recruiting language or references to c-suite positions.{" "}
-            <a href="#">Learn more</a>
-          </div>
+        <div className="block-subtitle" style={{ marginBottom: 12 }}>This information will form the basis of the employment agreement.</div>
+        <div style={{ marginBottom: 12 }}>
+          <ContextBanner variant="info"
+            title="Job scope guidelines"
+            body='Always refer to your company as "the company". Do not include recruiting language or references to c-suite positions.'
+            ctaLabel="Learn more"
+            ctaUrl="#"
+          />
         </div>
         <DropdownSelect placeholder="Job scope template (optional)" optional
+          helperText="Selecting a template will replace the current job scope."
           options={[{ value: "t1", label: "Customer Success Template" }]} />
         <div style={{ marginTop: 12 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
@@ -1840,46 +1860,12 @@ export function JobDescriptionBlock({
         </div>
       </div>
 
-      <div>
-        <div className="ai-banner">
-          <div className="ai-banner-left">
-            <div className="ai-icon-wrap"><AIIcon /></div>
-            <div>
-              <div className="ai-banner-title">Save time with our AI-powered compliance check</div>
-              <div className="ai-banner-desc">
-                Verify your job scope meets <a href="#">EOR compliance requirements</a> for an instant quote.
-              </div>
-            </div>
-          </div>
-          <SecondaryButton
-            size="sm"
-            label={running ? "Running…" : "Run check"}
-            icon={running ? null : <Refresh />}
-            loading={running}
-            disabled={running}
-            onClick={runCheck}
-          />
-        </div>
-
-        {running && results.length === 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-            {[1, 2, 3].map(i => <div key={i} className="shimmer" />)}
-          </div>
-        )}
-
-        {results.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-            {results.map((r, i) => <ComplianceCheckCard key={i} {...r} />)}
-            <div className="info-box" style={{ marginTop: 4 }}>
-              <span className="info-box-icon"><Info /></span>
-              <span className="info-box-text">
-                Think Deel reported false errors?{" "}
-                <a href="#" onClick={e => e.preventDefault()}>Report to our engineering team</a>
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
+      <ComplianceCheckPanel
+        results={results}
+        isRunning={running}
+        onRunCheck={runCheck}
+        onReport={onReport}
+      />
     </div>
   );
 }

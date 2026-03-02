@@ -576,6 +576,7 @@ export default function DeelAtomsPreview() {
             ["value",      "string",   false, "Controlled selected value"],
             ["optional",   "boolean",  false, "Appends (optional) to label"],
             ["disabled",   "boolean",  false, "Prevents interaction"],
+            ["helperText", "string",   false, "Hint text below the select"],
           ]}>
           <Card label="Unselected / placeholder">
             <DropdownSelect label="Job Position" optional
