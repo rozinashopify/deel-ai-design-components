@@ -508,10 +508,14 @@ export function applyAppearance(baseTokens, appearance = {}) {
 // Call makeLibraryCSS(tokens, isDark) and inject the result via
 // <style dangerouslySetInnerHTML={{ __html: ... }} />
 // ═══════════════════════════════════════════════════════════════════
-export const makeLibraryCSS = (t, isDark) => `
+export const makeLibraryCSS = (t, isDark) => {
+  const br = t._borderRadius !== undefined ? t._borderRadius : 6;
+  const ff = t._fontFamily ? `'${t._fontFamily}', -apple-system, sans-serif` : "'Inter', -apple-system, sans-serif";
+  const mf = t._monoFont ? `'${t._monoFont}', 'JetBrains Mono', monospace` : "'JetBrains Mono', monospace";
+  return `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  body { font-family: ${ff}; -webkit-font-smoothing: antialiased; }
 
   /* ── TextInput ── */
   .fi { display: flex; flex-direction: column; gap: 4px; }
@@ -519,9 +523,9 @@ export const makeLibraryCSS = (t, isDark) => `
   .fl .req { color: ${t.error}; margin-left: 1px; }
   .fi input, .fi textarea {
     width: 100%; padding: 0 11px;
-    font-family: 'Inter', sans-serif; font-size: 13.5px; color: ${t.textMain};
+    font-family: ${ff}; font-size: 13.5px; color: ${t.textMain};
     background: ${t.inputBg}; border: 1px solid ${t.border};
-    border-radius: 6px; outline: none; appearance: none;
+    border-radius: ${br}px; outline: none; appearance: none;
     transition: border-color .12s, box-shadow .12s;
   }
   .fi input { height: 36px; }
@@ -537,9 +541,9 @@ export const makeLibraryCSS = (t, isDark) => `
   .selw { position: relative; }
   .selw select {
     height: 36px; width: 100%; padding: 0 34px 0 11px;
-    font-family: 'Inter', sans-serif; font-size: 13.5px;
+    font-family: ${ff}; font-size: 13.5px;
     background: ${t.inputBg}; border: 1px solid ${t.border};
-    border-radius: 6px; outline: none; appearance: none; cursor: pointer; color: ${t.textMain};
+    border-radius: ${br}px; outline: none; appearance: none; cursor: pointer; color: ${t.textMain};
     transition: border-color .12s, box-shadow .12s;
   }
   .selw select.ph { color: ${t.textDisabled}; }
@@ -550,10 +554,10 @@ export const makeLibraryCSS = (t, isDark) => `
   /* ── RadioOption ── */
   .rrow {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 13px; border: 1px solid ${t.border}; border-radius: 8px;
+    padding: 10px 13px; border: 1px solid ${t.border}; border-radius: ${br + 2}px;
     cursor: pointer; user-select: none; width: 100%;
     background: ${t.surface}; transition: border-color .1s, background .1s;
-    font-family: 'Inter', sans-serif; appearance: none; text-align: left;
+    font-family: ${ff}; appearance: none; text-align: left;
   }
   .rrow:hover:not(:disabled) { border-color: ${t.textMuted}; }
   .rrow.on { border-color: ${t.primary}; background: ${isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.015)"}; }
@@ -582,14 +586,14 @@ export const makeLibraryCSS = (t, isDark) => `
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     padding: 0 14px; height: 36px;
-    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
-    border-radius: 6px; border: none; cursor: pointer;
+    font-family: ${ff}; font-size: 13px; font-weight: 500;
+    border-radius: ${br}px; border: none; cursor: pointer;
     letter-spacing: .005em; white-space: nowrap;
     transition: background .1s, box-shadow .1s, opacity .1s, transform .07s;
   }
   .btn:active:not(:disabled) { transform: scale(.985); }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .btn.sm { height: 30px; padding: 0 11px; font-size: 12px; border-radius: 5px; }
+  .btn.sm { height: 30px; padding: 0 11px; font-size: 12px; border-radius: ${Math.max(2, br - 1)}px; }
   .btn.lg { height: 42px; padding: 0 18px; font-size: 14px; }
   .btn-p { background: ${t.primary}; color: ${t.btnText}; }
   .btn-p:hover:not(:disabled) { background: ${t.primaryHover}; box-shadow: ${t.shadowMd}; }
@@ -604,7 +608,7 @@ export const makeLibraryCSS = (t, isDark) => `
   .btn-g:hover:not(:disabled) { color: ${t.textMain}; text-decoration-color: ${t.textMain}; }
 
   /* ── StatusBadge ── */
-  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 2.5px 8px; border-radius: 5px; font-size: 11.5px; font-weight: 500; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 2.5px 8px; border-radius: ${Math.max(2, br - 1)}px; font-size: 11.5px; font-weight: 500; }
   .bdot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
   .badge.mandatory { background: ${t.mandatoryBg}; color: ${t.mandatory}; }
   .badge.mandatory .bdot { background: ${t.mandatory}; }
@@ -616,7 +620,7 @@ export const makeLibraryCSS = (t, isDark) => `
   .badge.failed .bdot { background: ${t.error}; }
 
   /* ── AutosaveWidget ── */
-  .autosave { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: 10px; padding: 16px; box-shadow: ${t.shadow}; }
+  .autosave { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 4}px; padding: 16px; box-shadow: ${t.shadow}; }
   .autosave-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .autosave-icon { width: 18px; height: 18px; border-radius: 50%; background: ${t.infoBg}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: ${t.info}; }
   .autosave-title { font-size: 13px; font-weight: 600; color: ${t.textMain}; }
@@ -627,7 +631,7 @@ export const makeLibraryCSS = (t, isDark) => `
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
   /* ── HiringGuideBanner ── */
-  .hgb { border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: opacity .2s; }
+  .hgb { border-radius: ${br + 4}px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: opacity .2s; }
   .hgb.info-style { background: ${t.infoBg}; border: 1px solid ${isDark ? t.info + "33" : "#BFDBFE"}; }
   .hgb.surface-style { background: ${t.surface}; border: 1px solid ${t.border}; box-shadow: ${t.shadow}; }
   .hgb-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
@@ -642,25 +646,25 @@ export const makeLibraryCSS = (t, isDark) => `
   .hgb-dismissed { opacity: .4; pointer-events: none; }
 
   /* ── StepperRail ── */
-  .srail { display: flex; flex-direction: column; gap: 0; width: 100%; background: ${t.surface}; border: 1px solid ${t.border}; border-radius: 10px; overflow: hidden; padding: 8px; }
-  .srail-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: 8px; transition: background .12s; }
+  .srail { display: flex; flex-direction: column; gap: 0; width: 100%; background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 4}px; overflow: hidden; padding: 8px; }
+  .srail-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: ${br + 2}px; transition: background .12s; }
   .srail-item.clickable { cursor: pointer; }
-  .srail-item.clickable:hover { background: ${t.surfaceHover}; border-radius: 8px; }
-  .srail-item.active { background: ${t.surfaceHover}; border-radius: 8px; }
+  .srail-item.clickable:hover { background: ${t.surfaceHover}; border-radius: ${br + 2}px; }
+  .srail-item.active { background: ${t.surfaceHover}; border-radius: ${br + 2}px; }
   .srail-between { width: 1.5px; height: 10px; background: ${t.border}; margin: 0 0 0 23px; transition: background .15s; }
   .srail-between.done { background: ${t.primary}; }
   .srail-line-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
   .srail-circle {
     width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600; font-family: ${mf};
     border: 1.5px solid ${t.border}; color: ${t.textMuted}; background: ${t.surface};
     transition: all .15s;
   }
   .srail-circle.done   { background: ${t.primary}; border-color: ${t.primary}; color: ${t.btnText}; }
   .srail-circle.active { border-color: ${t.primary}; color: ${t.primary}; box-shadow: 0 0 0 3px ${t.ring}; }
   .srail-info { padding-top: 2px; }
-  .srail-step-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: ${t.textMuted}; margin-bottom: 1px; }
+  .srail-step-label { font-family: ${mf}; font-size: 9px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: ${t.textMuted}; margin-bottom: 1px; }
   .srail-step-label.done-lbl   { color: ${t.success}; }
   .srail-step-label.active-lbl { color: ${t.primary}; }
   .srail-step-name { font-size: 13px; font-weight: 500; color: ${t.textMuted}; transition: color .12s; }
@@ -668,7 +672,7 @@ export const makeLibraryCSS = (t, isDark) => `
   .srail-step-name.done-name { color: ${t.textMuted}; }
 
   /* ── ComplianceCheckCard ── */
-  .cc-card { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 13px 16px; border: 1px solid ${t.border}; border-radius: 8px; background: ${t.surface}; transition: border-color .15s, background .15s; }
+  .cc-card { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 13px 16px; border: 1px solid ${t.border}; border-radius: ${br + 2}px; background: ${t.surface}; transition: border-color .15s, background .15s; }
   .cc-card.pass { border-color: ${t.successBorder}; background: ${t.successBg}; }
   .cc-card.fail { border-color: ${t.errorBorder};   background: ${t.errorBg}; }
   .cc-card.warn { border-color: ${t.warningBorder}; background: ${t.warningBg}; }
@@ -686,7 +690,7 @@ export const makeLibraryCSS = (t, isDark) => `
 
   /* ── ComplianceCheckPanel ── */
   .ccp { display: flex; flex-direction: column; gap: 8px; }
-  .ccp-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: ${t.purpleBg}; border: 1px solid ${isDark ? t.purple + "44" : "#DDD6FE"}; border-radius: 10px; }
+  .ccp-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: ${t.purpleBg}; border: 1px solid ${isDark ? t.purple + "44" : "#DDD6FE"}; border-radius: ${br + 4}px; }
   .ccp-banner-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
   .ccp-icon-wrap { width: 36px; height: 36px; border-radius: 8px; background: ${isDark ? t.purple + "22" : "#EDE9FE"}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .ccp-banner-title { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; margin-bottom: 2px; }
@@ -705,7 +709,7 @@ export const makeLibraryCSS = (t, isDark) => `
   .mrc-subtitle { font-size: 12px; color: ${t.textMuted}; line-height: 1.45; }
   .mrc-private  { font-size: 11px; color: ${t.textDisabled}; margin-top: 2px; }
   .mrc-period-toggle { display: flex; border: 1px solid ${t.border}; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-  .mrc-period-btn { padding: 5px 12px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; background: transparent; border: none; cursor: pointer; color: ${t.textMuted}; transition: background .1s, color .1s; }
+  .mrc-period-btn { padding: 5px 12px; font-family: ${ff}; font-size: 12px; font-weight: 500; background: transparent; border: none; cursor: pointer; color: ${t.textMuted}; transition: background .1s, color .1s; }
   .mrc-period-btn.active { background: ${t.primary}; color: ${t.btnText}; }
   .mrc-bars-wrap { position: relative; height: 120px; margin-bottom: 6px; }
   .mrc-bars { display: flex; align-items: flex-end; gap: 3px; height: 100%; }
@@ -714,17 +718,17 @@ export const makeLibraryCSS = (t, isDark) => `
   .mrc-bar.active-bar { background: ${t.chartBarActive}; }
   .mrc-bar.hover-bar  { background: ${t.chartBarHover}; }
   .mrc-bubble-wrap  { position: absolute; top: -34px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
-  .mrc-bubble       { background: ${t.info}; color: #fff; font-size: 11.5px; font-weight: 600; font-family: 'JetBrains Mono', monospace; padding: 3px 9px; border-radius: 6px; white-space: nowrap; box-shadow: ${t.shadowMd}; }
+  .mrc-bubble       { background: ${t.info}; color: #fff; font-size: 11.5px; font-weight: 600; font-family: ${mf}; padding: 3px 9px; border-radius: 6px; white-space: nowrap; box-shadow: ${t.shadowMd}; }
   .mrc-bubble-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid ${t.info}; }
   .mrc-dashed { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-left: 1.5px dashed ${t.info}; opacity: .5; pointer-events: none; }
   .mrc-axis { display: flex; justify-content: space-between; align-items: flex-start; padding-top: 8px; border-top: 1px solid ${t.border}; }
   .mrc-axis-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-  .mrc-axis-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: ${t.textMain}; }
-  .mrc-axis-lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: ${t.textMuted}; }
+  .mrc-axis-val { font-family: ${mf}; font-size: 11px; font-weight: 500; color: ${t.textMain}; }
+  .mrc-axis-lbl { font-family: ${mf}; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: ${t.textMuted}; }
   .mrc-note { font-size: 11.5px; color: ${t.textMuted}; margin-top: 10px; }
 
   /* ── Block shell ── */
-  .block-shell { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: 12px; padding: 24px; box-shadow: ${t.shadow}; display: flex; flex-direction: column; gap: 20px; }
+  .block-shell { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 6}px; padding: 24px; box-shadow: ${t.shadow}; display: flex; flex-direction: column; gap: 20px; }
   .block-title    { font-size: 15px; font-weight: 600; color: ${t.textMain}; letter-spacing: -.01em; }
   .block-subtitle { font-size: 12.5px; color: ${t.textMuted}; margin-top: 2px; line-height: 1.5; }
   .block-divider  { height: 1px; background: ${t.border}; margin: 4px 0; }
@@ -754,10 +758,10 @@ export const makeLibraryCSS = (t, isDark) => `
   .benefit-added-bar   { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: ${t.successBg}; border-top: 1px solid ${t.successBorder}; }
   .benefit-added-text  { font-size: 12px; color: ${t.success}; font-weight: 500; }
   .benefit-grid        { display: flex; flex-direction: column; gap: 10px; }
-  .benefit-section-label { font-size: 11.5px; font-weight: 600; color: ${t.textMuted}; letter-spacing: .04em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; padding-bottom: 6px; border-bottom: 1px solid ${t.border}; margin-bottom: 2px; }
+  .benefit-section-label { font-size: 11.5px; font-weight: 600; color: ${t.textMuted}; letter-spacing: .04em; text-transform: uppercase; font-family: ${mf}; padding-bottom: 6px; border-bottom: 1px solid ${t.border}; margin-bottom: 2px; }
 
   /* ── JobDescriptionBlock ── */
-  .jdb-char-count { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: ${t.textMuted}; text-align: right; margin-top: 4px; }
+  .jdb-char-count { font-family: ${mf}; font-size: 10.5px; color: ${t.textMuted}; text-align: right; margin-top: 4px; }
   .jdb-char-count.warn { color: ${t.warning}; }
   .jdb-char-count.over { color: ${t.error}; }
   .ai-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: ${t.purpleBg}; border: 1px solid ${isDark ? t.purple + "44" : "#DDD6FE"}; border-radius: 10px; }
@@ -769,15 +773,15 @@ export const makeLibraryCSS = (t, isDark) => `
 
   /* ── CompensationBlock ── */
   .cb-toggle-wrap   { display: flex; border: 1px solid ${t.border}; border-radius: 8px; overflow: hidden; }
-  .cb-toggle-btn    { flex: 1; padding: 8px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; background: transparent; border: none; cursor: pointer; color: ${t.textMuted}; transition: background .1s, color .1s; }
+  .cb-toggle-btn    { flex: 1; padding: 8px; font-family: ${ff}; font-size: 13px; font-weight: 500; background: transparent; border: none; cursor: pointer; color: ${t.textMuted}; transition: background .1s, color .1s; }
   .cb-toggle-btn.active { background: ${t.primary}; color: ${t.btnText}; }
   .cb-salary-wrap   { display: flex; align-items: center; border: 1px solid ${t.border}; border-radius: 6px; overflow: hidden; transition: border-color .12s, box-shadow .12s; }
   .cb-salary-wrap:focus-within { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
-  .cb-currency-prefix { padding: 0 12px; height: 36px; display: flex; align-items: center; font-size: 13.5px; color: ${t.textMuted}; background: ${t.surfaceHover}; border-right: 1px solid ${t.border}; font-family: 'JetBrains Mono', monospace; }
-  .cb-salary-input  { flex: 1; height: 36px; padding: 0 11px; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; color: ${t.textMain}; background: ${t.inputBg}; border: none; outline: none; }
-  .cb-currency-suffix { padding: 0 12px; height: 36px; display: flex; align-items: center; font-size: 12px; font-weight: 500; color: ${t.textMuted}; background: ${t.surfaceHover}; border-left: 1px solid ${t.border}; font-family: 'JetBrains Mono', monospace; }
+  .cb-currency-prefix { padding: 0 12px; height: 36px; display: flex; align-items: center; font-size: 13.5px; color: ${t.textMuted}; background: ${t.surfaceHover}; border-right: 1px solid ${t.border}; font-family: ${mf}; }
+  .cb-salary-input  { flex: 1; height: 36px; padding: 0 11px; font-family: ${mf}; font-size: 14px; font-weight: 500; color: ${t.textMain}; background: ${t.inputBg}; border: none; outline: none; }
+  .cb-currency-suffix { padding: 0 12px; height: 36px; display: flex; align-items: center; font-size: 12px; font-weight: 500; color: ${t.textMuted}; background: ${t.surfaceHover}; border-left: 1px solid ${t.border}; font-family: ${mf}; }
   .mrc-ptoggle { display: flex; border: 1px solid ${t.border}; border-radius: 6px; overflow: hidden; }
-  .mrc-pbtn { padding: 4px 11px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; background: transparent; border: none; cursor: pointer; color: ${t.textMuted}; transition: background .1s, color .1s; }
+  .mrc-pbtn { padding: 4px 11px; font-family: ${ff}; font-size: 12px; font-weight: 500; background: transparent; border: none; cursor: pointer; color: ${t.textMuted}; transition: background .1s, color .1s; }
   .mrc-pbtn.on { background: ${t.primary}; color: ${t.btnText}; }
   .bonus-empty { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: ${t.textMuted}; padding: 10px 0; }
   .bonus-dot { width: 6px; height: 6px; border-radius: 50%; background: ${t.textDisabled}; flex-shrink: 0; }
@@ -789,7 +793,7 @@ export const makeLibraryCSS = (t, isDark) => `
   @keyframes sp { to { transform: rotate(360deg); } }
   .shimmer { height: 44px; border-radius: 8px; background: linear-gradient(90deg,${t.surfaceHover} 25%,${t.border} 50%,${t.surfaceHover} 75%); background-size: 200% 100%; animation: shim 1.4s infinite; }
   @keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-`;
+`;};
 
 // ═══════════════════════════════════════════════════════════════════
 // SHARED ICONS

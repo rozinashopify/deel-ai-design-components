@@ -2055,7 +2055,7 @@ export function Demo() {
 // ─────────────────────────────────────────────────────────────────
 // COMPONENT DOC PAGE  (shadcn-style documentation view)
 // ─────────────────────────────────────────────────────────────────
-function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library", embedded = false, onSelectComponent }) {
+function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library", embedded = false, onSelectComponent, appearance: appearanceProp, setAppearance: setAppearanceProp }) {
   const config   = COMPONENT_PLAYGROUND_CONFIG[name] ?? { defaults: {}, render: () => null };
   const manifest = COMPONENT_MANIFEST.find(c => c.name === name);
   const examples = COMPONENT_EXAMPLES[name] ?? [];
@@ -2073,9 +2073,19 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const [expandedEx,   setExpandedEx]   = useState({});
   const [copiedEx,     setCopiedEx]     = useState({});
   const [controlsWidth, setControlsWidth] = useState(300);
+  const [apPanelOpen,  setApPanelOpen]  = useState(false);
   const resizingRef = useRef(false);
   const startXRef   = useRef(0);
   const startWRef   = useRef(300);
+
+  // Appearance state: use lifted state if provided, otherwise local
+  const [localAp, setLocalAp] = useState({ ...APPEARANCE_DEFAULTS });
+  const ap    = appearanceProp ?? localAp;
+  const setAp = setAppearanceProp ?? setLocalAp;
+
+  const isApCustomised = ap.primaryColor !== APPEARANCE_DEFAULTS.primaryColor
+    || ap.fontFamily !== APPEARANCE_DEFAULTS.fontFamily
+    || ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius;
 
   const t = dark ? darkTokens : lightTokens;
   const { color: tierColor, bg: tierBg } = TIER_COLORS[manifest?.tier] ?? TIER_COLORS.atom;
@@ -2142,7 +2152,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
 
   return (
     <>
-      {!embedded && <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) + makeCatalogCSS(t) }} />}
+      {!embedded && <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(applyAppearance(t, ap), dark) + makeCatalogCSS(t) }} />}
 
       {/* ── Back bar (non-embedded) ── */}
       {!embedded && (
@@ -2192,6 +2202,120 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
               {copiedImport ? "✓ Copied!" : "Copy import"}
             </button>
           </div>
+        </div>
+
+        {/* ── Appearance customiser bar ── */}
+        <div style={{ background: t.surface, borderBottom: `1px solid ${t.border}` }}>
+          {/* Toggle row */}
+          <button
+            type="button"
+            onClick={() => setApPanelOpen(o => !o)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              width: "100%", padding: "10px 48px",
+              background: "transparent", border: "none", cursor: "pointer",
+              fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500,
+              color: isApCustomised ? t.primary : t.textMuted,
+              textAlign: "left",
+            }}
+          >
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: ap.primaryColor, border: `1.5px solid ${t.border}`, flexShrink: 0, display: "inline-block" }} />
+            <span>Appearance</span>
+            {isApCustomised && (
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", background: t.primary + "18", color: t.primary, padding: "1.5px 7px", borderRadius: 4 }}>customised</span>
+            )}
+            <span style={{ marginLeft: "auto", fontSize: 11, color: t.textDisabled }}>{apPanelOpen ? "▲" : "▼"}</span>
+          </button>
+
+          {/* Expanded controls */}
+          {apPanelOpen && (
+            <div style={{ padding: "0 48px 20px", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-end" }}>
+
+              {/* Primary colour */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>Primary colour</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="color"
+                    value={ap.primaryColor}
+                    onChange={e => setAp(prev => ({ ...prev, primaryColor: e.target.value }))}
+                    style={{ width: 32, height: 32, border: `1px solid ${t.border}`, borderRadius: 6, padding: 2, cursor: "pointer", background: t.inputBg }}
+                  />
+                  <input
+                    type="text"
+                    value={ap.primaryColor}
+                    onChange={e => { const v = e.target.value; if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setAp(prev => ({ ...prev, primaryColor: v })); }}
+                    onBlur={e => { if (!/^#[0-9a-fA-F]{6}$/.test(e.target.value)) setAp(prev => ({ ...prev, primaryColor: APPEARANCE_DEFAULTS.primaryColor })); }}
+                    style={{ width: 80, height: 32, fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 500, color: t.textMain, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "0 8px", outline: "none" }}
+                  />
+                </div>
+              </div>
+
+              {/* Font family */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>Font family</label>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {["Inter", "DM Sans", "Geist", "Sora", "Plus Jakarta Sans"].map(font => (
+                    <button
+                      key={font}
+                      type="button"
+                      onClick={() => setAp(prev => ({ ...prev, fontFamily: font }))}
+                      style={{
+                        fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 500,
+                        padding: "4px 10px", borderRadius: 6, border: `1px solid ${ap.fontFamily === font ? t.primary : t.border}`,
+                        background: ap.fontFamily === font ? t.primary + "12" : t.inputBg,
+                        color: ap.fontFamily === font ? t.primary : t.textMuted,
+                        cursor: "pointer", whiteSpace: "nowrap", transition: "all .1s",
+                      }}
+                    >{font}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Border radius */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                  Border radius — <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{ap.borderRadius}px</span>
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <input
+                    type="range"
+                    min={0} max={20} step={1}
+                    value={ap.borderRadius}
+                    onChange={e => setAp(prev => ({ ...prev, borderRadius: Number(e.target.value) }))}
+                    style={{ width: 160, accentColor: ap.primaryColor, cursor: "pointer" }}
+                  />
+                  <div style={{ display: "flex", gap: 3 }}>
+                    {[0, 4, 8, 14, 20].map(v => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setAp(prev => ({ ...prev, borderRadius: v }))}
+                        style={{
+                          width: 26, height: 26, border: `1px solid ${ap.borderRadius === v ? t.primary : t.border}`,
+                          background: ap.borderRadius === v ? t.primary + "12" : t.inputBg,
+                          color: ap.borderRadius === v ? t.primary : t.textMuted,
+                          borderRadius: `${v}px`, fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+                          fontWeight: 600, cursor: "pointer", transition: "all .1s",
+                        }}
+                      >{v}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset button */}
+              {isApCustomised && (
+                <button
+                  type="button"
+                  onClick={() => setAp({ ...APPEARANCE_DEFAULTS })}
+                  style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: t.textMuted, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 6, padding: "6px 14px", cursor: "pointer", transition: "all .12s", alignSelf: "flex-end" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = t.textMuted; e.currentTarget.style.color = t.textMain; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.textMuted; }}
+                >↺ Reset defaults</button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Scrollable sections ── */}
@@ -2580,8 +2704,10 @@ const makeCatalogCSS = (t) => `
 // ─────────────────────────────────────────────────────────────────
 // APPEARANCE CUSTOMISATION SECTION
 // ─────────────────────────────────────────────────────────────────
-function AppearanceSection({ t }) {
-  const [ap, setAp] = useState({ ...APPEARANCE_DEFAULTS });
+function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAppearanceProp }) {
+  const [localAp, setLocalAp] = useState({ ...APPEARANCE_DEFAULTS });
+  const ap = appearanceProp ?? localAp;
+  const setAp = setAppearanceProp ?? setLocalAp;
   const [copied, setCopied] = useState(false);
 
   const update = (key, val) => setAp(prev => ({ ...prev, [key]: val }));
@@ -3120,7 +3246,9 @@ export default function DeelDesignSystemIndex() {
   const [showDocs, setShowDocs]       = useState(false);
   const [demoSource, setDemoSource]   = useState("landing"); // "landing" | "docs"
   const [activeDomain, setActiveDomain] = useState("All");
+  const [appearance, setAppearance]   = useState({ ...APPEARANCE_DEFAULTS });
   const t = dark ? darkTokens : lightTokens;
+  const appliedT = applyAppearance(t, appearance);
   const wc = WAVE_COLORS(t);
 
   // ── Landing page ──
@@ -3148,7 +3276,7 @@ export default function DeelDesignSystemIndex() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(t, dark) + makeCatalogCSS(t) }} />
+      <style dangerouslySetInnerHTML={{ __html: makeCSS(t, dark) + makeLibraryCSS(appliedT, dark) + makeCatalogCSS(t) }} />
       <div className="shell">
 
         {/* ── Top bar ── */}
@@ -3199,6 +3327,8 @@ export default function DeelDesignSystemIndex() {
                 dark={dark}
                 setDark={setDark}
                 embedded
+                appearance={appearance}
+                setAppearance={setAppearance}
                 onBack={() => { setCurrentDemo(null); window.scrollTo(0, 0); }}
                 onSelectComponent={(n) => { setCurrentDemo(n); window.scrollTo(0, 0); }}
               />
@@ -3321,7 +3451,7 @@ export default function DeelDesignSystemIndex() {
         </div>
 
         {/* ── Appearance customisation ── */}
-        <AppearanceSection t={t} dark={dark} />
+        <AppearanceSection t={t} dark={dark} appearance={appearance} setAppearance={setAppearance} />
 
         {/* ── COMPONENT_MANIFEST code preview ── */}
         <div className="lib-manifest-section">
