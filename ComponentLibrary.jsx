@@ -123,11 +123,12 @@ export const COMPONENT_MANIFEST = [
       "White rounded card that wraps a group of related form fields. Renders a bold section title at the top and an optional ⓘ icon button for contextual help. Used for 'Team information', 'Employee personal details', 'Workplace information', etc. in the Add person flow.",
     composedOf: [],
     props: [
-      { name: "title",       type: "string",   required: true,  description: "Bold section heading shown at the top of the card." },
-      { name: "onInfoClick", type: "() => void", required: false, description: "When provided, renders a ⓘ icon button on the right; called when clicked." },
-      { name: "children",    type: "ReactNode", required: false, description: "Form fields or any content rendered inside the card body." },
+      { name: "title",          type: "string",    required: true,  description: "Bold section heading shown at the top of the card." },
+      { name: "showInfoButton", type: "boolean",   required: false, description: "When true, renders the ⓘ icon button on the right side of the title header." },
+      { name: "onInfoClick",    type: "() => void", required: false, description: "Called when the ⓘ button is clicked. Also enables the button if showInfoButton is not set." },
+      { name: "children",       type: "ReactNode", required: false, description: "Form fields or any content rendered inside the card body." },
     ],
-    usage: `<SectionCard title="Team information" onInfoClick={showHelp}>
+    usage: `<SectionCard title="Team information" showInfoButton onInfoClick={showHelp}>
   <DropdownSelect label="Entity" options={entities} />
   <DropdownSelect label="Group"  options={groups} />
 </SectionCard>`,
@@ -1111,12 +1112,13 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
  * @param {Function}    [onInfoClick] - Renders a ⓘ icon button when provided; called on click.
  * @param {ReactNode}   [children]  - Form fields or any content inside the card.
  */
-export function SectionCard({ title, onInfoClick, children }) {
+export function SectionCard({ title, showInfoButton, onInfoClick, children }) {
+  const showBtn = showInfoButton || !!onInfoClick;
   return (
     <div className="sc">
       <div className="sc-header">
         <span className="sc-title">{title}</span>
-        {onInfoClick && (
+        {showBtn && (
           <button
             type="button"
             className="sc-info-btn"

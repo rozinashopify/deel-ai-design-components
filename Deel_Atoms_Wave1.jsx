@@ -396,12 +396,13 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
   );
 }
 
-export function SectionCard({ title, onInfoClick, children }) {
+export function SectionCard({ title, showInfoButton, onInfoClick, children }) {
+  const showBtn = showInfoButton || !!onInfoClick;
   return (
     <div className="sc">
       <div className="sc-header">
         <span className="sc-title">{title}</span>
-        {onInfoClick && (
+        {showBtn && (
           <button
             type="button"
             className="sc-info-btn"

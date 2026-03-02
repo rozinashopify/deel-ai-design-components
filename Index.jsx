@@ -1291,6 +1291,10 @@ function generatePlaygroundCode(name, props) {
   const lines = entries.map(([k, v]) => {
     if (v === true) return `  ${k}`;
     if (typeof v === "string") return `  ${k}="${v}"`;
+    if (Array.isArray(v)) {
+      const inner = v.map(item => `    ${JSON.stringify(item)}`).join(",\n");
+      return `  ${k}={[\n${inner}\n  ]}`;
+    }
     return `  ${k}={${JSON.stringify(v)}}`;
   });
   return `<${name}\n${lines.join("\n")}\n/>`;
@@ -1390,6 +1394,7 @@ const COMPONENT_PLAYGROUND_CONFIG = {
       <div style={{ maxWidth: 520 }}>
         <SectionCard
           title={p.title}
+          showInfoButton={p.showInfoButton}
           onInfoClick={p.showInfoButton ? () => alert('Section info!') : undefined}
         >
           <TextInput label="Entity" placeholder="Select entity" />
@@ -1426,13 +1431,65 @@ const COMPONENT_PLAYGROUND_CONFIG = {
     render: (p) => <HiringGuideBanner {...p} flags={["🌍", "🇺🇸"]} />,
   },
   StepperRail: {
-    defaults: { currentStep: 2 },
-    render: (p) => <StepperRail {...p} steps={[
-      { label: "Personal details" },
-      { label: "Job details" },
-      { label: "Compensation" },
-      { label: "Benefits" },
-    ]} />,
+    defaults: {
+      currentStep: 2,
+      steps: [
+        { label: "Personal details" },
+        { label: "Job details" },
+        { label: "Compensation and dates" },
+        { label: "Benefits and extras" },
+      ],
+    },
+    render: (p) => <StepperRail currentStep={p.currentStep} steps={p.steps ?? []} />,
+    customControls: (liveProps, setProp, t) => {
+      const steps = liveProps.steps || [];
+      const inputBase = {
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+        padding: "5px 9px", borderRadius: 7,
+        border: `1px solid ${t.border}`,
+        background: t.inputBg || t.bg, color: t.textMain, outline: "none",
+        flex: 1, minWidth: 0,
+      };
+      return (
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 20px", borderBottom: `1px solid ${t.border}` }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: t.textMain, fontWeight: 500 }}>steps</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple }}>{"{ label: string }[]"}</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {steps.map((step, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 20px", borderBottom: `1px solid ${t.border}` }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.textDisabled, flexShrink: 0, width: 14, textAlign: "right" }}>{i + 1}</span>
+                <input
+                  type="text"
+                  value={step.label}
+                  onChange={e => {
+                    const next = steps.map((s, j) => j === i ? { ...s, label: e.target.value } : s);
+                    setProp("steps", next);
+                  }}
+                  style={inputBase}
+                />
+                <button
+                  type="button"
+                  onClick={() => steps.length > 1 && setProp("steps", steps.filter((_, j) => j !== i))}
+                  style={{ background: "none", border: "none", cursor: steps.length > 1 ? "pointer" : "default", color: steps.length > 1 ? t.textMuted : t.textDisabled, fontSize: 15, padding: "2px 4px", lineHeight: 1, flexShrink: 0 }}
+                  title="Remove step"
+                >×</button>
+              </div>
+            ))}
+            <div style={{ padding: "10px 20px" }}>
+              <button
+                type="button"
+                onClick={() => setProp("steps", [...steps, { label: `Step ${steps.length + 1}` }])}
+                style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: t.primary, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 7, padding: "5px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+              >+ Add step</button>
+            </div>
+          </div>
+        </>
+      );
+    },
   },
   ComplianceCheckCard: {
     defaults: { rule: "Job scope should be relevant to the job title.", status: "pass", detail: "" },
@@ -2446,7 +2503,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 14, borderBottom: `1px solid ${t.border}`, marginBottom: 20 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: "-0.025em", color: t.textMain, margin: 0 }}>Preview</h2>
-              {controllableProps.length > 0 && (
+              {(controllableProps.length > 0 || config.customControls) && (
                 <div style={{ display: "flex", gap: 2, background: t.surfaceHover, border: `1px solid ${t.border}`, borderRadius: 8, padding: 2 }}>
                   {["preview", "playground"].map(tab => (
                     <button key={tab} type="button" onClick={() => setActiveTab(tab)}
@@ -2484,17 +2541,22 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled }}>Controls</span>
                         <button type="button" onClick={() => setLiveProps({ ...config.defaults })} style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, color: t.textMuted, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>Reset</button>
                       </div>
-                      {controllableProps.length === 0 ? (
+                      {controllableProps.length === 0 && !config.customControls ? (
                         <div style={{ padding: "24px 20px", color: t.textMuted, fontFamily: "'JetBrains Mono', monospace", fontSize: 12, lineHeight: 1.7 }}>No configurable props.</div>
-                      ) : controllableProps.map(p => (
-                        <div key={p.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 20px", borderBottom: `1px solid ${t.border}`, gap: 16 }}>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-                            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: p.required ? t.error : t.textMain, fontWeight: 500 }}>{p.name}</span>
-                            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple }}>{p.type.length > 28 ? p.type.slice(0, 26) + "…" : p.type}</span>
-                          </div>
-                          {renderControlWidget(p.name, p.control, liveProps[p.name], setProp, t)}
-                        </div>
-                      ))}
+                      ) : (
+                        <>
+                          {controllableProps.map(p => (
+                            <div key={p.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 20px", borderBottom: `1px solid ${t.border}`, gap: 16 }}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: p.required ? t.error : t.textMain, fontWeight: 500 }}>{p.name}</span>
+                                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple }}>{p.type.length > 28 ? p.type.slice(0, 26) + "…" : p.type}</span>
+                              </div>
+                              {renderControlWidget(p.name, p.control, liveProps[p.name], setProp, t)}
+                            </div>
+                          ))}
+                          {config.customControls?.(liveProps, setProp, t)}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2932,7 +2994,7 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
         background: t.bg, display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         {ap.includeLogo
-          ? <span style={{ fontFamily: monoFont, fontSize: 12, fontWeight: 600, color: t.textMain, background: t.surface, border: `1px solid ${t.border}`, padding: "3px 8px", borderRadius: Math.max(0, br - 2) }}>deel</span>
+          ? <span style={{ fontFamily: monoFont, fontSize: 12, fontWeight: 600, color: t.textMain, background: t.surface, border: `1px solid ${t.border}`, padding: "3px 8px", borderRadius: Math.max(0, br - 2) }}>deel-kit</span>
           : <span />}
         {ap.includeCloseButton
           ? <button type="button" style={{ background: "none", border: "none", cursor: "pointer", color: t.textMuted, fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
@@ -3096,7 +3158,7 @@ function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
           boxShadow: t.shadow, position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: t.btnText, background: t.primary, padding: "5px 10px", borderRadius: 7 }}>deel</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: t.btnText, background: t.primary, padding: "5px 10px", borderRadius: 7 }}>deel-kit</span>
             <span style={{ color: t.textDisabled }}>/</span>
             <span style={{ fontSize: 14, fontWeight: 600, color: t.textMain, letterSpacing: "-0.02em" }}>Design System</span>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.07em", textTransform: "uppercase", color: t.purple, background: t.purpleBg, padding: "3px 9px", borderRadius: 6 }}>✦ LLM-ready</span>
@@ -3451,7 +3513,7 @@ export default function DeelDesignSystemIndex() {
               <BackArrow /> Home
             </button>
             <span className="lib-sep">/</span>
-            <span className="lib-logo">deel</span>
+            <span className="lib-logo">deel-kit</span>
             <span className="lib-sep">/</span>
             <span className="lib-title">Component Library</span>
             <span className="lib-badge">✦ LLM-ready</span>
