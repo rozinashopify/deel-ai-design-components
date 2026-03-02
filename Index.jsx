@@ -7,7 +7,7 @@ import {
   APPEARANCE_DEFAULTS,
   applyAppearance,
   // ── Atoms
-  TextInput, DropdownSelect, RadioOption,
+  TextInput, DropdownSelect, RadioOption, ToggleRow,
   // ── Molecules
   FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
   AutosaveWidget, HiringGuideBanner,
@@ -449,7 +449,7 @@ const WAVES = [
     name: "Atoms",
     subtitle: "Wave 1",
     file: "Deel_Atoms_Wave1.jsx",
-    tag: "5 components · 18 variants",
+    tag: "6 components · 19 variants",
     tagKey: "atoms",
     desc: "Foundation primitives — every higher-level component is assembled from these. All support light/dark mode, controlled & uncontrolled usage, disabled states, and validation.",
     ai: false,
@@ -459,6 +459,7 @@ const WAVES = [
       { icon: "⬤",  name: "StatusBadge",    desc: "Compact pill — mandatory, new, completed, failed" },
       { icon: "◯",  name: "RadioOption",    desc: "Full-width tappable row with optional sublabel" },
       { icon: "▣",  name: "Buttons",        desc: "Primary / Secondary / Text — 3 sizes, loading, icons" },
+      { icon: "◑",  name: "ToggleRow",      desc: "Bordered row with iOS-style toggle for binary settings" },
     ],
   },
   {
@@ -619,6 +620,24 @@ function MiniButtons({ t }) {
       <button type="button" style={{ ...base, background:t.primary, color:t.btnText, border:`1px solid ${t.primary}` }}>Continue</button>
       <button type="button" style={{ ...base, background:"transparent", color:t.textMain, border:`1px solid ${t.border}` }}>Cancel</button>
       <button type="button" style={{ ...base, background:"transparent", color:t.textMuted, border:"none", padding:"7px 6px", textDecoration:"underline", fontSize:12 }}>Learn more</button>
+    </div>
+  );
+}
+
+function MiniToggleRow({ t }) {
+  const [on, setOn] = useState(false);
+  return (
+    <div
+      onClick={() => setOn(v => !v)}
+      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"10px 12px", border:`1px solid ${on ? t.textMuted : t.border}`, borderRadius:8, background:t.surface, cursor:"pointer", userSelect:"none", width:"100%" }}
+    >
+      <div>
+        <div style={{ fontFamily:"Inter,sans-serif", fontSize:12.5, fontWeight:500, color:t.textMain }}>I don&rsquo;t know the worker&rsquo;s personal details yet</div>
+        <div style={{ fontFamily:"Inter,sans-serif", fontSize:11, color:t.textMuted, marginTop:2 }}>Get a cost estimate without providing worker details</div>
+      </div>
+      <div style={{ width:32, height:18, borderRadius:999, background: on ? t.primary : t.border, position:"relative", flexShrink:0, transition:"background .18s" }}>
+        <div style={{ position:"absolute", top:2, left: on ? 14 : 2, width:14, height:14, borderRadius:"50%", background:"#fff", boxShadow:"0 1px 3px rgba(0,0,0,0.25)", transition:"left .18s" }} />
+      </div>
     </div>
   );
 }
@@ -900,6 +919,7 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"StatusBadge",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniStatusBadge t={t} /> },
   { name:"RadioOption",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniRadioOption t={t} /> },
   { name:"Buttons",                wave:"Wave 1", waveKey:"atoms",  composed:"Primary · Secondary · Text",                      preview:<MiniButtons t={t} /> },
+  { name:"ToggleRow",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniToggleRow t={t} /> },
   { name:"FormFieldGroup",         wave:"Wave 2", waveKey:"mol",    composed:"TextInput × n + DropdownSelect × n",              preview:<MiniFormFieldGroup t={t} /> },
   { name:"StepperRail",            wave:"Wave 2", waveKey:"mol",    composed:"StepIndicator + connector + StatusBadge",         preview:<MiniStepperRail t={t} /> },
   { name:"AutosaveWidget",         wave:"Wave 2", waveKey:"mol",    composed:"InfoIcon + status dot + SecondaryButton",         preview:<MiniAutosave t={t} /> },
@@ -980,6 +1000,24 @@ const COMPONENT_DEMOS = {
       <RadioOption label="Full-time"  sublabel="40 hrs/week · standard contract" selected />
       <RadioOption label="Part-time"  sublabel="Custom hours · flexible contract" />
       <RadioOption label="Contractor" sublabel="1099 / B2B" disabled />
+    </div>
+  ),
+  ToggleRow: (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 480 }}>
+      <ToggleRow
+        label="I don't know the worker's personal details yet"
+        description="Get a cost estimate without providing worker details"
+      />
+      <ToggleRow
+        label="Send onboarding invitation immediately"
+        description="Worker will receive an email to complete their profile"
+        checked
+      />
+      <ToggleRow
+        label="Override compliance warnings"
+        description="Disabled — only available to contract admins"
+        disabled
+      />
     </div>
   ),
   FormFieldGroup: (
@@ -1294,6 +1332,15 @@ const COMPONENT_PLAYGROUND_CONFIG = {
   RadioOption: {
     defaults: { label: "Full-time", sublabel: "40 hrs/week · standard contract", selected: false, disabled: false },
     render: (p) => <RadioOption {...p} />,
+  },
+  ToggleRow: {
+    defaults: {
+      label:       "I don't know the worker's personal details yet",
+      description: "Get a cost estimate without providing worker details",
+      checked:     false,
+      disabled:    false,
+    },
+    render: (p) => <div style={{ maxWidth: 520 }}><ToggleRow {...p} /></div>,
   },
   FormFieldGroup: {
     defaults: { title: "Personal details", description: "Worker's basic information", columns: 2 },

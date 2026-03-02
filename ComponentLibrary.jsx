@@ -96,6 +96,26 @@ export const COMPONENT_MANIFEST = [
     usage: '<RadioOption label="Full-time" selected={empType === "full"} onClick={() => setEmpType("full")} />',
   },
   {
+    name: "ToggleRow",
+    domain: "Forms",
+    tier: "atom",
+    description:
+      "Full-width bordered row with an iOS-style toggle switch on the right. Used for binary setting fields — e.g. 'I don't know the worker's personal details yet'. Supports controlled and uncontrolled modes, a description line, and a disabled state.",
+    composedOf: [],
+    props: [
+      { name: "label",       type: "string",   required: true,  description: "Primary label for the toggle row." },
+      { name: "description", type: "string",   required: false, description: "Secondary help text shown below the label." },
+      { name: "checked",     type: "boolean",  required: false, description: "Controlled checked state." },
+      { name: "disabled",    type: "boolean",  required: false, description: "Prevents interaction and mutes the appearance." },
+      { name: "onChange",    type: "(checked: boolean) => void", required: false, description: "Called when the toggle is switched." },
+    ],
+    usage: `<ToggleRow
+  label="I don't know the worker's personal details yet"
+  description="Get a cost estimate without providing worker details"
+  onChange={setSkipDetails}
+/>`,
+  },
+  {
     name: "FormFieldGroup",
     domain: "Forms",
     tier: "molecule",
@@ -664,6 +684,31 @@ export const makeLibraryCSS = (t, isDark) => {
   .rsub { font-size: 11.5px; color: ${t.textMuted}; margin-top: 1px; }
   .rstack { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 
+  /* ── ToggleRow ── */
+  .trow {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 12px 14px; border: 1px solid ${t.border}; border-radius: ${br + 2}px;
+    background: ${t.surface}; cursor: pointer; user-select: none;
+  }
+  .trow:hover:not(.trow-disabled) { border-color: ${t.textMuted}; }
+  .trow-disabled { opacity: .45; cursor: not-allowed; }
+  .trow-text { flex: 1; min-width: 0; }
+  .trow-label { font-size: 13.5px; font-weight: 500; color: ${t.textMain}; line-height: 1.4; }
+  .trow-desc  { font-size: 12px; color: ${t.textMuted}; margin-top: 2px; line-height: 1.4; }
+  .trow-track {
+    width: 36px; height: 20px; border-radius: 999px; flex-shrink: 0;
+    position: relative; transition: background .18s;
+  }
+  .trow-track.on  { background: ${t.primary}; }
+  .trow-track.off { background: ${t.border}; }
+  .trow-thumb {
+    position: absolute; top: 2px; width: 16px; height: 16px;
+    border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: left .18s;
+  }
+  .trow-track.on  .trow-thumb { left: 18px; }
+  .trow-track.off .trow-thumb { left: 2px; }
+
   /* ── FormFieldGroup ── */
   .ffg { display: flex; flex-direction: column; gap: 14px; }
   .ffg-title { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; margin-bottom: 2px; }
@@ -991,6 +1036,45 @@ export function RadioOption({ label, sublabel, selected, disabled, onClick }) {
         {sublabel && <div className="rsub">{sublabel}</div>}
       </div>
     </button>
+  );
+}
+
+/**
+ * Full-width bordered row with an iOS-style toggle switch on the right.
+ * Supports controlled (checked + onChange) and uncontrolled usage.
+ *
+ * @param {string}   label         - Primary label text.
+ * @param {string}   [description] - Secondary help text below the label.
+ * @param {boolean}  [checked]     - Controlled checked state.
+ * @param {boolean}  [disabled]    - Prevents interaction and mutes appearance.
+ * @param {function} [onChange]    - (checked: boolean) => void
+ */
+export function ToggleRow({ label, description, checked, disabled, onChange }) {
+  const [internal, setInternal] = useState(checked ?? false);
+  const isOn = checked !== undefined ? checked : internal;
+  const toggle = () => {
+    if (disabled) return;
+    const next = !isOn;
+    if (checked === undefined) setInternal(next);
+    onChange?.(next);
+  };
+  return (
+    <div
+      className={`trow${disabled ? " trow-disabled" : ""}`}
+      role="switch"
+      aria-checked={isOn}
+      tabIndex={disabled ? -1 : 0}
+      onClick={toggle}
+      onKeyDown={e => (e.key === " " || e.key === "Enter") && toggle()}
+    >
+      <div className="trow-text">
+        <div className="trow-label">{label}</div>
+        {description && <div className="trow-desc">{description}</div>}
+      </div>
+      <div className={`trow-track ${isOn ? "on" : "off"}`}>
+        <div className="trow-thumb" />
+      </div>
+    </div>
   );
 }
 

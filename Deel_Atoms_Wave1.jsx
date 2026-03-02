@@ -228,6 +228,31 @@ const css = (t, isDark) => `
   .rsub { font-size: 11.5px; color: ${t.textMuted}; margin-top: 1px; }
   .rstack { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 
+  /* ToggleRow */
+  .trow {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 12px 14px; border: 1px solid ${t.border}; border-radius: 8px;
+    background: ${t.surface}; cursor: pointer; user-select: none;
+  }
+  .trow:hover:not(.trow-disabled) { border-color: ${t.textMuted}; }
+  .trow-disabled { opacity: 0.45; cursor: not-allowed; }
+  .trow-text { flex: 1; min-width: 0; }
+  .trow-label { font-size: 13.5px; font-weight: 500; color: ${t.textMain}; line-height: 1.4; }
+  .trow-desc  { font-size: 12px; color: ${t.textMuted}; margin-top: 2px; line-height: 1.4; }
+  .trow-track {
+    width: 36px; height: 20px; border-radius: 999px; flex-shrink: 0;
+    position: relative; transition: background 0.18s;
+  }
+  .trow-track.on  { background: ${t.primary}; }
+  .trow-track.off { background: ${t.border}; }
+  .trow-thumb {
+    position: absolute; top: 2px; width: 16px; height: 16px;
+    border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: left 0.18s;
+  }
+  .trow-track.on  .trow-thumb { left: 18px; }
+  .trow-track.off .trow-thumb { left: 2px; }
+
   /* Buttons */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -334,6 +359,35 @@ export function RadioOption({ label, sublabel, selected, disabled, onClick }) {
   );
 }
 
+export function ToggleRow({ label, description, checked, disabled, onChange }) {
+  const [internal, setInternal] = useState(checked ?? false);
+  const isOn = checked !== undefined ? checked : internal;
+  const toggle = () => {
+    if (disabled) return;
+    const next = !isOn;
+    if (checked === undefined) setInternal(next);
+    onChange?.(next);
+  };
+  return (
+    <div
+      className={`trow${disabled ? " trow-disabled" : ""}`}
+      role="switch"
+      aria-checked={isOn}
+      tabIndex={disabled ? -1 : 0}
+      onClick={toggle}
+      onKeyDown={e => (e.key === " " || e.key === "Enter") && toggle()}
+    >
+      <div className="trow-text">
+        <div className="trow-label">{label}</div>
+        {description && <div className="trow-desc">{description}</div>}
+      </div>
+      <div className={`trow-track ${isOn ? "on" : "off"}`}>
+        <div className="trow-thumb" />
+      </div>
+    </div>
+  );
+}
+
 export function PrimaryButton({ label, disabled, loading, size, icon }) {
   return (
     <button type="button"
@@ -434,7 +488,7 @@ export default function DeelAtomsPreview() {
             <span className="pg-title">Atoms — Wave 1</span>
           </div>
           <div className="hdr-r">
-            <span className="count-tag">5 components · 18 variants</span>
+            <span className="count-tag">6 components · 19 variants</span>
             <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">
               {dark ? <Moon /> : <Sun />}
               {dark ? "Dark" : "Light"}
@@ -638,6 +692,44 @@ export default function DeelAtomsPreview() {
               <SecondaryButton label="Medium" />
               <SecondaryButton label="Large" size="lg" />
             </div>
+          </Card>
+        </Sec>
+
+        {/* 06 ToggleRow */}
+        <Sec n={6} name="ToggleRow"
+          desc="Full-width bordered row with an iOS-style toggle switch. Used for binary settings like 'I don't know the worker's personal details yet' in the Add person flow."
+          props={[
+            ["label",      "string",   true,  "Primary label text"],
+            ["description","string",   false, "Secondary help text below the label"],
+            ["checked",    "boolean",  false, "Controlled checked state"],
+            ["disabled",   "boolean",  false, "Prevents interaction, mutes appearance"],
+            ["onChange",   "function", false, "(checked: boolean) => void"],
+          ]}>
+          <Card label="Off (default)" wide>
+            <ToggleRow label="I don't know the worker's personal details yet"
+              description="Get a cost estimate without providing worker details" />
+          </Card>
+          <Card label="On" wide>
+            <ToggleRow label="I don't know the worker's personal details yet"
+              description="Get a cost estimate without providing worker details"
+              checked />
+          </Card>
+          <Card label="With description only" wide>
+            <ToggleRow label="Send onboarding invitation immediately"
+              description="Worker will receive an email to complete their profile"
+              checked />
+          </Card>
+          <Card label="Disabled" wide>
+            <ToggleRow label="Override compliance warnings"
+              description="Only available to contract admins"
+              disabled />
+          </Card>
+          <Card label="Label only (no description)" wide>
+            <ToggleRow label="Enable custom notice period" />
+          </Card>
+          <Card label="Interactive — click to toggle" full>
+            <ToggleRow label="I don't know the worker's personal details yet"
+              description="Get a cost estimate without providing worker details" />
           </Card>
         </Sec>
 
