@@ -34,7 +34,7 @@
  *  atom  →  molecule  →  ai-molecule  →  block  →  flow
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENT MANIFEST
@@ -57,6 +57,8 @@ export const COMPONENT_MANIFEST = [
       { name: "disabled",    type: "boolean",  required: false, description: "Prevents interaction; mutes appearance." },
       { name: "error",       type: "boolean",  required: false, description: "Red border + error background tint." },
       { name: "helperText",  type: "string",   required: false, description: "Hint or error message shown below the input." },
+      { name: "prefix",      type: "string",   required: false, description: "Leading adornment inside the input border, e.g. '$' for salary fields." },
+      { name: "suffix",      type: "string",   required: false, description: "Trailing adornment inside the input border, e.g. 'USD' or 'Hours'." },
       { name: "onChange",    type: "(value: string) => void", required: false, description: "Called on every keystroke." },
     ],
     usage: '<TextInput label="Worker ID" placeholder="Enter worker ID" required />',
@@ -133,6 +135,28 @@ export const COMPONENT_MANIFEST = [
   <DropdownSelect label="Entity" options={entities} />
   <DropdownSelect label="Group"  options={groups} />
 </SectionCard>`,
+  },
+  {
+    name: "SegmentedControl",
+    domain: "Forms",
+    tier: "atom",
+    description:
+      "Adjacent pill-buttons for selecting one option from a small, mutually exclusive set. Used for Annual/Hourly salary period, Annual/Monthly market-rate view, and any binary or ternary toggle that lives inline with a heading. Supports controlled and uncontrolled modes, a small size variant, full-width stretch, and disabled state.",
+    composedOf: [],
+    props: [
+      { name: "options",   type: "{ value: string; label: string }[]", required: true,  description: "Two or more option objects." },
+      { name: "value",        type: "string",    required: false, description: "Controlled selected value. Pair with onChange." },
+      { name: "defaultValue", type: "string",    required: false, description: "Initial value for uncontrolled mode (defaults to first option)." },
+      { name: "onChange",     type: "(value: string) => void", required: false, description: "Called when the active segment changes." },
+      { name: "size",      type: "'sm' | 'md'", required: false, description: "'sm' shrinks padding for inline use next to headings (default: 'md')." },
+      { name: "fullWidth", type: "boolean",   required: false, description: "Stretches the control to fill its container width." },
+      { name: "disabled",  type: "boolean",   required: false, description: "Prevents interaction on all segments." },
+    ],
+    usage: `<SegmentedControl
+  options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]}
+  value={period}
+  onChange={setPeriod}
+/>`,
   },
   {
     name: "FormFieldGroup",
@@ -748,6 +772,32 @@ export const makeLibraryCSS = (t, isDark) => {
   .fhint { font-size: 11.5px; color: ${t.textMuted}; margin-top: 1px; }
   .fhint.err { color: ${t.error}; }
 
+  /* ── TextInput adornments (prefix / suffix) ── */
+  .fi-adorn {
+    display: flex; align-items: stretch;
+    border: 1px solid ${t.border}; border-radius: ${br}px;
+    overflow: hidden; background: ${t.inputBg};
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .fi-adorn:focus-within { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
+  .fi-adorn.err { border-color: ${t.error}; background: ${t.errorBg}; }
+  .fi-adorn.disabled { background: ${t.surfaceHover}; }
+  .fi-adorn input {
+    border: none; box-shadow: none; background: transparent;
+    border-radius: 0; flex: 1; min-width: 0;
+  }
+  .fi-adorn input:focus { border-color: transparent; box-shadow: none; }
+  .fi-adorn input:disabled { background: transparent; }
+  .fi-pre, .fi-suf {
+    display: flex; align-items: center; flex-shrink: 0;
+    padding: 0 10px; font-size: 13.5px; font-family: ${ff};
+    color: ${t.textMuted}; background: ${t.surfaceHover};
+    white-space: nowrap; user-select: none;
+  }
+  .fi-pre { border-right: 1px solid ${t.border}; }
+  .fi-suf { border-left: 1px solid ${t.border}; }
+  .fi-adorn.err .fi-pre, .fi-adorn.err .fi-suf { border-color: ${t.errorBorder}; }
+
   /* ── DropdownSelect ── */
   .selw { position: relative; }
   .selw select {
@@ -809,6 +859,32 @@ export const makeLibraryCSS = (t, isDark) => {
   }
   .trow-track.on  .trow-thumb { left: 18px; }
   .trow-track.off .trow-thumb { left: 2px; }
+
+  /* ── SegmentedControl ── */
+  .seg {
+    display: inline-flex; align-items: center; position: relative;
+    border: 1px solid ${t.border}; border-radius: ${br + 2}px;
+    padding: 3px; background: ${t.surface}; gap: 2px;
+  }
+  .seg.full { display: flex; width: 100%; }
+  .seg-pill {
+    position: absolute; border-radius: ${br}px;
+    background: ${t.primary}; pointer-events: none; z-index: 0;
+  }
+  .seg-pill-disabled { background: ${t.textDisabled}; }
+  .seg-opt {
+    position: relative; z-index: 1;
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 7px 16px; border-radius: ${br}px;
+    font-family: ${ff}; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; white-space: nowrap;
+    color: ${t.textMuted}; background: transparent;
+    transition: color .15s;
+  }
+  .seg-opt.on { color: ${t.btnText}; }
+  .seg-opt:hover:not(.on):not(:disabled) { background: ${t.surfaceHover}; color: ${t.textMain}; }
+  .seg-opt:disabled { opacity: .4; cursor: not-allowed; }
+  .seg.sm .seg-opt { padding: 5px 12px; font-size: 12px; }
 
   /* ── SectionCard ── */
   .sc { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 6}px; padding: 20px 20px 24px; box-shadow: ${t.shadow}; display: flex; flex-direction: column; gap: 16px; }
@@ -1095,9 +1171,19 @@ const Disk       = () => <svg width="11" height="11" viewBox="0 0 11 11" fill="n
  * @param {string}   [helperText]  - Hint or error message below the input.
  * @param {function} [onChange]    - Called on every keystroke with the new value.
  */
-export function TextInput({ label, placeholder, value, required, disabled, error, helperText, onChange }) {
+export function TextInput({ label, placeholder, value, required, disabled, error, helperText, onChange, prefix, suffix }) {
   const [v, setV] = useState(value ?? "");
   const handleChange = e => { setV(e.target.value); onChange?.(e.target.value); };
+  const hasAdornment = prefix || suffix;
+  const inputEl = (
+    <input
+      className={!hasAdornment && error ? "err" : ""}
+      placeholder={placeholder}
+      value={v}
+      disabled={disabled}
+      onChange={handleChange}
+    />
+  );
   return (
     <div className="fi">
       {label && (
@@ -1105,13 +1191,13 @@ export function TextInput({ label, placeholder, value, required, disabled, error
           {label}{required && <span className="req">*</span>}
         </label>
       )}
-      <input
-        className={error ? "err" : ""}
-        placeholder={placeholder}
-        value={v}
-        disabled={disabled}
-        onChange={handleChange}
-      />
+      {hasAdornment ? (
+        <div className={`fi-adorn${error ? " err" : ""}${disabled ? " disabled" : ""}`}>
+          {prefix && <span className="fi-pre">{prefix}</span>}
+          {inputEl}
+          {suffix && <span className="fi-suf">{suffix}</span>}
+        </div>
+      ) : inputEl}
       {helperText && <span className={`fhint${error ? " err" : ""}`}>{helperText}</span>}
     </div>
   );
@@ -1246,6 +1332,73 @@ export function SectionCard({ title, showInfoButton, onInfoClick, bodyGap, child
       </div>
       )}
       {children && <div className="sc-body" style={bodyGap !== undefined ? { gap: bodyGap } : undefined}>{children}</div>}
+    </div>
+  );
+}
+
+/**
+ * Adjacent pill-buttons for selecting one option from a small, mutually exclusive set.
+ * Used for Annual/Hourly salary period, Annual/Monthly market-rate view, and any
+ * binary or ternary toggle that lives inline with a heading.
+ *
+ * @param {{ value: string; label: string }[]} options  - Two or more option objects.
+ * @param {string}   [value]     - Controlled selected value.
+ * @param {function} [onChange]  - (value: string) => void
+ * @param {'sm'|'md'} [size]    - 'sm' shrinks padding (default: 'md').
+ * @param {boolean}  [fullWidth] - Stretches to fill its container.
+ * @param {boolean}  [disabled]  - Prevents interaction on all segments.
+ */
+export function SegmentedControl({ options = [], value, defaultValue, onChange, size, fullWidth, disabled }) {
+  const [internal, setInternal] = useState(defaultValue ?? options[0]?.value ?? "");
+  const active = value !== undefined ? value : internal;
+  const select = (v) => {
+    if (disabled) return;
+    if (value === undefined) setInternal(v);
+    onChange?.(v);
+  };
+
+  const btnRefs = useRef([]);
+  const hasMounted = useRef(false);
+  const [pill, setPill] = useState(null);
+
+  useLayoutEffect(() => {
+    const idx = options.findIndex(o => o.value === active);
+    const btn = btnRefs.current[idx];
+    if (!btn) return;
+    setPill({
+      left: btn.offsetLeft, top: btn.offsetTop,
+      width: btn.offsetWidth, height: btn.offsetHeight,
+      animated: hasMounted.current,
+    });
+    hasMounted.current = true;
+  }, [active, options]);
+
+  return (
+    <div className={`seg${size === "sm" ? " sm" : ""}${fullWidth ? " full" : ""}`} role="group">
+      {pill && (
+        <div
+          className={`seg-pill${disabled ? " seg-pill-disabled" : ""}`}
+          style={{
+            left: pill.left, top: pill.top,
+            width: pill.width, height: pill.height,
+            transition: pill.animated
+              ? "left .2s cubic-bezier(.4,0,.2,1), width .2s cubic-bezier(.4,0,.2,1)"
+              : "none",
+          }}
+        />
+      )}
+      {options.map((opt, i) => (
+        <button
+          key={opt.value}
+          ref={el => { btnRefs.current[i] = el; }}
+          type="button"
+          className={`seg-opt${active === opt.value ? " on" : ""}`}
+          disabled={disabled}
+          onClick={() => select(opt.value)}
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   );
 }

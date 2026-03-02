@@ -8,7 +8,7 @@ import {
   APPEARANCE_DEFAULTS,
   applyAppearance,
   // ── Atoms
-  TextInput, DropdownSelect, RadioOption, ToggleRow, SectionCard,
+  TextInput, DropdownSelect, RadioOption, ToggleRow, SectionCard, SegmentedControl,
   // ── Molecules
   FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
   AutosaveWidget, ContextBanner, HiringGuideBanner,
@@ -472,7 +472,7 @@ const WAVES = [
     name: "Atoms",
     subtitle: "Wave 1",
     file: "Deel_Atoms_Wave1.jsx",
-    tag: "7 components · 20 variants",
+    tag: "8 components · 24 variants",
     tagKey: "atoms",
     desc: "Foundation primitives — every higher-level component is assembled from these. All support light/dark mode, controlled & uncontrolled usage, disabled states, and validation.",
     ai: false,
@@ -482,8 +482,9 @@ const WAVES = [
       { icon: "⬤",  name: "StatusBadge",    desc: "Compact pill — mandatory, new, completed, failed" },
       { icon: "◯",  name: "RadioOption",    desc: "Full-width tappable row with optional sublabel" },
       { icon: "▣",  name: "Buttons",        desc: "Primary / Secondary / Text — 3 sizes, loading, icons" },
-      { icon: "◑",  name: "ToggleRow",      desc: "Bordered row with iOS-style toggle for binary settings" },
-      { icon: "▭",  name: "SectionCard",   desc: "White rounded card with bold title + optional ⓘ button for form sections" },
+      { icon: "◑",  name: "ToggleRow",         desc: "Bordered row with iOS-style toggle for binary settings" },
+      { icon: "▭",  name: "SectionCard",        desc: "White rounded card with bold title + optional ⓘ button for form sections" },
+      { icon: "⊟",  name: "SegmentedControl",   desc: "Adjacent pill-buttons for Annual/Hourly, Annual/Monthly and other small exclusive selections" },
     ],
   },
   {
@@ -683,6 +684,34 @@ function MiniSectionCard({ t }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ height: 28, borderRadius: 7, background: t.border, opacity: 0.5 }} />
         <div style={{ height: 28, borderRadius: 7, background: t.border, opacity: 0.5 }} />
+      </div>
+    </div>
+  );
+}
+
+function MiniSegmentedControl({ t }) {
+  const [v, setV] = useState("annual");
+  const opts = [{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
+      <div style={{ display: "inline-flex", border: `1px solid ${t.border}`, borderRadius: 10, padding: 3, background: t.surface, gap: 2 }}>
+        {opts.map(o => (
+          <button key={o.value} type="button" onClick={() => setV(o.value)}
+            style={{ flex: 1, padding: "6px 14px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: "Inter,sans-serif", fontSize: 12.5, fontWeight: 500, background: v === o.value ? t.primary : "transparent", color: v === o.value ? t.btnText : t.textMuted, transition: "background .12s, color .12s" }}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontFamily: "Inter,sans-serif", fontSize: 12, fontWeight: 600, color: t.textMain }}>Market rate insights</span>
+        <div style={{ display: "inline-flex", border: `1px solid ${t.border}`, borderRadius: 8, padding: 2, background: t.surface, gap: 2 }}>
+          {[{ value: "annual", label: "Annual" }, { value: "monthly", label: "Monthly" }].map(o => (
+            <button key={o.value} type="button"
+              style={{ padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: "Inter,sans-serif", fontSize: 11, fontWeight: 500, background: o.value === "annual" ? t.primary : "transparent", color: o.value === "annual" ? t.btnText : t.textMuted }}>
+              {o.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -1005,6 +1034,7 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"Buttons",                wave:"Wave 1", waveKey:"atoms",  composed:"Primary · Secondary · Text",                      preview:<MiniButtons t={t} /> },
   { name:"ToggleRow",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniToggleRow t={t} /> },
   { name:"SectionCard",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniSectionCard t={t} /> },
+  { name:"SegmentedControl",       wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniSegmentedControl t={t} /> },
   { name:"FormFieldGroup",         wave:"Wave 2", waveKey:"mol",    composed:"TextInput × n + DropdownSelect × n",              preview:<MiniFormFieldGroup t={t} /> },
   { name:"StepperRail",            wave:"Wave 2", waveKey:"mol",    composed:"StepIndicator + connector + StatusBadge",         preview:<MiniStepperRail t={t} /> },
   { name:"AutosaveWidget",         wave:"Wave 2", waveKey:"mol",    composed:"InfoIcon + status dot + SecondaryButton",         preview:<MiniAutosave t={t} /> },
@@ -1058,6 +1088,8 @@ const COMPONENT_DEMOS = {
     <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 400 }}>
       <TextInput label="Worker ID" placeholder="e.g. EMP-2024-260" required />
       <TextInput label="Email address" placeholder="worker@company.com" helperText="Used for contract delivery" />
+      <TextInput label="Gross annual salary" placeholder="0.00" prefix="$" suffix="USD" />
+      <TextInput label="Work hours per week" placeholder="40" suffix="Hours" />
       <TextInput label="Validation error" value="bad input" error helperText="This field contains an invalid value" />
       <TextInput label="Disabled field" value="Read only" disabled />
     </div>
@@ -1120,6 +1152,33 @@ const COMPONENT_DEMOS = {
         <TextInput label="Last name" required placeholder="Johnson" />
       </SectionCard>
       <SectionCard title="No children (title only)" />
+    </div>
+  ),
+  SegmentedControl: (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 480 }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Default — salary period</div>
+        <SegmentedControl options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]} />
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Small — inline with heading</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Market rate insights</span>
+          <SegmentedControl size="sm" options={[{ value: "annual", label: "Annual" }, { value: "monthly", label: "Monthly" }]} />
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Three options</div>
+        <SegmentedControl options={[{ value: "w", label: "Weekly" }, { value: "m", label: "Monthly" }, { value: "a", label: "Annual" }]} defaultValue="m" />
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Full width</div>
+        <SegmentedControl fullWidth options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]} />
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 10 }}>Disabled</div>
+        <SegmentedControl disabled options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]} />
+      </div>
     </div>
   ),
   FormFieldGroup: (
@@ -1428,8 +1487,8 @@ function syntaxHighlightCode(code, t) {
 // ─────────────────────────────────────────────────────────────────
 const COMPONENT_PLAYGROUND_CONFIG = {
   TextInput: {
-    defaults: { label: "Worker ID", placeholder: "e.g. EMP-2024-260", required: false, disabled: false, error: false, helperText: "" },
-    render: (p) => <TextInput {...p} />,
+    defaults: { label: "Worker ID", placeholder: "e.g. EMP-2024-260", required: false, disabled: false, error: false, helperText: "", prefix: "", suffix: "" },
+    render: (p) => <TextInput {...p} prefix={p.prefix || undefined} suffix={p.suffix || undefined} />,
   },
   DropdownSelect: {
     defaults: { label: "Job title", disabled: false, optional: false, placeholder: "Select job title…", helperText: "" },
@@ -1468,6 +1527,16 @@ const COMPONENT_PLAYGROUND_CONFIG = {
           <TextInput label="Group" placeholder="Select group" />
         </SectionCard>
       </div>
+    ),
+  },
+  SegmentedControl: {
+    defaults: { fullWidth: false, disabled: false },
+    render: (p) => (
+      <SegmentedControl
+        options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]}
+        fullWidth={p.fullWidth}
+        disabled={p.disabled}
+      />
     ),
   },
   FormFieldGroup: {
@@ -1644,6 +1713,30 @@ export function Demo() {
           <TextInput label="Required field" required helperText="This field is mandatory" />
           <TextInput label="Error state" value="invalid@" error helperText="Enter a valid email address" />
           <TextInput label="Disabled" value="Read-only value" disabled />
+        </div>
+      ),
+    },
+    {
+      id: "adornments", title: "Prefix & suffix",
+      description: "Leading and trailing adornments for currency and unit fields.",
+      code: `import { TextInput } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 380 }}>
+      <TextInput label="Gross annual salary" placeholder="0.00" prefix="$" suffix="USD" required />
+      <TextInput label="Work hours per week" placeholder="40" suffix="Hours" />
+      <TextInput label="Salary (error)" placeholder="0.00" prefix="$" suffix="USD"
+        value="abc" error helperText="Please enter a valid number" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380, display: "flex", flexDirection: "column", gap: 16 }}>
+          <TextInput label="Gross annual salary" placeholder="0.00" prefix="$" suffix="USD" required />
+          <TextInput label="Work hours per week" placeholder="40" suffix="Hours" />
+          <TextInput label="Salary (error)" placeholder="0.00" prefix="$" suffix="USD"
+            value="abc" error helperText="Please enter a valid number" />
         </div>
       ),
     },

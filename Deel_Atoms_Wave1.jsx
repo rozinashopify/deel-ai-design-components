@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────
 const lightTokens = {
@@ -174,6 +174,32 @@ const css = (t, isDark) => `
   .fhint { font-size: 11.5px; color: ${t.textMuted}; margin-top: 1px; }
   .fhint.err { color: ${t.error}; }
 
+  /* TextInput adornments */
+  .fi-adorn {
+    display: flex; align-items: stretch;
+    border: 1px solid ${t.border}; border-radius: 6px;
+    overflow: hidden; background: ${t.inputBg};
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .fi-adorn:focus-within { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
+  .fi-adorn.err { border-color: ${t.error}; background: ${t.errorBg}; }
+  .fi-adorn.disabled { background: ${t.surfaceHover}; }
+  .fi-adorn input {
+    border: none; box-shadow: none; background: transparent;
+    border-radius: 0; flex: 1; min-width: 0;
+  }
+  .fi-adorn input:focus { border-color: transparent; box-shadow: none; }
+  .fi-adorn input:disabled { background: transparent; }
+  .fi-pre, .fi-suf {
+    display: flex; align-items: center; flex-shrink: 0;
+    padding: 0 10px; font-size: 13.5px; font-family: 'Inter', sans-serif;
+    color: ${t.textMuted}; background: ${t.surfaceHover};
+    white-space: nowrap; user-select: none;
+  }
+  .fi-pre { border-right: 1px solid ${t.border}; }
+  .fi-suf { border-left: 1px solid ${t.border}; }
+  .fi-adorn.err .fi-pre, .fi-adorn.err .fi-suf { border-color: ${t.error}; }
+
   /* DropdownSelect */
   .selw { position: relative; }
   .selw select {
@@ -227,6 +253,32 @@ const css = (t, isDark) => `
   .rlbl { font-size: 13.5px; color: ${t.textMain}; }
   .rsub { font-size: 11.5px; color: ${t.textMuted}; margin-top: 1px; }
   .rstack { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+
+  /* SegmentedControl */
+  .seg {
+    display: inline-flex; align-items: center; position: relative;
+    border: 1px solid ${t.border}; border-radius: ${br + 2}px;
+    padding: 3px; background: ${t.surface}; gap: 2px;
+  }
+  .seg.full { display: flex; width: 100%; }
+  .seg-pill {
+    position: absolute; border-radius: ${br}px;
+    background: ${t.primary}; pointer-events: none; z-index: 0;
+  }
+  .seg-pill-disabled { background: ${t.textDisabled}; }
+  .seg-opt {
+    position: relative; z-index: 1;
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 7px 16px; border-radius: ${br}px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; white-space: nowrap;
+    color: ${t.textMuted}; background: transparent;
+    transition: color .15s;
+  }
+  .seg-opt.on { color: ${t.btnText}; }
+  .seg-opt:hover:not(.on):not(:disabled) { background: ${t.surfaceHover}; color: ${t.textMain}; }
+  .seg-opt:disabled { opacity: .4; cursor: not-allowed; }
+  .seg.sm .seg-opt { padding: 5px 12px; font-size: 12px; }
 
   /* ToggleRow */
   .trow {
@@ -316,13 +368,23 @@ const Arrow    = () => <svg width="13" height="13" viewBox="0 0 13 13" fill="non
 const CheckRun = () => <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="6.5" cy="6.5" r="5"/><polyline points="4 6.5 5.8 8.5 9.5 4.5"/></svg>;
 
 // ─── ATOMS ───────────────────────────────────────────────────────
-export function TextInput({ label, placeholder, value, required, disabled, error, helperText }) {
+export function TextInput({ label, placeholder, value, required, disabled, error, helperText, prefix, suffix }) {
   const [v, setV] = useState(value ?? "");
+  const hasAdornment = prefix || suffix;
+  const inputEl = (
+    <input className={!hasAdornment && error ? "err" : ""} placeholder={placeholder}
+      value={v} disabled={disabled} onChange={e => setV(e.target.value)} />
+  );
   return (
     <div className="fi">
       {label && <label className="fl">{label}{required && <span className="req">*</span>}</label>}
-      <input className={error ? "err" : ""} placeholder={placeholder}
-        value={v} disabled={disabled} onChange={e => setV(e.target.value)} />
+      {hasAdornment ? (
+        <div className={`fi-adorn${error ? " err" : ""}${disabled ? " disabled" : ""}`}>
+          {prefix && <span className="fi-pre">{prefix}</span>}
+          {inputEl}
+          {suffix && <span className="fi-suf">{suffix}</span>}
+        </div>
+      ) : inputEl}
       {helperText && <span className={`fhint${error ? " err" : ""}`}>{helperText}</span>}
     </div>
   );
@@ -392,6 +454,61 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
       <div className={`trow-track ${isOn ? "on" : "off"}`}>
         <div className="trow-thumb" />
       </div>
+    </div>
+  );
+}
+
+export function SegmentedControl({ options = [], value, defaultValue, onChange, size, fullWidth, disabled }) {
+  const [internal, setInternal] = useState(defaultValue ?? options[0]?.value ?? "");
+  const active = value !== undefined ? value : internal;
+  const select = (v) => {
+    if (disabled) return;
+    if (value === undefined) setInternal(v);
+    onChange?.(v);
+  };
+
+  const btnRefs = useRef([]);
+  const hasMounted = useRef(false);
+  const [pill, setPill] = useState(null);
+
+  useLayoutEffect(() => {
+    const idx = options.findIndex(o => o.value === active);
+    const btn = btnRefs.current[idx];
+    if (!btn) return;
+    setPill({
+      left: btn.offsetLeft, top: btn.offsetTop,
+      width: btn.offsetWidth, height: btn.offsetHeight,
+      animated: hasMounted.current,
+    });
+    hasMounted.current = true;
+  }, [active, options]);
+
+  return (
+    <div className={`seg${size === "sm" ? " sm" : ""}${fullWidth ? " full" : ""}${disabled ? " disabled" : ""}`} role="group">
+      {pill && (
+        <div
+          className={`seg-pill${disabled ? " seg-pill-disabled" : ""}`}
+          style={{
+            left: pill.left, top: pill.top,
+            width: pill.width, height: pill.height,
+            transition: pill.animated
+              ? "left .2s cubic-bezier(.4,0,.2,1), width .2s cubic-bezier(.4,0,.2,1)"
+              : "none",
+          }}
+        />
+      )}
+      {options.map((opt, i) => (
+        <button
+          key={opt.value}
+          ref={el => { btnRefs.current[i] = el; }}
+          type="button"
+          className={`seg-opt${active === opt.value ? " on" : ""}`}
+          disabled={disabled}
+          onClick={() => select(opt.value)}
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -525,7 +642,7 @@ export default function DeelAtomsPreview() {
             <span className="pg-title">Atoms — Wave 1</span>
           </div>
           <div className="hdr-r">
-            <span className="count-tag">7 components · 20 variants</span>
+            <span className="count-tag">8 components · 24 variants</span>
             <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">
               {dark ? <Moon /> : <Sun />}
               {dark ? "Dark" : "Light"}
@@ -545,6 +662,8 @@ export default function DeelAtomsPreview() {
             ["disabled",   "boolean",  false, "Prevents interaction"],
             ["error",      "boolean",  false, "Red border + tinted background"],
             ["helperText", "string",   false, "Hint or error message below input"],
+            ["prefix",     "string",   false, "Leading adornment, e.g. '$'"],
+            ["suffix",     "string",   false, "Trailing adornment, e.g. 'USD' or 'Hours'"],
             ["onChange",   "function", false, "(value: string) => void"],
           ]}>
           <Card label="Default">
@@ -563,6 +682,16 @@ export default function DeelAtomsPreview() {
           <Card label="With helper text" wide>
             <TextInput label="Manager" placeholder="Search by name or email"
               helperText="You can search by name or email" />
+          </Card>
+          <Card label="Prefix + suffix — salary" wide>
+            <TextInput label="Gross annual salary" placeholder="0.00" prefix="$" suffix="USD" required />
+          </Card>
+          <Card label="Suffix only — hours" wide>
+            <TextInput label="Work hours per week" placeholder="40" suffix="Hours" />
+          </Card>
+          <Card label="Prefix + suffix — error" wide>
+            <TextInput label="Gross annual salary" placeholder="0.00" prefix="$" suffix="USD"
+              value="abc" error helperText="Please enter a valid number" required />
           </Card>
         </Sec>
 
@@ -797,6 +926,37 @@ export default function DeelAtomsPreview() {
             >
               <div style={{ height: 40, border: `1px solid var(--border, #e2e2e2)`, borderRadius: 7, background: "transparent", display: "flex", alignItems: "center", paddingLeft: 12, color: "#aaa", fontSize: 13 }}>Country — Select country</div>
             </SectionCard>
+          </Card>
+        </Sec>
+
+        {/* 08 SegmentedControl */}
+        <Sec n={8} name="SegmentedControl"
+          desc="Adjacent pill-buttons for selecting one option from a small, mutually exclusive set. Used for Annual/Hourly salary period, Annual/Monthly market-rate view, and any binary or ternary toggle that lives inline with a heading."
+          props={[
+            ["options",   "{ value, label }[]", true,  "Two or more option objects"],
+            ["value",     "string",             false, "Controlled selected value"],
+            ["onChange",  "function",           false, "(value: string) => void"],
+            ["size",      "'sm' | 'md'",        false, "'sm' shrinks padding (default: 'md')"],
+            ["fullWidth", "boolean",            false, "Stretches to fill its container"],
+            ["disabled",  "boolean",            false, "Prevents interaction on all segments"],
+          ]}>
+          <Card label="Default — 2 options">
+            <SegmentedControl options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]} />
+          </Card>
+          <Card label="Small — inline with heading">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>Market rate insights</span>
+              <SegmentedControl size="sm" options={[{ value: "annual", label: "Annual" }, { value: "monthly", label: "Monthly" }]} />
+            </div>
+          </Card>
+          <Card label="Three options">
+            <SegmentedControl options={[{ value: "w", label: "Weekly" }, { value: "m", label: "Monthly" }, { value: "a", label: "Annual" }]} defaultValue="m" />
+          </Card>
+          <Card label="Full width">
+            <SegmentedControl fullWidth options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]} />
+          </Card>
+          <Card label="Disabled">
+            <SegmentedControl disabled options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]} />
           </Card>
         </Sec>
 
