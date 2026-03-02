@@ -398,10 +398,12 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
 
 export function SectionCard({ title, showInfoButton, onInfoClick, children }) {
   const showBtn = showInfoButton || !!onInfoClick;
+  const showHeader = !!(title || showBtn);
   return (
     <div className="sc">
+      {showHeader && (
       <div className="sc-header">
-        <span className="sc-title">{title}</span>
+        {title && <span className="sc-title">{title}</span>}
         {showBtn && (
           <button
             type="button"
@@ -417,6 +419,7 @@ export function SectionCard({ title, showInfoButton, onInfoClick, children }) {
           </button>
         )}
       </div>
+      )}
       {children && <div className="sc-body">{children}</div>}
     </div>
   );
