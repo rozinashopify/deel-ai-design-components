@@ -2071,7 +2071,8 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const [copiedImport, setCopiedImport] = useState(false);
   const [copiedUsage,  setCopiedUsage]  = useState(false);
   const [expandedEx,   setExpandedEx]   = useState({});
-  const [copiedEx,     setCopiedEx]     = useState({});
+  const [copiedEx,       setCopiedEx]       = useState({});
+  const [copiedApSnippet, setCopiedApSnippet] = useState(false);
   const [controlsWidth, setControlsWidth] = useState(300);
   const [apWidth,      setApWidth]      = useState(260);
   const resizingRef    = useRef(false);
@@ -2103,6 +2104,15 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
 
   const generatedCode  = generatePlaygroundCode(name, liveProps);
   const importCode     = `import { ${name} } from "./ComponentLibrary"`;
+  const appearanceSnippet = (() => {
+    const lines = [];
+    if (ap.primaryColor) lines.push(`  primaryColor: "${ap.primaryColor}",`);
+    if (ap.fontFamily !== APPEARANCE_DEFAULTS.fontFamily) lines.push(`  fontFamily: "${ap.fontFamily}",`);
+    if (ap.borderRadius !== APPEARANCE_DEFAULTS.borderRadius) lines.push(`  borderRadius: ${ap.borderRadius},`);
+    const baseVar = dark ? "darkTokens" : "lightTokens";
+    const obj = lines.length ? `{\n${lines.join("\n")}\n}` : "{}";
+    return `import { applyAppearance, ${baseVar} } from "./ComponentLibrary";\n\nconst tokens = applyAppearance(${baseVar}, ${obj}, ${dark});`;
+  })();
   const setProp        = (key, val) => setLiveProps(prev => ({ ...prev, [key]: val }));
   const copyText       = (text, setter) => { navigator.clipboard.writeText(text).then(() => { setter(true); setTimeout(() => setter(false), 1800); }).catch(() => {}); };
   const toggleEx       = (id) => setExpandedEx(prev => ({ ...prev, [id]: !prev[id] }));
@@ -2122,8 +2132,9 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
     window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp); e.preventDefault();
   };
 
-  // Appearance side-panel controls (reused in preview tab)
-  const AppearancePanel = () => (
+  // Appearance side-panel controls — stored as JSX, NOT a component, to avoid
+  // remounting on every render which would close the native color picker.
+  const appearancePanelJSX = (
     <div style={{ flex: `0 0 ${apWidth}px`, width: apWidth, overflow: "auto", background: t.surface, display: "flex", position: "relative" }}>
       {/* Resize handle */}
       <div
@@ -2350,7 +2361,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                   {COMPONENT_DEMOS[name] || config.render(liveProps)}
                 </div>
                 {/* Appearance side panel */}
-                <AppearancePanel />
+                {appearancePanelJSX}
               </div>
             ) : (
               /* Playground: interactive controls + live preview + generated code */
@@ -2385,6 +2396,19 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
                 </div>
                 {/* Generated code */}
                 <CodeBlock code={generatedCode} copied={false} onCopy={() => copyText(generatedCode, () => {})} />
+              </div>
+            )}
+
+            {/* ── Appearance snippet ── */}
+            {activeTab === "preview" && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled }}>Appearance snippet</span>
+                  {isApCustomised && (
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, color: t.success, background: t.successBg ?? t.surfaceHover, border: `1px solid ${t.successBorder ?? t.border}`, padding: "2px 8px", borderRadius: 5 }}>customised</span>
+                  )}
+                </div>
+                <CodeBlock code={appearanceSnippet} copied={copiedApSnippet} onCopy={() => copyText(appearanceSnippet, setCopiedApSnippet)} />
               </div>
             )}
           </div>
