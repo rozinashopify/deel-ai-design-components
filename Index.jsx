@@ -13,6 +13,7 @@ import {
   // ── Molecules
   FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
   AutosaveWidget, ContextBanner, HiringGuideBanner,
+  SelectList, RichDropdownSelect,
   // ── Navigation
   StepperRail,
   // ── Compliance
@@ -496,7 +497,7 @@ const WAVES = [
     name: "Molecules",
     subtitle: "Wave 2",
     file: "Deel_Molecules_Wave2.jsx",
-    tag: "5 molecules",
+    tag: "7 molecules",
     tagKey: "mol",
     desc: "Composed UI patterns that group atoms into reusable interactive units. Each molecule declares its atom dependencies explicitly.",
     ai: false,
@@ -506,6 +507,8 @@ const WAVES = [
       { icon: "💾", name: "AutosaveWidget",      desc: "Right-rail card — saved/saving state + delete draft CTA" },
       { icon: "ⓘ", name: "ContextBanner",       desc: "Guide / Insight / Promo / Info — unified contextual banner with 4 variants" },
       { icon: "🏳", name: "CountryPolicyCard",  desc: "Flag + policy title + key–value rows for country statutory standards" },
+      { icon: "☰", name: "SelectList",         desc: "Scrollable item list — sublabels, avatars, badge pills, indent hierarchy, group headers" },
+      { icon: "▾", name: "RichDropdownSelect", desc: "Custom floating-panel dropdown — same chrome as DropdownSelect, full SelectList item schema" },
     ],
   },
   {
@@ -1081,6 +1084,62 @@ function MiniFlow({ t, onOpen }) {
   );
 }
 
+function MiniSelectList({ t }) {
+  const items = [
+    { value: "au", label: "AU entity - Payroll Connect", sublabel: "Australia", sel: true },
+    { value: "ca", label: "CA entity", sublabel: "Canada", sel: false },
+    { value: "de", label: "DE entity", sublabel: "Germany", sel: false },
+  ];
+  return (
+    <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, overflow: "hidden", width: "100%" }}>
+      {items.map((item) => (
+        <div key={item.value} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: item.sel ? t.surfaceHover : undefined }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "Inter,sans-serif", fontSize: 11.5, fontWeight: 500, color: t.textMain, lineHeight: 1.3 }}>{item.label}</div>
+            <div style={{ fontFamily: "Inter,sans-serif", fontSize: 10.5, color: t.textMuted, marginTop: 1 }}>{item.sublabel}</div>
+          </div>
+          {item.sel && (
+            <div style={{ width: 18, height: 18, borderRadius: "50%", background: t.textMain, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="9" height="9" viewBox="0 0 11 11" fill="none" stroke={t.surface} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1.5 5.5 4.5 8.5 9.5 2.5"/></svg>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MiniRichDropdownSelect({ t }) {
+  const triggerS = { height: 32, border: `1px solid ${t.borderFocus}`, boxShadow: `0 0 0 2px ${t.ring}`, borderRadius: 7, background: t.inputBg, display: "flex", alignItems: "center", paddingLeft: 10, paddingRight: 28, fontFamily: "Inter,sans-serif", fontSize: 12, color: t.textMain, position: "relative", overflow: "hidden" };
+  const miniItems = [
+    { v: "au", l: "AU entity - Payroll Connect", s: "Australia", sel: true },
+    { v: "ca", l: "CA entity", s: "Canada", sel: false },
+    { v: "de", l: "DE entity", s: "Germany", sel: false },
+  ];
+  return (
+    <div style={{ width: "100%" }}>
+      <div style={{ fontFamily: "Inter,sans-serif", fontSize: 10.5, fontWeight: 600, color: t.textMain, marginBottom: 3 }}>Entity <span style={{ color: t.error }}>*</span></div>
+      <div style={{ position: "relative" }}>
+        <div style={triggerS}>AU entity - Payroll Connect</div>
+        <div style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%) rotate(180deg)", color: t.textMuted }}>
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><polyline points="3 5 7 9 11 5"/></svg>
+        </div>
+      </div>
+      <div style={{ marginTop: 2, border: `1px solid ${t.border}`, borderRadius: 8, background: t.surface, boxShadow: "0 4px 12px rgba(0,0,0,.08)", overflow: "hidden" }}>
+        {miniItems.map(it => (
+          <div key={it.v} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: it.sel ? t.surfaceHover : undefined }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "Inter,sans-serif", fontSize: 11, fontWeight: 500, color: t.textMain, lineHeight: 1.3 }}>{it.l}</div>
+              <div style={{ fontFamily: "Inter,sans-serif", fontSize: 10, color: t.textMuted }}>{it.s}</div>
+            </div>
+            {it.sel && <div style={{ width: 16, height: 16, borderRadius: "50%", background: t.textMain, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><svg width="8" height="8" viewBox="0 0 11 11" fill="none" stroke={t.surface} strokeWidth="2" strokeLinecap="round"><polyline points="1.5 5.5 4.5 8.5 9.5 2.5"/></svg></div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MiniCountryPolicyCard({ t }) {
   const rows = [
     { label: "During probation", value: "No notice period" },
@@ -1120,6 +1179,8 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"AutosaveWidget",         wave:"Wave 2", waveKey:"mol",    composed:"InfoIcon + status dot + SecondaryButton",         preview:<MiniAutosave t={t} /> },
   { name:"ContextBanner",          wave:"Wave 2", waveKey:"mol",    composed:"guide / insight / promo variants",                  preview:<MiniContextBanner t={t} /> },
   { name:"CountryPolicyCard",       wave:"Wave 2", waveKey:"mol",    composed:"flag + title header + divider + key–value rows",  preview:<MiniCountryPolicyCard t={t} /> },
+  { name:"SelectList",             wave:"Wave 2", waveKey:"mol",    composed:"item rows · sublabel + avatar + badge + indent",  preview:<MiniSelectList t={t} /> },
+  { name:"RichDropdownSelect",     wave:"Wave 2", waveKey:"mol",    composed:"SelectList + trigger button + chevron",           preview:<MiniRichDropdownSelect t={t} /> },
   { name:"ComplianceCheckCard",    wave:"Wave 3", waveKey:"ai",     composed:"rule text + StatusBadge + detail line",           preview:<MiniComplianceCard t={t} /> },
   { name:"ComplianceCheckPanel",   wave:"Wave 3", waveKey:"ai",     composed:"AI banner + CheckCard × n + shimmer",             preview:<MiniCompliancePanel t={t} /> },
   { name:"MarketRateChart",        wave:"Wave 3", waveKey:"ai",     composed:"period toggle + histogram + bubble + axis",       preview:<MiniMarketChart t={t} /> },
@@ -1159,6 +1220,83 @@ const TIER_COLORS = {
   block:        { color: "#D97706", bg: "#FFFBEB" },
   flow:         { color: "#18181B", bg: "#F4F4F5" },
 };
+
+// ── Data constants for SelectList / RichDropdownSelect demos ──
+const IDX_ENTITY_ITEMS = [
+  { value: "au", label: "AU entity - Payroll Connect",               sublabel: "Australia" },
+  { value: "ca", label: "CA entity",                                 sublabel: "Canada" },
+  { value: "de", label: "DE entity",                                 sublabel: "Germany" },
+  { value: "gb", label: "GB entity",                                 sublabel: "United Kingdom" },
+  { value: "jp", label: "JP entity",                                 sublabel: "Japan" },
+];
+
+const _IDX_AVC = ["#0D9488","#7C3AED","#0284C7","#DB2777","#EA580C","#65A30D"];
+function IdxAv({ name }) {
+  const bg = _IDX_AVC[name.charCodeAt(0) % _IDX_AVC.length];
+  const i2 = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  return <div style={{ width: "100%", height: "100%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>{i2}</div>;
+}
+
+const IDX_PEOPLE_ITEMS = [
+  { value: "adriana", label: "Adriana Costa",    sublabel: "Human Applications Representative", avatar: <IdxAv name="Adriana Costa" /> },
+  { value: "andre",   label: "André Fabron",     sublabel: "Team Lead",                         avatar: <IdxAv name="André Fabron" /> },
+  { value: "breanna", label: "Breanna Schmeler", sublabel: "Global Data Manager",               avatar: <IdxAv name="Breanna Schmeler" /> },
+  { value: "brenna",  label: "Brenna Fadel",     sublabel: "Sustainability Consultant",         avatar: <IdxAv name="Brenna Fadel" /> },
+  { value: "brigg",   label: "Brigg Kirkwood",   sublabel: "Software Engineer",                 avatar: <IdxAv name="Brigg Kirkwood" /> },
+];
+
+const IDX_DEPT_ITEMS = [
+  { value: "eng",      label: "Engineers" },
+  { value: "devops",   label: "Devops",      indent: 1 },
+  { value: "web",      label: "Web",         indent: 1 },
+  { value: "backend",  label: "Back end",    indent: 2 },
+  { value: "frontend", label: "Front end",   indent: 2 },
+  { value: "mktg",     label: "Marketing" },
+  { value: "product",  label: "Product" },
+  { value: "design",   label: "Design",      indent: 1 },
+  { value: "mgmt",     label: "Management",  indent: 1 },
+];
+
+const IDX_TEMPLATE_ITEMS = [
+  { value: "_hdr",  label: "Saved scope of work templates", isGroupHeader: true },
+  { value: "ae",    label: "Account Executive",    badge: "Deel template" },
+  { value: "am",    label: "Account Manager",      badge: "Deel template" },
+  { value: "bd",    label: "Business Developer",   badge: "Deel template" },
+  { value: "cm",    label: "Content Marketing",    badge: "Deel template" },
+  { value: "cw",    label: "Content Writer",       badge: "Deel template" },
+];
+
+function SelectListCanvas() {
+  const [entityV, setEntityV] = useState("au");
+  const [personV, setPersonV] = useState(null);
+  const lbl = { fontSize: 10.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#A1A1AA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 8 };
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 24, maxWidth: 580 }}>
+      <div style={{ flex: "1 1 220px", minWidth: 220 }}>
+        <div style={lbl}>Entity · sublabel + checkmark</div>
+        <div className="sl-outer"><SelectList items={IDX_ENTITY_ITEMS} value={entityV} onSelect={setEntityV} maxHeight={280} /></div>
+      </div>
+      <div style={{ flex: "1 1 220px", minWidth: 220 }}>
+        <div style={lbl}>People · avatar + role</div>
+        <div className="sl-outer"><SelectList items={IDX_PEOPLE_ITEMS} value={personV} onSelect={setPersonV} maxHeight={280} /></div>
+      </div>
+    </div>
+  );
+}
+
+function RichDropdownCanvas() {
+  const [entity,   setEntity]   = useState("");
+  const [person,   setPerson]   = useState("");
+  const [template, setTemplate] = useState("");
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 420 }}>
+      <RichDropdownSelect label="Entity" required placeholder="Select entity…" options={IDX_ENTITY_ITEMS} value={entity} onChange={setEntity} />
+      <RichDropdownSelect label="Manager" optional placeholder="Select manager (optional)" options={IDX_PEOPLE_ITEMS} value={person} onChange={setPerson} />
+      <RichDropdownSelect label="Scope of work template" optional placeholder="Choose a template…" options={IDX_TEMPLATE_ITEMS} value={template} onChange={setTemplate} />
+      <RichDropdownSelect label="Department (disabled)" disabled placeholder="Select department…" options={IDX_DEPT_ITEMS} helperText="Field is locked by your administrator" />
+    </div>
+  );
+}
 
 // ── Per-component demo canvases ─────────────────────────────────
 // Each entry renders the component in an isolated, appropriately-sized
@@ -1434,6 +1572,10 @@ const COMPONENT_DEMOS = {
     </div>
   ),
 
+  // Rich Selects
+  SelectList: <SelectListCanvas />,
+  RichDropdownSelect: <RichDropdownCanvas />,
+
   // Compliance
   ComplianceCheckCard: (
     <div style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1566,7 +1708,7 @@ function renderControlWidget(propName, control, value, setProp, t) {
 
 /** Build a formatted JSX snippet from current prop values. */
 function generatePlaygroundCode(name, props) {
-  const entries = Object.entries(props).filter(([, v]) => v !== false && v !== "" && v !== null && v !== undefined);
+  const entries = Object.entries(props).filter(([k, v]) => !k.startsWith("_") && v !== false && v !== "" && v !== null && v !== undefined);
   if (!entries.length) return `<${name} />`;
   const lines = entries.map(([k, v]) => {
     if (v === true) return `  ${k}`;
@@ -2032,6 +2174,121 @@ const COMPONENT_PLAYGROUND_CONFIG = {
         </>
       );
     },
+  },
+  SelectList: {
+    defaults: { maxHeight: 300, searchable: false },
+    render: (p) => {
+      const showBadge  = p._showBadge  !== false;
+      const showAvatar = p._showAvatar !== false;
+      const tmplItems  = showBadge
+        ? IDX_TEMPLATE_ITEMS
+        : IDX_TEMPLATE_ITEMS.map(item => item.badge   ? { ...item, badge: undefined }  : item);
+      const peopleItems = showAvatar
+        ? IDX_PEOPLE_ITEMS
+        : IDX_PEOPLE_ITEMS.map(item => item.avatar ? { ...item, avatar: undefined } : item);
+      const VARIANT_MAP = {
+        entity:    { items: IDX_ENTITY_ITEMS,   value: "au" },
+        people:    { items: peopleItems,         value: undefined },
+        dept:      { items: IDX_DEPT_ITEMS,     value: undefined },
+        templates: { items: tmplItems,          value: undefined },
+      };
+      const { items, value } = VARIANT_MAP[p._variant || "entity"];
+      return (
+        <div className="sl-outer" style={{ maxWidth: 360 }}>
+          <SelectList items={items} value={value} onSelect={() => {}} maxHeight={p.maxHeight} searchable={p.searchable} />
+        </div>
+      );
+    },
+    generateCode: (p) => {
+      const v = p._variant || "entity";
+      const mh = p.maxHeight !== 300 ? `\n  maxHeight={${p.maxHeight}}` : "";
+      const sr = p.searchable ? "\n  searchable" : "";
+      const badge  = p._showBadge  !== false ? `, badge: "Deel template"` : "";
+      const avatar = p._showAvatar !== false;
+      const avAF   = avatar ? `, avatar: <Avatar name="AF" />` : "";
+      const avBS   = avatar ? `, avatar: <Avatar name="BS" />` : "";
+      const avBF   = avatar ? `, avatar: <Avatar name="BF" />` : "";
+      const snippets = {
+        entity: `const items = [\n  { value: "au", label: "AU entity - Payroll Connect", sublabel: "Australia" },\n  { value: "ca", label: "CA entity", sublabel: "Canada" },\n  { value: "de", label: "DE entity", sublabel: "Germany" },\n];\n\n<SelectList\n  items={items}\n  value="au"\n  onSelect={v => console.log(v)}${mh}${sr}\n/>`,
+        people: `const items = [\n  { value: "af", label: "André Fabron",      sublabel: "Team Lead"${avAF} },\n  { value: "bs", label: "Breanna Schmeler", sublabel: "Global Data Manager"${avBS} },\n  { value: "bf", label: "Brenna Fadel",     sublabel: "Sustainability Consultant"${avBF} },\n];\n\n<SelectList\n  items={items}\n  onSelect={v => console.log(v)}${mh}${sr}\n/>`,
+        dept:   `const items = [\n  { value: "eng",    label: "Engineers" },\n  { value: "devops", label: "Devops",    indent: 1 },\n  { value: "web",    label: "Web",       indent: 1 },\n  { value: "be",     label: "Back end",  indent: 2 },\n  { value: "fe",     label: "Front end", indent: 2 },\n];\n\n<SelectList\n  items={items}\n  value="devops"\n  onSelect={v => console.log(v)}${mh}${sr}\n/>`,
+        templates: `const items = [\n  { value: "gh1", label: "Saved Scope of Work Templates", isGroupHeader: true },\n  { value: "ae",  label: "Account Executive"${badge} },\n  { value: "am",  label: "Account Manager"${badge} },\n  { value: "bd",  label: "Business Developer"${badge} },\n];\n\n<SelectList\n  items={items}\n  onSelect={v => console.log(v)}${mh}${sr}\n/>`,
+      };
+      return snippets[v];
+    },
+    customControls: (liveProps, setProp, t) => {
+      const VARIANTS = [
+        { value: "entity",    label: "entity · sublabel + checkmark" },
+        { value: "people",    label: "people · avatar + role" },
+        { value: "dept",      label: "dept · indent levels" },
+        { value: "templates", label: "templates · badge + header" },
+      ];
+      const activeVariant = liveProps._variant || "entity";
+      const isTemplates   = activeVariant === "templates";
+      const isPeople      = activeVariant === "people";
+      const showBadge     = liveProps._showBadge  !== false;
+      const showAvatar    = liveProps._showAvatar !== false;
+      const sel = {
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+        padding: "5px 9px", paddingRight: 26, borderRadius: 7,
+        border: `1px solid ${t.border}`, background: t.inputBg || t.bg, color: t.textMain,
+        outline: "none", appearance: "none", minWidth: 200,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2371717A' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center",
+      };
+      const mkToggle = (key, active) => (
+        <button type="button" aria-checked={active} onClick={() => setProp(key, !active)}
+          style={{ display: "flex", alignItems: "center", flexShrink: 0, background: active ? t.primary : t.surfaceHover, border: `1.5px solid ${active ? t.primary : t.border}`, borderRadius: 999, padding: 2, cursor: "pointer", width: 40, height: 22, transition: "background .15s, border-color .15s" }}>
+          <div style={{ width: 16, height: 16, borderRadius: "50%", background: active ? t.btnText : t.textDisabled, transform: active ? "translateX(18px)" : "translateX(0)", transition: "transform .15s" }} />
+        </button>
+      );
+      const row = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 20px", borderBottom: `1px solid ${t.border}`, gap: 16 };
+      const lbl = (name, type) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: t.textMain, fontWeight: 500 }}>{name}</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple }}>{type}</span>
+        </div>
+      );
+      return (
+        <>
+          <div style={row}>
+            {lbl("content", "variant")}
+            <select value={liveProps._variant || "entity"} onChange={e => setProp("_variant", e.target.value)} style={sel}>
+              {VARIANTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          {isTemplates && (
+            <div style={row}>
+              {lbl("badge", "boolean")}
+              {mkToggle("_showBadge", showBadge)}
+            </div>
+          )}
+          {isPeople && (
+            <div style={row}>
+              {lbl("avatar", "boolean")}
+              {mkToggle("_showAvatar", showAvatar)}
+            </div>
+          )}
+        </>
+      );
+    },
+  },
+  RichDropdownSelect: {
+    defaults: { label: "Entity", placeholder: "Select entity…", required: false, optional: false, disabled: false, helperText: "", searchable: false },
+    render: (p) => (
+      <div style={{ maxWidth: 380, minWidth: 280 }}>
+        <RichDropdownSelect
+          label={p.label}
+          placeholder={p.placeholder}
+          required={p.required}
+          optional={p.optional}
+          disabled={p.disabled}
+          helperText={p.helperText || undefined}
+          searchable={p.searchable}
+          options={IDX_ENTITY_ITEMS}
+        />
+      </div>
+    ),
   },
   ComplianceCheckCard: {
     defaults: { rule: "Job scope should be relevant to the job title.", status: "pass", detail: "" },
@@ -2938,6 +3195,183 @@ export function Demo() {
     },
   ],
 
+  SelectList: [
+    {
+      id: "sublabels", title: "Sublabels + checkmark",
+      description: "Pass sublabel on each item for a two-line row. The value prop marks the active item with a filled-circle checkmark.",
+      code: `import { SelectList } from "./ComponentLibrary"
+import { useState } from "react"
+
+const ENTITIES = [
+  { value: "au", label: "AU entity - Payroll Connect", sublabel: "Australia" },
+  { value: "ca", label: "CA entity", sublabel: "Canada" },
+  { value: "de", label: "DE entity", sublabel: "Germany" },
+]
+
+export function Demo() {
+  const [v, setV] = useState("au")
+  return (
+    <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 340 }}>
+      <SelectList items={ENTITIES} value={v} onSelect={setV} />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 340 }}>
+          <SelectList items={IDX_ENTITY_ITEMS} value="au" onSelect={() => {}} />
+        </div>
+      ),
+    },
+    {
+      id: "avatars", title: "Avatars",
+      description: "Pass an avatar ReactNode (e.g. a circular image or initials div) for people pickers.",
+      code: `import { SelectList } from "./ComponentLibrary"
+
+const PEOPLE = [
+  { value: "ac", label: "Adriana Costa",    sublabel: "HR Representative",
+    avatar: <div style={{ width:"100%", height:"100%", background:"#0D9488", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:12, fontWeight:600 }}>AC</div> },
+  { value: "af", label: "André Fabron",     sublabel: "Team Lead",
+    avatar: <div style={{ width:"100%", height:"100%", background:"#7C3AED", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:12, fontWeight:600 }}>AF</div> },
+]
+
+export function Demo() {
+  return (
+    <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 340 }}>
+      <SelectList items={PEOPLE} />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 340 }}>
+          <SelectList items={IDX_PEOPLE_ITEMS} />
+        </div>
+      ),
+    },
+    {
+      id: "indent", title: "Hierarchical indent",
+      description: "Set indent: 1, 2, 3 … on items to create tree-like groupings. Parent items have no indent value.",
+      code: `import { SelectList } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 280 }}>
+      <SelectList items={[
+        { value: "eng",  label: "Engineers" },
+        { value: "be",   label: "Back end",   indent: 1 },
+        { value: "fe",   label: "Front end",  indent: 1 },
+        { value: "mktg", label: "Marketing" },
+      ]} />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 280 }}>
+          <SelectList items={IDX_DEPT_ITEMS} />
+        </div>
+      ),
+    },
+    {
+      id: "badges", title: "Badge pills + group header",
+      description: "Add badge to show a right-side pill label. Use isGroupHeader: true for non-selectable uppercase section dividers.",
+      code: `import { SelectList } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 380 }}>
+      <SelectList items={[
+        { value: "_h",  label: "Saved templates", isGroupHeader: true },
+        { value: "ae",  label: "Account Executive",  badge: "Deel template" },
+        { value: "am",  label: "Account Manager",    badge: "Deel template" },
+      ]} />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ border: "1px solid #E4E4E7", borderRadius: 10, overflow: "hidden", maxWidth: 380 }}>
+          <SelectList items={IDX_TEMPLATE_ITEMS} />
+        </div>
+      ),
+    },
+  ],
+
+  RichDropdownSelect: [
+    {
+      id: "with-sublabels", title: "With sublabels",
+      description: "Options with sublabel show a two-line row in the floating panel.",
+      code: `import { RichDropdownSelect } from "./ComponentLibrary"
+
+const ENTITIES = [
+  { value: "au", label: "AU entity - Payroll Connect", sublabel: "Australia" },
+  { value: "ca", label: "CA entity", sublabel: "Canada" },
+]
+
+export function Demo() {
+  return (
+    <RichDropdownSelect
+      label="Entity"
+      required
+      placeholder="Select entity…"
+      options={ENTITIES}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380 }}>
+          <RichDropdownSelect label="Entity" required placeholder="Select entity…" options={IDX_ENTITY_ITEMS} />
+        </div>
+      ),
+    },
+    {
+      id: "with-badges", title: "With badge pills",
+      description: "Pair with a group header and badge items to create template pickers.",
+      code: `import { RichDropdownSelect } from "./ComponentLibrary"
+
+const TEMPLATES = [
+  { value: "_h",  label: "Saved templates", isGroupHeader: true },
+  { value: "ae",  label: "Account Executive", badge: "Deel template" },
+  { value: "am",  label: "Account Manager",   badge: "Deel template" },
+]
+
+export function Demo() {
+  return (
+    <RichDropdownSelect
+      label="Scope of work template"
+      optional
+      placeholder="Choose a template…"
+      options={TEMPLATES}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380 }}>
+          <RichDropdownSelect label="Scope of work template" optional placeholder="Choose a template…" options={IDX_TEMPLATE_ITEMS} />
+        </div>
+      ),
+    },
+    {
+      id: "disabled", title: "Disabled state",
+      description: "disabled prevents interaction and mutes appearance. helperText still renders below.",
+      code: `import { RichDropdownSelect } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <RichDropdownSelect
+      label="Entity"
+      disabled
+      placeholder="Select entity…"
+      options={[{ value: "au", label: "AU entity", sublabel: "Australia" }]}
+      helperText="Field is locked by your administrator"
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 380 }}>
+          <RichDropdownSelect label="Entity" disabled placeholder="Select entity…" options={IDX_ENTITY_ITEMS} helperText="Field is locked by your administrator" />
+        </div>
+      ),
+    },
+  ],
+
   ComplianceCheckCard: [
     {
       id: "all-states", title: "All states",
@@ -3128,7 +3562,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
     .map(p => ({ ...p, control: inferControlType(p.type) }))
     .filter(p => p.control !== null && Object.prototype.hasOwnProperty.call(config.defaults, p.name));
 
-  const generatedCode  = generatePlaygroundCode(name, liveProps);
+  const generatedCode  = config.generateCode ? config.generateCode(liveProps) : generatePlaygroundCode(name, liveProps);
   const importCode     = `import { ${name} } from "./ComponentLibrary"`;
   const effectiveBorder = ap.borderColor || t.border;
   const appearanceSnippet = (() => {

@@ -149,7 +149,8 @@ const makeCSS = (t, isDark) => `
   .selw select.ph { color:${t.textDisabled}; }
   .selw select:focus { border-color:${t.borderFocus}; box-shadow:0 0 0 3px ${t.ring}; }
   .selw select:disabled { background:${t.surfaceHover}; color:${t.textDisabled}; cursor:not-allowed; }
-  .chev { position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:${t.textMuted}; }
+  .chev { position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:${t.textMuted}; transition:transform .15s; }
+  .chev.up { transform:translateY(-50%) rotate(180deg); }
 
   /* StatusBadge */
   .badge { display:inline-flex; align-items:center; gap:5px; padding:2.5px 8px; border-radius:5px; font-size:11.5px; font-weight:500; }
@@ -242,6 +243,60 @@ const makeCSS = (t, isDark) => `
   .hgb-dismiss:hover { color:${t.textMain}; background:${t.surfaceHover}; }
   .hgb-dismissed { opacity:.4; pointer-events:none; }
 
+  /* ══════════════════════════════════════════
+     MOLECULE 5 — SelectList
+  ══════════════════════════════════════════ */
+  .sl { padding:6px; scrollbar-width:none; -ms-overflow-style:none; }
+  .sl::-webkit-scrollbar { display:none; }
+  .sl-item {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-radius:6px;
+    cursor:pointer; border:none; background:transparent;
+    width:100%; text-align:left; font-family:'Inter',sans-serif;
+    transition:background .1s;
+  }
+  .sl-item:hover:not(.sl-gh) { background:${t.surfaceHover}; }
+  .sl-item.sl-sel { background:${t.surfaceHover}; }
+  .sl-item.sl-gh { cursor:default; padding:6px 12px 4px; margin-top:4px; }
+  .sl-item.sl-gh:first-child { margin-top:0; }
+  .sl-info { flex:1; min-width:0; }
+  .sl-lbl { font-size:13.5px; font-weight:500; color:${t.textMain}; line-height:1.35; }
+  .sl-sub { font-size:12px; color:${t.textMuted}; margin-top:2px; line-height:1.3; }
+  .sl-gh .sl-lbl { font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:${t.textMuted}; }
+  .sl-av { width:36px; height:36px; border-radius:${br}px; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; background:${t.surfaceHover}; }
+  .sl-outer { border:1px solid ${t.border}; border-radius:${br}px; overflow:hidden; }
+  .sl-badge { font-size:11.5px; color:${t.textMuted}; border:1px solid ${t.border}; border-radius:999px; padding:2px 10px; white-space:nowrap; flex-shrink:0; margin-left:auto; }
+  .sl-check { margin-left:auto; flex-shrink:0; width:22px; height:22px; border-radius:50%; background:${t.textMain}; color:${t.surface}; display:flex; align-items:center; justify-content:center; }
+  .sl-check-sp { margin-left:auto; flex-shrink:0; width:22px; }
+  .sl-search { position:sticky; top:0; z-index:1; padding:6px 6px 4px; background:${t.surface}; border-bottom:1px solid ${t.border}; }
+  .sl-search input { display:block; width:100%; height:32px; padding:0 10px; font-family:'Inter',sans-serif; font-size:13px; background:${t.inputBg}; border:1px solid ${t.border}; border-radius:5px; outline:none; color:${t.textMain}; box-sizing:border-box; }
+  .sl-search input::placeholder { color:${t.textDisabled}; }
+  .sl-search input:focus { border-color:${t.borderFocus}; box-shadow:0 0 0 3px ${t.ring}; }
+  .sl-empty { padding:24px 12px; text-align:center; font-size:13px; color:${t.textMuted}; }
+
+  /* ══════════════════════════════════════════
+     MOLECULE 6 — RichDropdownSelect
+  ══════════════════════════════════════════ */
+  .rds { position:relative; }
+  .rds-trigger {
+    height:36px; width:100%; padding:0 34px 0 11px;
+    font-family:'Inter',sans-serif; font-size:13.5px;
+    background:${t.inputBg}; border:1px solid ${t.border};
+    border-radius:6px; outline:none; appearance:none; cursor:pointer;
+    color:${t.textMain}; transition:border-color .12s,box-shadow .12s;
+    display:flex; align-items:center; text-align:left; white-space:nowrap; overflow:hidden;
+  }
+  .rds-trigger.ph { color:${t.textDisabled}; }
+  .rds-trigger:focus, .rds-trigger.open { border-color:${t.borderFocus}; box-shadow:0 0 0 3px ${t.ring}; }
+  .rds-trigger:disabled { background:${t.surfaceHover}; color:${t.textDisabled}; cursor:not-allowed; }
+  .rds-panel {
+    position:absolute; top:calc(100% + 4px); left:0; z-index:999;
+    width:max-content; min-width:100%;
+    background:${t.surface}; border:1px solid ${t.border};
+    border-radius:8px; box-shadow:${isDark ? "0 8px 24px rgba(0,0,0,.55)" : "0 8px 24px rgba(0,0,0,.10)"};
+    max-height:300px; overflow-y:auto;
+  }
+
   /* ── Footer ── */
   .foot { display:flex; justify-content:space-between; align-items:center; padding-top:20px; border-top:1px solid ${t.border}; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:${t.textMuted}; }
 `;
@@ -294,6 +349,135 @@ function SecondaryButton({ label, disabled, size, icon }) {
 }
 function TextButton({ label, disabled }) {
   return <button type="button" className="btn btn-g" disabled={disabled}>{label}</button>;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MOLECULE 5 — SelectList
+// Composed of: Check icon + optional avatar/badge per row
+// ─────────────────────────────────────────────────────────────────
+function SelectList({ items = [], value, onSelect, maxHeight = 300, searchable = false }) {
+  const controlled = value !== undefined;
+  const [query, setQuery] = useState("");
+
+  let visible = items;
+  if (searchable && query.trim()) {
+    const q = query.toLowerCase();
+    const result = [];
+    let pendingHeader = null;
+    for (const item of items) {
+      if (item.isGroupHeader) {
+        pendingHeader = item;
+      } else {
+        const match =
+          item.label.toLowerCase().includes(q) ||
+          (item.sublabel && item.sublabel.toLowerCase().includes(q));
+        if (match) {
+          if (pendingHeader) { result.push(pendingHeader); pendingHeader = null; }
+          result.push(item);
+        }
+      }
+    }
+    visible = result;
+  }
+
+  return (
+    <div className="sl" style={{ maxHeight, overflowY: "auto" }}>
+      {searchable && (
+        <div className="sl-search">
+          <input
+            autoFocus
+            type="text"
+            placeholder="Search…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+        </div>
+      )}
+      {searchable && query.trim() && visible.length === 0 && (
+        <div className="sl-empty">No results</div>
+      )}
+      {visible.map((item, i) => {
+        if (item.isGroupHeader) {
+          return (
+            <div key={item.value ?? `gh-${i}`} className="sl-item sl-gh" role="presentation">
+              <div className="sl-info"><div className="sl-lbl">{item.label}</div></div>
+            </div>
+          );
+        }
+        const isSelected = controlled && value === item.value;
+        const showCheck  = controlled && !item.avatar && !item.badge;
+        return (
+          <button
+            key={item.value}
+            type="button"
+            className={`sl-item${isSelected ? " sl-sel" : ""}`}
+            style={item.indent ? { paddingLeft: 12 + item.indent * 16 } : undefined}
+            onClick={() => onSelect?.(item.value)}
+          >
+            {item.avatar && <div className="sl-av">{item.avatar}</div>}
+            <div className="sl-info">
+              <div className="sl-lbl">{item.label}</div>
+              {item.sublabel && <div className="sl-sub">{item.sublabel}</div>}
+            </div>
+            {item.badge && <div className="sl-badge">{item.badge}</div>}
+            {showCheck && (isSelected
+              ? <div className="sl-check"><Check /></div>
+              : <div className="sl-check-sp" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MOLECULE 6 — RichDropdownSelect
+// Composed of: SelectList + trigger button + chevron
+// ─────────────────────────────────────────────────────────────────
+function RichDropdownSelect({ label, placeholder = "Select…", options = [], value, optional, required, disabled, helperText, onChange, searchable = false }) {
+  const [open, setOpen] = useState(false);
+  const [v, setV]       = useState(value ?? "");
+  const wrapRef         = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = e => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const selected    = options.find(o => o.value === v && !o.isGroupHeader);
+  const handleSelect = val => { setV(val); onChange?.(val); setOpen(false); };
+
+  return (
+    <div className="fi">
+      {label && (
+        <label className="fl">
+          {label}
+          {required && <span className="req">*</span>}
+          {optional && <span style={{ fontWeight: 400, opacity: .65 }}> (optional)</span>}
+        </label>
+      )}
+      <div className="rds" ref={wrapRef}>
+        <button
+          type="button"
+          className={`rds-trigger${!v ? " ph" : ""}${open ? " open" : ""}`}
+          disabled={disabled}
+          onClick={() => !disabled && setOpen(o => !o)}
+        >
+          {selected ? selected.label : placeholder}
+        </button>
+        <span className={open ? "chev up" : "chev"}><Chevron /></span>
+        {open && (
+          <div className="rds-panel">
+            <SelectList items={options} value={v} onSelect={handleSelect} maxHeight={280} searchable={searchable} />
+          </div>
+        )}
+      </div>
+      {helperText && <span className="fhint">{helperText}</span>}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -424,6 +608,63 @@ export function HiringGuideBanner({ country = "United States", guideUrl = "#", f
 }
 
 // ─────────────────────────────────────────────────────────────────
+// DEMO DATA — SelectList & RichDropdownSelect
+// ─────────────────────────────────────────────────────────────────
+const ENTITY_ITEMS = [
+  { value: "au", label: "AU entity - Payroll Connect",            sublabel: "Australia" },
+  { value: "ca", label: "CA entity",                              sublabel: "Canada" },
+  { value: "de", label: "DE entity",                              sublabel: "Germany" },
+  { value: "es", label: "ES entity",                              sublabel: "Spain" },
+  { value: "gb", label: "GB entity",                              sublabel: "United Kingdom" },
+  { value: "jp", label: "JP entity",                              sublabel: "Japan" },
+  { value: "se", label: "SE entity - Payroll Connect (Pay by Deel)", sublabel: "Sweden" },
+];
+
+const AV_COLORS = ["#0D9488","#7C3AED","#0284C7","#DB2777","#EA580C","#65A30D","#CA8A04","#DC2626"];
+function AvatarDot({ name }) {
+  const bg = AV_COLORS[name.charCodeAt(0) % AV_COLORS.length];
+  const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  return (
+    <div style={{ width: "100%", height: "100%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>
+      {initials}
+    </div>
+  );
+}
+
+const PEOPLE_ITEMS = [
+  { value: "adriana", label: "Adriana Costa",    sublabel: "Human Applications Representative", avatar: <AvatarDot name="Adriana Costa" /> },
+  { value: "andre",   label: "André Fabron",     sublabel: "Team Lead",                         avatar: <AvatarDot name="André Fabron" /> },
+  { value: "breanna", label: "Breanna Schmeler", sublabel: "Global Data Manager",               avatar: <AvatarDot name="Breanna Schmeler" /> },
+  { value: "brenna",  label: "Brenna Fadel",     sublabel: "Sustainability Consultant",         avatar: <AvatarDot name="Brenna Fadel" /> },
+  { value: "brigg",   label: "Brigg Kirkwood",   sublabel: "Software Engineer",                 avatar: <AvatarDot name="Brigg Kirkwood" /> },
+  { value: "brit",    label: "Brit Tackes",       sublabel: "Software Engineer",                 avatar: <AvatarDot name="Brit Tackes" /> },
+];
+
+const DEPT_ITEMS = [
+  { value: "eng",      label: "Engineers" },
+  { value: "devops",   label: "Devops",      indent: 1 },
+  { value: "web",      label: "Web",         indent: 1 },
+  { value: "backend",  label: "Back end",    indent: 2 },
+  { value: "frontend", label: "Front end",   indent: 2 },
+  { value: "mktg",     label: "Marketing" },
+  { value: "product",  label: "Product" },
+  { value: "design",   label: "Design",      indent: 1 },
+  { value: "mgmt",     label: "Management",  indent: 1 },
+];
+
+const TEMPLATE_ITEMS = [
+  { value: "_hdr",  label: "Saved scope of work templates", isGroupHeader: true },
+  { value: "ae",    label: "Account Executive",    badge: "Deel template" },
+  { value: "am",    label: "Account Manager",      badge: "Deel template" },
+  { value: "bd",    label: "Business Developer",   badge: "Deel template" },
+  { value: "cm",    label: "Content Marketing",    badge: "Deel template" },
+  { value: "cw",    label: "Content Writer",       badge: "Deel template" },
+  { value: "css",   label: "Customer Success",     badge: "Deel template" },
+  { value: "csup",  label: "Customer Support",     badge: "Deel template" },
+  { value: "des",   label: "Designer",             badge: "Deel template" },
+];
+
+// ─────────────────────────────────────────────────────────────────
 // PREVIEW LAYOUT HELPERS
 // ─────────────────────────────────────────────────────────────────
 function PropsTable({ rows }) {
@@ -525,6 +766,51 @@ function BannerDismissDemo() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// INTERACTIVE DEMOS — SelectList
+// ─────────────────────────────────────────────────────────────────
+function EntityPickerDemo() {
+  const [v, setV] = useState("au");
+  return <SelectList items={ENTITY_ITEMS} value={v} onSelect={setV} maxHeight={260} />;
+}
+function PeoplePickerDemo() {
+  const [v, setV] = useState(null);
+  return <SelectList items={PEOPLE_ITEMS} value={v} onSelect={setV} maxHeight={260} />;
+}
+function DeptTreeDemo() {
+  const [v, setV] = useState(null);
+  return <SelectList items={DEPT_ITEMS} value={v} onSelect={setV} maxHeight={260} />;
+}
+function TemplatesDemo() {
+  const [v, setV] = useState(null);
+  return <SelectList items={TEMPLATE_ITEMS} value={v} onSelect={setV} maxHeight={260} />;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INTERACTIVE DEMOS — RichDropdownSelect
+// ─────────────────────────────────────────────────────────────────
+function RichDropdownDemo() {
+  const [entity,   setEntity]   = useState("");
+  const [person,   setPerson]   = useState("");
+  const [template, setTemplate] = useState("");
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <RichDropdownSelect
+        label="Entity" required placeholder="Select entity…"
+        options={ENTITY_ITEMS} value={entity} onChange={setEntity}
+      />
+      <RichDropdownSelect
+        label="Manager" optional placeholder="Select manager (optional)"
+        options={PEOPLE_ITEMS} value={person} onChange={setPerson}
+      />
+      <RichDropdownSelect
+        label="Scope of work template" optional placeholder="Choose a template…"
+        options={TEMPLATE_ITEMS} value={template} onChange={setTemplate}
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // MAIN EXPORT
 // ─────────────────────────────────────────────────────────────────
 export default function DeelMoleculesPreview() {
@@ -543,7 +829,7 @@ export default function DeelMoleculesPreview() {
             <span className="pg-title">Molecules — Wave 2</span>
           </div>
           <div className="hdr-r">
-            <span className="count-tag">4 molecules · atoms from Wave 1</span>
+            <span className="count-tag">6 molecules · atoms from Wave 1</span>
             <button className="toggle-btn" onClick={() => setDark(d => !d)} type="button">
               {dark ? <Moon /> : <Sun />}
               {dark ? "Dark" : "Light"}
@@ -707,10 +993,63 @@ export default function DeelMoleculesPreview() {
           </Card>
         </Sec>
 
+        {/* ── 05 SelectList ── */}
+        <Sec n={5} name="SelectList"
+          desc="Scrollable list of selectable items that goes beyond plain text. Supports two-line labels with a sublabel, circular avatars (people pickers), right-side badge pills (e.g. 'Deel template'), hierarchical indentation via an indent level, and non-selectable uppercase group-header rows. Use standalone for inline pickers or compose inside RichDropdownSelect."
+          composed="Check icon (for selection indicator)"
+          props={[
+            ["items",     "{ value, label, sublabel?, avatar?, badge?, indent?, isGroupHeader? }[]", true,  "List items. isGroupHeader: true renders a non-clickable uppercase section divider."],
+            ["value",     "string",   false, "Controlled selected value — the matching item gets a filled-circle checkmark."],
+            ["onSelect",  "function", false, "(value: string) => void — called when an item is clicked."],
+            ["maxHeight", "number",   false, "Max height in px before internal scroll (default: 300)."],
+          ]}>
+          <Card label="Entity picker — title + sublabel + checkmark" wide>
+            <EntityPickerDemo />
+          </Card>
+          <Card label="People picker — avatar + role (click to select)" wide>
+            <PeoplePickerDemo />
+          </Card>
+          <Card label="Hierarchical — indent levels" narrow>
+            <DeptTreeDemo />
+          </Card>
+          <Card label="Templates — badge pill + group header" wide>
+            <TemplatesDemo />
+          </Card>
+        </Sec>
+
+        {/* ── 06 RichDropdownSelect ── */}
+        <Sec n={6} name="RichDropdownSelect"
+          desc="Drop-in upgrade of DropdownSelect that replaces the native <select> with a custom floating SelectList panel. Supports the full SelectList item schema — sublabels, avatars, badges, hierarchical indent — while preserving the same form-field chrome: label, helper text, required/optional flags, disabled state, animated chevron. Panel closes on outside click."
+          composed="SelectList + chevron icon"
+          props={[
+            ["label",       "string",   false, "Field label."],
+            ["placeholder", "string",   false, "Shown before selection (default: 'Select…')."],
+            ["options",     "Item[]",   true,  "Same item schema as SelectList — supports sublabel, avatar, badge, indent, isGroupHeader."],
+            ["value",       "string",   false, "Controlled selected value."],
+            ["optional",    "boolean",  false, "Appends '(optional)' to the label."],
+            ["required",    "boolean",  false, "Appends a red * to the label."],
+            ["disabled",    "boolean",  false, "Prevents interaction."],
+            ["helperText",  "string",   false, "Hint text shown below the field."],
+            ["onChange",    "function", false, "(value: string) => void — called on selection."],
+          ]}>
+          <Card label="Entity · people · template — all interactive" wide>
+            <RichDropdownDemo />
+          </Card>
+          <Card label="Disabled state" narrow>
+            <RichDropdownSelect label="Entity" disabled placeholder="Select entity…" options={ENTITY_ITEMS} helperText="Field is locked by your administrator" />
+          </Card>
+          <Card label="With helper text" wide>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <RichDropdownSelect label="Department" options={DEPT_ITEMS} placeholder="Select department…" helperText="Determines which team this person joins" />
+              <RichDropdownSelect label="Manager" options={PEOPLE_ITEMS} optional placeholder="Select manager (optional)" helperText="Leave blank if no direct manager" />
+            </div>
+          </Card>
+        </Sec>
+
         {/* Footer */}
         <div className="foot">
           <span>Deel Design System · Wave 2 · Molecules</span>
-          <span>Next → Wave 3: AI Molecules (ComplianceCheckPanel, MarketRateChart)</span>
+          <span>SelectList + RichDropdownSelect added · Next → Wave 3: AI Molecules</span>
         </div>
 
       </div>

@@ -21,7 +21,7 @@
  *      const context = JSON.stringify(COMPONENT_MANIFEST, null, 2);
  *
  * ─── DOMAINS ───────────────────────────────────────────────────────
- *  Forms               · TextInput, DateInput, DropdownSelect, RadioOption, FormFieldGroup
+ *  Forms               · TextInput, DateInput, DropdownSelect, SelectList, RichDropdownSelect, RadioOption, FormFieldGroup
  *  Actions             · PrimaryButton, SecondaryButton, TextButton
  *  Status & Feedback   · StatusBadge, AutosaveWidget, ContextBanner (guide / insight / promo / info variants)
  *  Navigation          · StepperRail
@@ -143,6 +143,56 @@ export const COMPONENT_MANIFEST = [
       { name: "onChange",    type: "(value: string) => void", required: false, description: "Called on selection change." },
     ],
     usage: '<DropdownSelect label="Job title" options={[{ value: "ea", label: "Executive Assistant" }]} />',
+  },
+  {
+    name: "SelectList",
+    domain: "Forms",
+    tier: "molecule",
+    description:
+      "Scrollable list of selectable items. Supports rich row content: two-line labels with a sublabel, circular avatars (for people pickers), right-side badge pills (e.g. 'Deel template'), hierarchical indentation via an indent level, and non-selectable uppercase group-header rows. Designed to be composed inside RichDropdownSelect or used standalone as an inline picker panel.",
+    composedOf: ["Icon"],
+    props: [
+      { name: "items",      type: "{ value: string; label: string; sublabel?: string; avatar?: ReactNode; badge?: string; indent?: number; isGroupHeader?: boolean }[]", required: true,  description: "List items. isGroupHeader: true renders a non-clickable uppercase section divider." },
+      { name: "value",      type: "string",                       required: false, description: "Controlled selected value. The matching item receives a filled-circle checkmark." },
+      { name: "onSelect",   type: "(value: string) => void",      required: false, description: "Called with the item's value when clicked." },
+      { name: "maxHeight",  type: "number",                       required: false, description: "Max height in px before internal scroll kicks in (default: 300)." },
+      { name: "searchable", type: "boolean",                      required: false, description: "Renders a sticky search input at the top that filters items by label and sublabel." },
+    ],
+    usage: `<SelectList
+  items={[
+    { value: "au", label: "AU entity - Payroll Connect", sublabel: "Australia" },
+    { value: "ca", label: "CA entity", sublabel: "Canada" },
+  ]}
+  value="au"
+  onSelect={v => console.log(v)}
+/>`,
+  },
+  {
+    name: "RichDropdownSelect",
+    domain: "Forms",
+    tier: "molecule",
+    description:
+      "Drop-in upgrade of DropdownSelect that replaces the native <select> with a custom floating SelectList panel. Accepts the full SelectList item schema — sublabels, avatars, badge pills, hierarchical indent — while keeping the identical form-field chrome (label, helper text, required/optional flags, disabled state, chevron icon). The panel closes on outside click.",
+    composedOf: ["SelectList"],
+    props: [
+      { name: "label",       type: "string",                       required: false, description: "Field label." },
+      { name: "placeholder", type: "string",                       required: false, description: "Shown before selection (default: 'Select…')." },
+      { name: "options",     type: "{ value: string; label: string; sublabel?: string; avatar?: ReactNode; badge?: string; indent?: number; isGroupHeader?: boolean }[]", required: true, description: "Same item schema as SelectList." },
+      { name: "value",       type: "string",                       required: false, description: "Controlled selected value." },
+      { name: "optional",    type: "boolean",                      required: false, description: "Appends '(optional)' to the label." },
+      { name: "required",    type: "boolean",                      required: false, description: "Appends a red * to the label." },
+      { name: "disabled",    type: "boolean",                      required: false, description: "Prevents interaction." },
+      { name: "helperText",  type: "string",                       required: false, description: "Hint text shown below the field." },
+      { name: "onChange",    type: "(value: string) => void",      required: false, description: "Called with the new value on selection." },
+      { name: "searchable",  type: "boolean",                      required: false, description: "Adds a search input inside the panel that filters options by label and sublabel." },
+    ],
+    usage: `<RichDropdownSelect
+  label="Entity"
+  options={[
+    { value: "au", label: "AU entity - Payroll Connect", sublabel: "Australia" },
+    { value: "ca", label: "CA entity", sublabel: "Canada" },
+  ]}
+/>`,
   },
   {
     name: "RadioOption",
@@ -975,7 +1025,59 @@ export const makeLibraryCSS = (t, isDark) => {
   .selw select.ph { color: ${t.textDisabled}; }
   .selw select:focus { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
   .selw select:disabled { background: ${t.surfaceHover}; color: ${t.textDisabled}; cursor: not-allowed; }
-  .chev { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: ${t.textMuted}; }
+  .chev { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: ${t.textMuted}; transition: transform .15s; padding-top: 4px;}
+  .chev.up { transform: translateY(-50%) rotate(180deg); }
+
+  /* ── SelectList ── */
+  .sl { padding: 6px; min-width: 280px; scrollbar-width: none; -ms-overflow-style: none; }
+  .sl::-webkit-scrollbar { display: none; }
+  .sl-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: ${br - 1}px;
+    cursor: pointer; border: none; background: transparent;
+    width: 100%; text-align: left; font-family: ${ff};
+    transition: background .1s;
+  }
+  .sl-item:hover:not(.sl-gh) { background: ${t.surfaceHover}; }
+  .sl-item.sl-sel { background: ${t.surfaceHover}; }
+  .sl-item.sl-gh { cursor: default; padding: 6px 12px 4px; margin-top: 4px; }
+  .sl-item.sl-gh:first-child { margin-top: 0; }
+  .sl-info { flex: 1; min-width: 0; }
+  .sl-lbl { font-size: 13.5px; font-weight: 500; color: ${t.textMain}; line-height: 1.35; }
+  .sl-sub { font-size: 12px; color: ${t.textMuted}; margin-top: 2px; line-height: 1.3; }
+  .sl-gh .sl-lbl { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: ${t.textMuted}; }
+  .sl-av { width: 36px; height: 36px; border-radius: ${br}px; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; background: ${t.surfaceHover}; }
+  .sl-outer { border: 1px solid ${t.border}; border-radius: ${br}px; overflow: hidden; }
+  .sl-badge { font-size: 11.5px; color: ${t.textMuted}; border: 1px solid ${t.border}; border-radius: 999px; padding: 2px 10px; white-space: nowrap; flex-shrink: 0; margin-left: auto; }
+  .sl-check { margin-left: auto; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: ${t.textMain}; color: ${t.surface}; display: flex; align-items: center; justify-content: center; }
+  .sl-check-sp { margin-left: auto; flex-shrink: 0; width: 22px; }
+  .sl-search { position: sticky; top: 0; z-index: 1; margin-bottom: 6px; }
+  .sl-search input { display: block; width: 100%; height: 32px; padding: 0 10px; font-family: ${ff}; font-size: 13px; background: ${t.inputBg}; border: 1px solid ${t.border}; border-radius: ${br - 1}px; outline: none; color: ${t.textMain}; box-sizing: border-box; }
+  .sl-search input::placeholder { color: ${t.textDisabled}; }
+  .sl-search input:focus { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
+  .sl-empty { padding: 24px 12px; text-align: center; font-size: 13px; color: ${t.textMuted}; }
+
+  /* ── RichDropdownSelect ── */
+  .rds { position: relative; }
+  .rds-trigger {
+    height: 36px; width: 100%; padding: 0 34px 0 11px;
+    font-family: ${ff}; font-size: 13.5px;
+    background: ${t.inputBg}; border: 1px solid ${t.border};
+    border-radius: ${br}px; outline: none; appearance: none; cursor: pointer;
+    color: ${t.textMain}; transition: border-color .12s, box-shadow .12s;
+    display: flex; align-items: center; text-align: left;
+    white-space: nowrap; overflow: hidden;
+  }
+  .rds-trigger.ph { color: ${t.textDisabled}; }
+  .rds-trigger:focus, .rds-trigger.open { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
+  .rds-trigger:disabled { background: ${t.surfaceHover}; color: ${t.textDisabled}; cursor: not-allowed; }
+  .rds-panel {
+    position: absolute; top: calc(100% + 4px); left: 0; z-index: 999;
+    width: max-content; min-width: 100%;
+    background: ${t.surface}; border: 1px solid ${t.border};
+    border-radius: ${br + 2}px; box-shadow: ${t.shadowLg};
+    max-height: 300px; overflow-y: auto;
+  }
 
   /* ── RadioOption ── */
   .rrow {
@@ -1532,6 +1634,154 @@ export function DropdownSelect({ label, placeholder = "Select…", options = [],
           {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <span className="chev"><Chevron /></span>
+      </div>
+      {helperText && <span className="fhint">{helperText}</span>}
+    </div>
+  );
+}
+
+/**
+ * Scrollable list of selectable items — the panel molecule used inside
+ * RichDropdownSelect and anywhere a custom picker panel is needed.
+ *
+ * Each item may carry: sublabel, avatar (ReactNode), badge pill, indent level,
+ * or isGroupHeader flag for non-selectable uppercase section dividers.
+ *
+ * @param {Array}   items            - Item objects (see prop list).
+ * @param {string}  [value]          - Controlled selected value; shows a checkmark.
+ * @param {function}[onSelect]       - Called with item.value on click.
+ * @param {number}  [maxHeight=300]  - Max height px before internal scroll.
+ */
+export function SelectList({ items = [], value, onSelect, maxHeight = 300, searchable = false }) {
+  const controlled = value !== undefined;
+  const [query, setQuery] = useState("");
+
+  let visible = items;
+  if (searchable && query.trim()) {
+    const q = query.toLowerCase();
+    const result = [];
+    let pendingHeader = null;
+    for (const item of items) {
+      if (item.isGroupHeader) {
+        pendingHeader = item;
+      } else {
+        const match =
+          item.label.toLowerCase().includes(q) ||
+          (item.sublabel && item.sublabel.toLowerCase().includes(q));
+        if (match) {
+          if (pendingHeader) { result.push(pendingHeader); pendingHeader = null; }
+          result.push(item);
+        }
+      }
+    }
+    visible = result;
+  }
+
+  return (
+    <div className="sl" style={{ maxHeight, overflowY: "auto" }}>
+      {searchable && (
+        <div className="sl-search">
+          <input
+            autoFocus
+            type="text"
+            placeholder="Search…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+        </div>
+      )}
+      {searchable && query.trim() && visible.length === 0 && (
+        <div className="sl-empty">No results</div>
+      )}
+      {visible.map((item, i) => {
+        if (item.isGroupHeader) {
+          return (
+            <div key={item.value ?? `gh-${i}`} className="sl-item sl-gh" role="presentation">
+              <div className="sl-info"><div className="sl-lbl">{item.label}</div></div>
+            </div>
+          );
+        }
+        const isSelected = controlled && value === item.value;
+        const showCheck  = controlled && !item.avatar && !item.badge;
+        return (
+          <button
+            key={item.value}
+            type="button"
+            className={`sl-item${isSelected ? " sl-sel" : ""}`}
+            style={item.indent ? { paddingLeft: 12 + item.indent * 16 } : undefined}
+            onClick={() => onSelect?.(item.value)}
+          >
+            {item.avatar && <div className="sl-av">{item.avatar}</div>}
+            <div className="sl-info">
+              <div className="sl-lbl">{item.label}</div>
+              {item.sublabel && <div className="sl-sub">{item.sublabel}</div>}
+            </div>
+            {item.badge && <div className="sl-badge">{item.badge}</div>}
+            {showCheck && (isSelected
+              ? <div className="sl-check"><Icon name="check" size={12} /></div>
+              : <div className="sl-check-sp" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Enhanced dropdown that replaces the native <select> with a custom floating
+ * SelectList panel. Supports the full SelectList item schema (sublabels, avatars,
+ * badges, hierarchy) while preserving the same form-field chrome as DropdownSelect.
+ *
+ * @param {string}   [label]       - Field label.
+ * @param {string}   [placeholder] - Shown before selection (default: 'Select…').
+ * @param {Array}    options       - Same item schema as SelectList.
+ * @param {string}   [value]       - Controlled selected value.
+ * @param {boolean}  [optional]    - Appends '(optional)' to the label.
+ * @param {boolean}  [required]    - Appends a red * to the label.
+ * @param {boolean}  [disabled]    - Prevents interaction.
+ * @param {string}   [helperText]  - Hint text shown below the field.
+ * @param {function} [onChange]    - Called with the new value on selection.
+ */
+export function RichDropdownSelect({ label, placeholder = "Select…", options = [], value, optional, required, disabled, helperText, onChange, searchable = false }) {
+  const [open, setOpen] = useState(false);
+  const [v, setV] = useState(value ?? "");
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = e => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const selected = options.find(o => o.value === v && !o.isGroupHeader);
+  const handleSelect = val => { setV(val); onChange?.(val); setOpen(false); };
+
+  return (
+    <div className="fi">
+      {label && (
+        <label className="fl">
+          {label}
+          {required && <span className="req">*</span>}
+          {optional && <span style={{ fontWeight: 400, opacity: .65 }}> (optional)</span>}
+        </label>
+      )}
+      <div className="rds" ref={wrapRef}>
+        <button
+          type="button"
+          className={`rds-trigger${!v ? " ph" : ""}${open ? " open" : ""}`}
+          disabled={disabled}
+          onClick={() => !disabled && setOpen(o => !o)}
+        >
+          {selected ? selected.label : placeholder}
+        </button>
+        <span className={open ? "chev up" : "chev"}><Chevron /></span>
+        {open && (
+          <div className="rds-panel">
+            <SelectList items={options} value={v} onSelect={handleSelect} maxHeight={280} searchable={searchable} />
+          </div>
+        )}
       </div>
       {helperText && <span className="fhint">{helperText}</span>}
     </div>
