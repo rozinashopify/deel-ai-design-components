@@ -3,7 +3,6 @@ import {
   makeLibraryCSS,
   lightTokens as libLightTokens,
   darkTokens as libDarkTokens,
-  EORContractCreationFlow,
   JobDescriptionBlock,
   CompensationBlock,
   BenefitsBlock,
@@ -92,6 +91,14 @@ const landingLight = {
 function makeLandingCSS(t, isDark) {
   return `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@font-face {
+  font-family: 'BagossCondensed';
+  src: url('/Bagoss-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -335,12 +342,13 @@ body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: 
 }
 .lp-hero-title {
   font-size: clamp(48px, 8vw, 80px);
-  font-weight: 800; letter-spacing: -0.04em; line-height: 1.05;
+  font-family: 'BagossCondensed', 'Inter', sans-serif;
+  font-weight: 600; line-height: 1.05;
   color: ${t.textMain};
   animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.1s both;
 }
 .lp-hero-gradient {
-  background: linear-gradient(135deg, ${t.purple} 0%, #60A5FA 50%, ${t.purple} 100%);
+  background: linear-gradient(135deg, rgba(160, 109, 255, 1) 0%, ${isDark ? 'rgba(255, 235, 200, 1)' : 'rgba(230, 100, 180, 1)'} 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -387,7 +395,8 @@ body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: 
 }
 .lp-section-title {
   font-size: clamp(32px, 4.5vw, 52px);
-  font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
+  font-family: 'BagossCondensed', 'Inter', sans-serif;
+  font-weight: 500; letter-spacing: -0.03em; line-height: 1.1;
   color: ${t.textMain};
 }
 .lp-section-sub {
@@ -627,14 +636,14 @@ body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: 
 }
 .lp-stars { display: flex; gap: 3px; margin-bottom: 14px; }
 .lp-star { color: ${t.gold}; font-size: 14px; }
+.lp-star-empty { color: ${t.border}; }
 .lp-test-text {
   font-size: 14px; line-height: 1.65; color: ${t.textMuted}; margin-bottom: 20px;
 }
 .lp-test-author { display: flex; align-items: center; gap: 10px; }
 .lp-test-avatar {
   width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600; color: #fff;
+  object-fit: cover;
 }
 .lp-test-name { font-size: 13px; font-weight: 600; color: ${t.textMain}; }
 .lp-test-role { font-size: 12px; color: ${t.textSubtle}; }
@@ -775,6 +784,157 @@ function combineCSS(...parts) {
 // ─────────────────────────────────────────────────────────────────
 // COMPONENT PREVIEW WRAPPER
 // ─────────────────────────────────────────────────────────────────
+const COMING_SOON_FLOWS = [
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    ),
+    name: "Contractor Agreement",
+    desc: "Self-service contractor onboarding with compliance checks, agreement generation, and payment setup.",
+    features: ["Contractor classification check", "Agreement generation", "Invoice management", "Payment scheduling"],
+    complexity: "Low", shipTime: "~1 day", countries: "150+",
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+    ),
+    name: "Global Payroll Setup",
+    desc: "Configure payroll schedules, currencies, and payment methods for employees across multiple countries.",
+    features: ["Multi-currency payroll", "Tax withholding automation", "Payslip generation", "Bank account management"],
+    complexity: "Medium", shipTime: "~5 days", countries: "90+",
+  },
+];
+
+function ComingSoonFlowCard({ t, flow }) {
+  return (
+    <div style={{
+      background: t.cardSurface, border: `1px solid ${t.border}`,
+      borderRadius: 12, overflow: "hidden",
+      display: "flex", flexDirection: "column",
+      width: 340, opacity: 0.72,
+    }}>
+      {/* Header */}
+      <div style={{ padding: "18px 18px 14px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: t.surface, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMuted, flexShrink: 0 }}>
+          {flow.icon}
+        </div>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 500, color: t.textMuted, border: `1px solid ${t.border}`, borderRadius: 999, padding: "3px 10px", whiteSpace: "nowrap", marginTop: 6 }}>Coming soon</span>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: "0 18px 16px", flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div>
+          <div style={{ fontFamily: "'Inter',sans-serif", fontSize: 14, fontWeight: 700, color: t.textMain, marginBottom: 6, letterSpacing: "-0.01em" }}>{flow.name}</div>
+          <div style={{ fontFamily: "'Inter',sans-serif", fontSize: 12, color: t.textMuted, lineHeight: 1.55 }}>{flow.desc}</div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {flow.features.map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textSubtle} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span style={{ fontFamily: "'Inter',sans-serif", fontSize: 11.5, color: t.textMuted }}>{f}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 20, marginTop: 4 }}>
+          {[["Complexity", flow.complexity], ["Ship time", flow.shipTime], ["Countries", flow.countries]].map(([label, value]) => (
+            <div key={label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontFamily: "'Inter',sans-serif", fontSize: 10, color: t.textSubtle }}>{label}</span>
+              <span style={{ fontFamily: "'Inter',sans-serif", fontSize: 12, fontWeight: 700, color: t.textMuted }}>{value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer button */}
+      <div style={{ padding: "0 18px 18px" }}>
+        <div style={{ width: "100%", padding: "9px 0", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", fontFamily: "'Inter',sans-serif", fontSize: 12, fontWeight: 500, color: t.textMuted, textAlign: "center", cursor: "default" }}>
+          Notify me when available
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniFlowCard({ t, libT, onOpen }) {
+  const steps = ["Personal", "Job details", "Compensation", "Benefits"];
+  return (
+    <div
+      style={{
+        background: t.cardSurface, border: `1px solid ${t.border}`,
+        borderRadius: 12, overflow: "hidden", boxShadow: t.shadow,
+        display: "flex", flexDirection: "column",
+        transition: "box-shadow .14s, transform .14s", cursor: "pointer",
+        width: 340,
+      }}
+      onClick={onOpen}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = t.shadowMd; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = t.shadow; e.currentTarget.style.transform = "translateY(0)"; }}
+    >
+      {/* Visual preview area */}
+      <div style={{
+        padding: "22px 18px", background: t.surface,
+        borderBottom: `1px solid ${t.border}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        minHeight: 160, overflow: "hidden",
+      }}>
+        <div style={{ background: libT.surface, border: `1px solid ${libT.border}`, borderRadius: 12, overflow: "hidden", width: "100%" }}>
+          <div style={{ background: libT.bg, padding: "8px 14px", borderBottom: `1px solid ${libT.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", gap: 5 }}>
+              {["#E4E4E7", "#E4E4E7", "#E4E4E7"].map((c, i) => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: c }} />)}
+            </div>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: libT.textMuted, letterSpacing: "0.06em" }}>EOR Contract Creation</span>
+            <span />
+          </div>
+          <div style={{ display: "flex" }}>
+            <div style={{ width: 114, borderRight: `1px solid ${libT.border}`, padding: "12px 10px", display: "flex", flexDirection: "column" }}>
+              {steps.map((s, i) => {
+                const done = i < 1, active = i === 1;
+                return (
+                  <div key={s} style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                      <div style={{ width: 16, height: 16, borderRadius: "50%", border: `1.5px solid ${done ? libT.success : active ? libT.primary : libT.border}`, background: done ? libT.successBg : active ? libT.surface : libT.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: done ? libT.success : active ? libT.primary : libT.textDisabled }}>
+                        {done ? "✓" : i + 1}
+                      </div>
+                      {i < steps.length - 1 && <div style={{ width: 1, height: 14, background: done ? libT.success : libT.border }} />}
+                    </div>
+                    <div style={{ fontFamily: "Inter,sans-serif", fontSize: 10, fontWeight: active ? 600 : 400, color: active ? libT.textMain : libT.textMuted, paddingTop: 1 }}>{s}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ flex: 1, padding: 14, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 120 }}>
+              <div>
+                <div style={{ fontFamily: "Inter,sans-serif", fontSize: 12.5, fontWeight: 700, color: libT.textMain, marginBottom: 3 }}>Job details</div>
+                <div style={{ fontFamily: "Inter,sans-serif", fontSize: 11, color: libT.textMuted, marginBottom: 10, lineHeight: 1.4 }}>Describe the role and responsibilities.</div>
+                <div style={{ background: libT.bg, border: `1px solid ${libT.border}`, borderRadius: 7, height: 28 }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
+                <button type="button" style={{ fontFamily: "Inter,sans-serif", fontSize: 11, color: libT.textMuted, background: "transparent", border: `1px solid ${libT.border}`, borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}>Back</button>
+                <button type="button" onClick={e => { e.stopPropagation(); onOpen(); }} style={{ fontFamily: "Inter,sans-serif", fontSize: 11, fontWeight: 600, color: libT.btnText, background: libT.primary, border: "none", borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}>Open full flow</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Card footer */}
+      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: t.textMain, letterSpacing: "-0.01em" }}>EORContractCreationFlow</span>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, color: t.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>All blocks + StepperRail + AutosaveWidget</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 500, color: t.textMain, background: t.surface, border: `1px solid ${t.border}`, padding: "5px 10px", borderRadius: 7, whiteSpace: "nowrap", flexShrink: 0, fontFamily: "'Inter',sans-serif" }}>
+          Open →
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ComponentPreview({ scale = 0.5, width, height, onClick, children }) {
   return (
     <div className="lp-preview-card" style={{ width, height }} onClick={onClick}>
@@ -910,8 +1070,7 @@ function HeroSection({ t, onLaunchDemo }) {
         </div>
 
         <h1 className="lp-hero-title">
-          Deel Kit:<br />
-          <span className="lp-hero-gradient">AI builder</span>
+          <span className="lp-hero-gradient">Deel Kit: AI builder</span>
         </h1>
 
         <p className="lp-hero-sub">
@@ -1337,7 +1496,7 @@ function AppearanceSection({ t, dark }) {
   );
 }
 
-function GetStartedSection({ t, onLaunchDemo }) {
+function GetStartedSection({ t, libT, onLaunchDemo }) {
   const [ref, inView] = useScrollReveal(0.1);
   return (
     <section className="lp-section lp-gs">
@@ -1354,9 +1513,10 @@ function GetStartedSection({ t, onLaunchDemo }) {
         <div className={`lp-gs-category reveal ${inView ? "in" : ""}`} style={{ "--i": 0 }}>
           <div className="lp-gs-cat-label">Flows</div>
           <div className="lp-gs-row">
-            <ComponentPreview scale={0.44} width={760} height={310} onClick={() => onLaunchDemo("EORContractCreationFlow")}>
-              <EORContractCreationFlow country="Brazil" workerName="Sofia Andrade" />
-            </ComponentPreview>
+            <MiniFlowCard t={t} libT={libT} onOpen={() => onLaunchDemo("EORContractCreationFlow")} />
+            {COMING_SOON_FLOWS.map(flow => (
+              <ComingSoonFlowCard key={flow.name} t={t} flow={flow} />
+            ))}
           </div>
         </div>
 
@@ -1418,33 +1578,39 @@ function GetStartedSection({ t, onLaunchDemo }) {
 // ─────────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
   {
-    text: "We went to months trying to build compliant payroll flows. DeelKit shipped the same flows in a single day. The system handles all the edge cases we spent months debugging.",
-    name: "Sarah Chen", role: "CTO · HRTech Series B",
+    stars: 4,
+    text: "The component manifest is what makes this actually usable for AI-assisted development. I can match a hiring scenario to the right flow without guessing. That discoverability is rare — and it matters.",
+    name: "Claude (Sonnet)", role: "Code Generation Agent · Anthropic",
     color: "linear-gradient(135deg, #7C3AED, #A78BFA)",
   },
   {
-    text: "With DeelKit, our platform is featuring Deel's payroll data. It shipped the same flows in just days. The system handles all the edge cases we spent months trying to build our own flow.",
-    name: "Marcus K.", role: "Lead Engineer · Global Payroll Co.",
+    stars: 4,
+    text: "Every field carries semantic weight — I'm not just reading a label, I'm understanding why it exists. That lets me reason about compliance correctness, not just render a form. That's the difference between a UI kit and a knowledge system.",
+    name: "Claude (Sonnet)", role: "Compliance Reasoning Agent · Anthropic",
     color: "linear-gradient(135deg, #059669, #34D399)",
   },
   {
-    text: "We went to months trying to build compliant payroll flows. DeelKit shipped the same flows in a single day. The white-label theming meant our brand was preserved end-to-end.",
-    name: "Priya Sharma", role: "Product Lead · WorkOS",
+    stars: 5,
+    text: "White-label theming via design tokens means I can help teams customize their integration without touching core flow logic. The separation of concerns isn't just good architecture — it's what makes safe AI-assisted customization possible.",
+    name: "Claude (Sonnet)", role: "Documentation Agent · Anthropic",
     color: "linear-gradient(135deg, #EA580C, #FB923C)",
   },
   {
-    text: "We went to months trying to build our own flow. DeelKit shipped the same flows in just days. This is the system we wanted to launch globally without the pain.",
-    name: "Tom Liu", role: "VP Engineering · RemoteFirst",
+    stars: 3,
+    text: "When I retry a failed step, I need to know nothing was duplicated. Idempotency isn't a nice-to-have for agentic workflows — it's the contract that lets me act without asking the user to verify every side effect manually.",
+    name: "Claude (Sonnet)", role: "Automation Agent · Anthropic",
     color: "linear-gradient(135deg, #2563EB, #60A5FA)",
   },
   {
-    text: "With DeelKit we went from zero to fully featured EOR flow in under 48 hours. The AI-powered compliance checks alone saved us weeks of legal review cycles.",
-    name: "Sofia Patel", role: "Founder · TalentBridge",
+    stars: 3,
+    text: "Structured error states with machine-readable codes are what separate a system I can debug from one I can only apologize about. When a flow fails, I need to explain why and suggest a recovery path — not just surface a string.",
+    name: "Claude (Sonnet)", role: "Debugging Agent · Anthropic",
     color: "linear-gradient(135deg, #D97706, #FCD34D)",
   },
   {
-    text: "We went to months trying to build our payroll flow. DeelKit shipped the same flows in just days. This is the system we wanted to build from the start.",
-    name: "James O.", role: "Engineering Manager · PayStack",
+    stars: 3,
+    text: "The honest gap I'd push on: TypeScript definitions and a spec for valid prop combinations. Right now I can read the components, but I can't yet guarantee correct code without running it. Solve that and AI-first integration becomes truly zero-friction.",
+    name: "Claude (Sonnet)", role: "Product Scoping Agent · Anthropic",
     color: "linear-gradient(135deg, #E11D48, #FB7185)",
   },
 ];
@@ -1462,13 +1628,11 @@ function TestimonialsSection({ t }) {
           {TESTIMONIALS.map((t, i) => (
             <div key={i} className={`lp-test-card reveal-scale ${inView ? "in" : ""}`} style={{ "--i": i }}>
               <div className="lp-stars">
-                {[...Array(5)].map((_, si) => <span key={si} className="lp-star">★</span>)}
+                {[...Array(5)].map((_, si) => <span key={si} className={`lp-star${si >= t.stars ? " lp-star-empty" : ""}`}>★</span>)}
               </div>
               <p className="lp-test-text">"{t.text}"</p>
               <div className="lp-test-author">
-                <div className="lp-test-avatar" style={{ background: t.color }}>
-                  {t.name.split(" ").map(n => n[0]).join("")}
-                </div>
+                <img className="lp-test-avatar" src="https://claude.ai/images/claude_app_icon.png" alt="Claude" />
                 <div>
                   <div className="lp-test-name">{t.name}</div>
                   <div className="lp-test-role">{t.role}</div>
@@ -1603,7 +1767,7 @@ export default function LandingPage({ onLaunchDemo, dark = true, onToggleDark })
       <ProblemSection t={t} />
       <HowItWorksSection t={t} />
       <AppearanceSection t={t} dark={dark} />
-      <GetStartedSection t={t} onLaunchDemo={onLaunchDemo} />
+      <GetStartedSection t={t} libT={libTokens} onLaunchDemo={onLaunchDemo} />
       <TestimonialsSection t={t} />
       <TeamSection t={t} />
       <CTASection t={t} />

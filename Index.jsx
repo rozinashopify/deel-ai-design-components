@@ -157,6 +157,13 @@ function combineCSS(...parts) {
 // ─────────────────────────────────────────────────────────────────
 const makeCSS = (t, isDark) => `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @font-face {
+    font-family: 'BagossCondensed';
+    src: url('/Bagoss-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
 
@@ -4079,7 +4086,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
 
   // ── Inline sub-components ────────────────────────────────────
   const SectionTitle = ({ children, id }) => (
-    <h2 id={id} style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: "-0.025em", color: t.textMain, margin: "0 0 18px", paddingBottom: 14, borderBottom: `1px solid ${t.border}` }}>
+    <h2 id={id} style={{ fontSize: 18, fontWeight: 500, fontFamily: "'BagossCondensed', 'Inter', sans-serif", letterSpacing: "-0.025em", color: t.textMain, margin: "0 0 18px", paddingBottom: 14, borderBottom: `1px solid ${t.border}` }}>
       {children}
     </h2>
   );
@@ -4151,7 +4158,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
           {/* Title + actions row */}
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.04em", color: t.textMain, margin: "0 0 12px", fontFamily: "'Inter', sans-serif" }}>{name}</h1>
+              <h1 style={{ fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: t.textMain, margin: "0 0 12px", fontFamily: "'BagossCondensed', 'Inter', sans-serif" }}>{name}</h1>
               {/* Tier + domain + composed-of tags */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14, alignItems: "center" }}>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.07em", textTransform: "uppercase", color: tierColor, background: tierBg, padding: "3px 9px", borderRadius: 5 }}>{manifest?.tier}</span>
@@ -4178,7 +4185,7 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
           {/* ── Preview / Playground ── */}
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 14, borderBottom: `1px solid ${t.border}`, marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: "-0.025em", color: t.textMain, margin: 0 }}>Preview</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 500, fontFamily: "'BagossCondensed', 'Inter', sans-serif", letterSpacing: "-0.025em", color: t.textMain, margin: 0 }}>Preview</h2>
               {(controllableProps.length > 0 || config.customControls) && (
                 <div style={{ display: "flex", gap: 2, background: t.surfaceHover, border: `1px solid ${t.border}`, borderRadius: 8, padding: 2 }}>
                   {["preview", "playground"].map(tab => (
@@ -4415,7 +4422,7 @@ const makeCatalogCSS = (t) => `
     letter-spacing: 0.14em; text-transform: uppercase; color: ${t.textMuted}; margin-bottom: 12px;
   }
   .lib-h1 {
-    font-size: 32px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.14;
+    font-size: 32px; font-family: 'BagossCondensed', 'Inter', sans-serif; font-weight: 500; letter-spacing: -0.04em; line-height: 1.14;
     color: ${t.textMain}; margin-bottom: 14px;
   }
   .lib-h1 em { font-style: normal; color: ${t.purple}; }
@@ -4959,7 +4966,7 @@ function QuickStartBanner({ t, onTryLive }) {
         display: "block", marginBottom: 14,
       }}>Quick Start</span>
       <h2 style={{
-        fontSize: 32, fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1.1,
+        fontSize: 32, fontWeight: 500, fontFamily: "'BagossCondensed', 'Inter', sans-serif", letterSpacing: "-0.04em", lineHeight: 1.1,
         color: t.textMain, margin: "0 0 12px",
       }}>
         From zero to live EOR flow<br />
@@ -5175,7 +5182,7 @@ function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
               Deel Design Foundation · Waves 1 – 5
             </span>
             <h1 style={{
-              fontSize: 48, fontWeight: 700, letterSpacing: "-0.05em", lineHeight: 1.08,
+              fontSize: 48, fontWeight: 600, fontFamily: "'BagossCondensed', 'Inter', sans-serif", lineHeight: 1.08,
               color: t.textMain, marginBottom: 18, margin: "0 0 18px",
             }}>
               Components that<br />
@@ -5257,7 +5264,7 @@ function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
                       }}>✦ AI-powered</span>
                     )}
                   </div>
-                  <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: t.textMain, margin: "0 0 8px" }}>
+                  <h2 style={{ fontSize: 28, fontWeight: 500, fontFamily: "'BagossCondensed', 'Inter', sans-serif", letterSpacing: "-0.03em", color: t.textMain, margin: "0 0 8px" }}>
                     {wave.name}
                   </h2>
                   <p style={{ fontSize: 13.5, color: t.textMuted, lineHeight: 1.6, maxWidth: 560, margin: 0 }}>
@@ -5355,7 +5362,7 @@ function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
           }}>
             Explore further
           </span>
-          <h2 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", color: t.textMain, margin: "0 0 12px" }}>
+          <h2 style={{ fontSize: 28, fontWeight: 500, fontFamily: "'BagossCondensed', 'Inter', sans-serif", letterSpacing: "-0.03em", color: t.textMain, margin: "0 0 12px" }}>
             Ready for the full picture?
           </h2>
           <p style={{ fontSize: 14, color: t.textMuted, lineHeight: 1.65, maxWidth: 480, margin: "0 auto 32px" }}>
