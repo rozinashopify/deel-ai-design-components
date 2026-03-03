@@ -2999,7 +2999,19 @@ export function EORContractCreationFlow({
     setTimeout(() => setSaveStatus("saved"), 1200);
   };
 
-  const next = () => { if (step < 4) goTo(step + 1); else onComplete?.({ step, workerName, country }); };
+  const next = () => {
+    if (step < 4) {
+      goTo(step + 1);
+    } else {
+      onComplete?.({
+        workerName,
+        country,
+        contractType: "EOR",
+        status: "submitted",
+        submittedAt: new Date().toISOString(),
+      });
+    }
+  };
   const back = () => { if (step > 1) goTo(step - 1); };
 
   const stepContent = {

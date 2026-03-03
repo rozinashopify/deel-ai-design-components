@@ -4131,6 +4131,242 @@ function AppearanceSection({ t, appearance: appearanceProp, setAppearance: setAp
 }
 
 // ─────────────────────────────────────────────────────────────────
+// QUICK START BANNER  — install → prompt → ship
+// ─────────────────────────────────────────────────────────────────
+function QuickStartBanner({ t, onTryLive }) {
+  const [copied, setCopied] = useState(null);
+  const copy = (text, key) => {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2200);
+  };
+
+  const INSTALL = "npm install deelkit";
+  const CODE = `import { EORContractCreationFlow } from "deelkit"\n\nexport default function App() {\n  return (\n    <EORContractCreationFlow\n      onComplete={handleContractSubmit}\n    />\n  )\n}`;
+  const MONO = "'JetBrains Mono', monospace";
+
+  const Dots = () => (
+    <div style={{ display: "flex", gap: 5 }}>
+      {["#FF5F57", "#FEBC2E", "#28C840"].map(c => (
+        <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
+      ))}
+    </div>
+  );
+
+  const CopyBtn = ({ text, id }) => (
+    <button
+      type="button"
+      onClick={() => copy(text, id)}
+      style={{
+        fontFamily: MONO, fontSize: 10,
+        color: copied === id ? "#28C840" : "rgba(255,255,255,0.4)",
+        background: "none", border: "1px solid rgba(255,255,255,0.12)",
+        padding: "3px 8px", borderRadius: 5, cursor: "pointer",
+        transition: "color .15s",
+      }}
+    >
+      {copied === id ? "✓ Copied" : "Copy"}
+    </button>
+  );
+
+  const StepLabel = ({ n, label }) => (
+    <div style={{
+      fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 600,
+      color: t.textMuted, marginBottom: 10, display: "flex", alignItems: "center", gap: 7,
+    }}>
+      <span style={{
+        width: 20, height: 20, borderRadius: "50%", background: t.primary,
+        color: t.btnText, display: "inline-flex", alignItems: "center", justifyContent: "center",
+        fontSize: 10, fontWeight: 700, fontFamily: MONO, flexShrink: 0,
+      }}>{n}</span>
+      {label}
+    </div>
+  );
+
+  const CodeBlock = ({ headerLeft, headerRight, children }) => (
+    <div style={{
+      background: "#111", borderRadius: 12, overflow: "hidden",
+      border: "1px solid rgba(255,255,255,0.07)",
+    }}>
+      <div style={{
+        padding: "9px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        {headerLeft}
+        {headerRight}
+      </div>
+      {children}
+    </div>
+  );
+
+  return (
+    <div style={{
+      padding: "60px 36px 64px",
+      background: t.surface,
+      borderBottom: `1px solid ${t.border}`,
+    }}>
+      <span style={{
+        fontFamily: MONO, fontSize: 10, fontWeight: 500,
+        letterSpacing: "0.14em", textTransform: "uppercase", color: t.textMuted,
+        display: "block", marginBottom: 14,
+      }}>Quick Start</span>
+      <h2 style={{
+        fontSize: 32, fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1.1,
+        color: t.textMain, margin: "0 0 12px",
+      }}>
+        From zero to live EOR flow<br />
+        <span style={{ color: t.purple }}>in a single prompt</span>
+      </h2>
+      <p style={{
+        fontSize: 15, color: t.textMuted, lineHeight: 1.65,
+        maxWidth: 560, margin: "0 0 44px",
+      }}>
+        Install the package, then ask your AI to wire it up. DeelKit ships with a structured
+        manifest every LLM can read — so the right component, props, and{" "}
+        <code style={{ fontFamily: MONO, fontSize: 12.5, background: t.surfaceHover, padding: "1px 5px", borderRadius: 4 }}>onComplete</code>
+        {" "}handler are always generated first time.
+      </p>
+
+      {/* 3-step grid */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1.7fr auto 1fr",
+        alignItems: "start", marginBottom: 40,
+      }}>
+        {/* Step 1: Install */}
+        <div>
+          <StepLabel n={1} label="Install" />
+          <CodeBlock
+            headerLeft={<Dots />}
+            headerRight={<CopyBtn text={INSTALL} id="install" />}
+          >
+            <div style={{ padding: "14px 16px", fontFamily: MONO, fontSize: 13 }}>
+              <div>
+                <span style={{ color: "rgba(255,255,255,0.3)" }}>$ </span>
+                <span style={{ color: "#E8E8E8" }}>npm install </span>
+                <span style={{ color: "#C3E88D" }}>deelkit</span>
+              </div>
+              <div style={{ marginTop: 10, fontSize: 11, lineHeight: 1.9, color: "rgba(255,255,255,0.3)" }}>
+                <div><span style={{ color: "#28C840" }}>+</span> 32 components added</div>
+                <div><span style={{ color: "#28C840" }}>+</span> COMPONENT_MANIFEST ready</div>
+                <div><span style={{ color: "#28C840" }}>+</span> Deel MCP Server wired</div>
+              </div>
+            </div>
+          </CodeBlock>
+        </div>
+
+        {/* Divider */}
+        <div style={{ padding: "38px 18px 0", color: t.textDisabled, fontSize: 20 }}>→</div>
+
+        {/* Step 2: Prompt */}
+        <div>
+          <StepLabel n={2} label="Prompt your AI" />
+          <CodeBlock
+            headerLeft={<Dots />}
+            headerRight={<span style={{ fontFamily: MONO, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Cursor · Claude Code</span>}
+          >
+            <div style={{ padding: "14px 16px" }}>
+              <div style={{
+                background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.2)",
+                borderRadius: "8px 8px 8px 2px", padding: "10px 14px",
+                fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: "#C4B5FD", lineHeight: 1.55,
+              }}>
+                "add EOR contract creation flow to this page"
+              </div>
+              <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.9, color: "rgba(255,255,255,0.3)" }}>
+                <div><span style={{ color: "#A78BFA" }}>✦</span> reading COMPONENT_MANIFEST…</div>
+                <div><span style={{ color: "#A78BFA" }}>✦</span> wiring onComplete handler…</div>
+                <div><span style={{ color: "#28C840" }}>✓</span> generated App.jsx</div>
+              </div>
+            </div>
+          </CodeBlock>
+        </div>
+
+        {/* Divider */}
+        <div style={{ padding: "38px 18px 0", color: t.textDisabled, fontSize: 20 }}>→</div>
+
+        {/* Step 3: Ship */}
+        <div>
+          <StepLabel n={3} label="Ship it" />
+          <CodeBlock
+            headerLeft={
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Dots />
+                <span style={{ fontFamily: MONO, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>App.jsx</span>
+              </div>
+            }
+            headerRight={<CopyBtn text={CODE} id="code" />}
+          >
+            <div style={{ padding: "14px 16px", fontFamily: MONO, fontSize: 12, lineHeight: 1.8 }}>
+              <div>
+                <span style={{ color: "#C792EA" }}>import</span>
+                {" "}<span style={{ color: "#89DDFF" }}>{"{"}</span>
+                {" "}<span style={{ color: "#EEFFFF" }}>EORContractCreationFlow</span>
+                {" "}<span style={{ color: "#89DDFF" }}>{"}"}</span>
+                {" "}<span style={{ color: "#C792EA" }}>from</span>
+                {" "}<span style={{ color: "#C3E88D" }}>"deelkit"</span>
+              </div>
+              <div style={{ height: 6 }} />
+              <div>
+                <span style={{ color: "#C792EA" }}>export default function</span>
+                {" "}<span style={{ color: "#82AAFF" }}>App</span>
+                <span style={{ color: "#EEFFFF" }}>()</span>
+                {" "}<span style={{ color: "#89DDFF" }}>{"{"}</span>
+              </div>
+              <div style={{ paddingLeft: 16 }}>
+                <span style={{ color: "#C792EA" }}>return</span>
+                {" "}<span style={{ color: "#89DDFF" }}>(</span>
+              </div>
+              <div style={{ paddingLeft: 32 }}>
+                <span style={{ color: "#89DDFF" }}>&lt;</span>
+                <span style={{ color: "#FFCB6B" }}>EORContractCreationFlow</span>
+              </div>
+              <div style={{ paddingLeft: 48, background: "rgba(167,139,250,0.1)", borderRadius: 3, margin: "1px 0" }}>
+                <span style={{ color: "#C792EA" }}>onComplete</span>
+                <span style={{ color: "#89DDFF" }}>={"{"}handleContractSubmit{"}"}</span>
+              </div>
+              <div style={{ paddingLeft: 32 }}>
+                <span style={{ color: "#89DDFF" }}>/&gt;</span>
+              </div>
+              <div style={{ paddingLeft: 16 }}>
+                <span style={{ color: "#89DDFF" }}>)</span>
+              </div>
+              <div><span style={{ color: "#89DDFF" }}>{"}"}</span></div>
+            </div>
+          </CodeBlock>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <button
+          type="button"
+          onClick={onTryLive}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600,
+            color: t.btnText, background: t.primary, border: "none",
+            padding: "11px 24px", borderRadius: 9, cursor: "pointer",
+            transition: "background .12s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = t.primaryHover; }}
+          onMouseLeave={e => { e.currentTarget.style.background = t.primary; }}
+        >
+          Try EOR flow live <ArrowRight />
+        </button>
+        <span style={{
+          fontFamily: MONO, fontSize: 11, color: t.textMuted,
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#28C840", display: "inline-block" }} />
+          Runs in Deel sandbox · no auth needed
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // LANDING PAGE  — visual showcase, grouped by Wave
 // ─────────────────────────────────────────────────────────────────
 function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
@@ -4243,6 +4479,9 @@ function LandingPage({ dark, setDark, t, wc, onOpenDocs, onOpenComponent }) {
             </div>
           </div>
         </div>
+
+        {/* ── Quick Start ── */}
+        <QuickStartBanner t={t} onTryLive={() => onOpenComponent("EORContractCreationFlow")} />
 
         {/* ── Wave sections ── */}
         {WAVES.map(wave => {
