@@ -5437,10 +5437,12 @@ function SidebarNav({ active, onSelect, t }) {
   );
 }
 
-export default function DeelDesignSystemIndex() {
-  const [dark, setDark] = useState(false);
-  const [currentDemo, setCurrentDemo] = useState(null); // string: component name
-  const [showDocs, setShowDocs]       = useState(false);
+export default function DeelDesignSystemIndex({ initialComponent = null, dark: darkProp, setDark: setDarkProp } = {}) {
+  const [localDark, setLocalDark] = useState(false);
+  const dark    = darkProp    !== undefined ? darkProp    : localDark;
+  const setDark = setDarkProp !== undefined ? setDarkProp : setLocalDark;
+  const [currentDemo, setCurrentDemo] = useState(initialComponent); // string: component name
+  const [showDocs, setShowDocs]       = useState(initialComponent !== null);
   const [demoSource, setDemoSource]   = useState("landing"); // "landing" | "docs"
   const [activeDomain, setActiveDomain] = useState("All");
   const [appearance, setAppearance]   = useState({ ...APPEARANCE_DEFAULTS });
