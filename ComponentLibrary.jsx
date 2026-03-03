@@ -1357,12 +1357,21 @@ export const makeLibraryCSS = (t, isDark) => {
   .mri-desc  { font-size: 12px; color: ${t.textMuted}; margin-bottom: 12px; }
 
   /* ── EORContractCreationFlow ── */
-  .flow-shell        { background: ${t.bg}; width: 100%; }
+  .flow-shell        { background: ${t.bg}; width: 100%; container-type: inline-size; }
   .flow-header       { display: flex; align-items: center; justify-content: space-between; padding: 12px 28px; background: ${t.surface}; border-bottom: 1px solid ${t.border}; }
   .flow-header-title { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; }
   .flow-header-sub   { font-size: 11.5px; color: ${t.textMuted}; }
+  .flow-body         { display: grid; grid-template-columns: 1fr 264px; gap: 0; padding: 28px 32px 64px; align-items: start; }
+  .flow-main         { min-width: 0; padding-right: 28px; }
   .flow-footer       { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid ${t.border}; }
   .flow-rail         { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
+
+  @container (max-width: 680px) {
+    .flow-body  { grid-template-columns: 1fr; padding: 20px 16px 48px; }
+    .flow-main  { padding-right: 0; }
+    .flow-rail  { position: static; order: -1; }
+    .flow-header { padding: 10px 16px; }
+  }
 `;
   let out = css;
   if (fsc !== 1) out = out.replace(/font-size:\s*([\d.]+)px/g, (_, n) => `font-size: ${Math.round(+n * fsc * 10) / 10}px`);
@@ -3036,9 +3045,9 @@ export function EORContractCreationFlow({
       )}
 
       {/* Body */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 264px", gap: 0, padding: "28px 32px 64px", alignItems: "start" }}>
+      <div className="flow-body">
         {/* Main content */}
-        <div style={{ minWidth: 0, paddingRight: 28 }}>
+        <div className="flow-main">
           {stepContent[step]}
           <div className="flow-footer">
             <SecondaryButton label="Back" disabled={step === 1} onClick={back} />
