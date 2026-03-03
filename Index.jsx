@@ -3086,6 +3086,9 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   const apStartXRef    = useRef(0);
   const apStartWRef    = useRef(260);
   const [fontPopOpen, setFontPopOpen] = useState(false);
+  const [pkgMgr,        setPkgMgr]        = useState("npm");
+  const [copiedInstall,  setCopiedInstall]  = useState(false);
+  const [copiedAIPrompt, setCopiedAIPrompt] = useState(false);
   const fontTriggerRef = useRef(null);   // wrapper div — used to measure position
   const fontDropRef    = useRef(null);   // portal dropdown — used for click-outside
   const fontPopRectRef = useRef(null);   // cached getBoundingClientRect when opening
@@ -3142,6 +3145,12 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
   })();
   const setProp        = (key, val) => setLiveProps(prev => ({ ...prev, [key]: val }));
   const copyText       = (text, setter) => { navigator.clipboard.writeText(text).then(() => { setter(true); setTimeout(() => setter(false), 1800); }).catch(() => {}); };
+  const compSlug = name.replace(/([a-z])([A-Z])/g, "$1-$2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1-$2").toLowerCase();
+  const PKG_CMDS = { pnpm: `pnpm dlx deelkit add ${compSlug}`, npm: `npx deelkit add ${compSlug}`, yarn: `yarn dlx deelkit add ${compSlug}`, bun: `bunx deelkit add ${compSlug}` };
+  const shortDesc = (manifest?.description ?? "").split(".")[0];
+  const aiPrompt = isFlow
+    ? `Add the ${name} from deelkit to this page and wire up the onComplete handler.`
+    : `Add a ${name} from deelkit — ${shortDesc.charAt(0).toLowerCase() + shortDesc.slice(1)}.`;
   const toggleEx       = (id) => setExpandedEx(prev => ({ ...prev, [id]: !prev[id] }));
   const copyEx         = (id, code) => copyText(code, (v) => setCopiedEx(prev => ({ ...prev, [id]: v })));
 
@@ -3554,6 +3563,30 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
           {/* ── Installation ── */}
           <div>
             <SectionTitle>Installation</SectionTitle>
+            {/* CLI install with package manager tabs */}
+            <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderBottom: `1px solid ${t.border}`, background: t.surface }}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {["pnpm", "npm", "yarn", "bun"].map(pm => (
+                    <button
+                      key={pm}
+                      type="button"
+                      onClick={() => { setPkgMgr(pm); setCopiedInstall(false); }}
+                      style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: pkgMgr === pm ? 600 : 400, color: pkgMgr === pm ? t.textMain : t.textMuted, background: pkgMgr === pm ? t.surfaceHover : "transparent", border: pkgMgr === pm ? `1px solid ${t.border}` : "1px solid transparent", borderRadius: 5, padding: "3px 10px", cursor: "pointer", transition: "all .12s" }}
+                    >{pm}</button>
+                  ))}
+                </div>
+                <button type="button" onClick={() => copyText(PKG_CMDS[pkgMgr], setCopiedInstall)} style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: copiedInstall ? t.success : t.textMuted, background: "transparent", border: `1px solid ${copiedInstall ? t.success : t.border}`, borderRadius: 6, padding: "3px 12px", cursor: "pointer", transition: "all .15s", display: "flex", alignItems: "center", gap: 5 }}>
+                  {copiedInstall ? "✓ Copied" : "Copy"}
+                </button>
+              </div>
+              <pre style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, lineHeight: 1.75, padding: "14px 20px", margin: 0, background: t.bg, minHeight: 42 }}>
+                <span style={{ color: t.textDisabled }}>$ </span>
+                <span style={{ color: t.textMain }}>{PKG_CMDS[pkgMgr]}</span>
+              </pre>
+            </div>
+            {/* Import */}
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textDisabled, display: "block", marginBottom: 8 }}>Import</span>
             <CodeBlock code={importCode} copied={copiedImport} onCopy={() => copyText(importCode, setCopiedImport)} minHeight={42} />
           </div>
 
@@ -3562,6 +3595,18 @@ function ComponentPlayground({ name, dark, setDark, onBack, backLabel = "Library
             <div>
               <SectionTitle>Usage</SectionTitle>
               <CodeBlock code={manifest.usage} copied={copiedUsage} onCopy={() => copyText(manifest.usage, setCopiedUsage)} />
+              {/* AI prompt suggestion */}
+              <div style={{ marginTop: 16, background: t.purpleBg, border: `1px solid ${t.purple}22`, borderRadius: 10, overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderBottom: `1px solid ${t.purple}22` }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: t.purple }}>✦ Claude / Cursor prompt</span>
+                  <button type="button" onClick={() => copyText(aiPrompt, setCopiedAIPrompt)} style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: copiedAIPrompt ? t.success : t.purple, background: "transparent", border: `1px solid ${copiedAIPrompt ? t.success : t.purple}44`, borderRadius: 6, padding: "3px 12px", cursor: "pointer", transition: "all .15s" }}>
+                    {copiedAIPrompt ? "✓ Copied" : "Copy"}
+                  </button>
+                </div>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, lineHeight: 1.6, color: t.purple, margin: 0, padding: "14px 16px" }}>
+                  "{aiPrompt}"
+                </p>
+              </div>
             </div>
           )}
 
