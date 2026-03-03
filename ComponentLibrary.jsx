@@ -21,7 +21,7 @@
  *      const context = JSON.stringify(COMPONENT_MANIFEST, null, 2);
  *
  * ─── DOMAINS ───────────────────────────────────────────────────────
- *  Forms               · TextInput, DropdownSelect, RadioOption, FormFieldGroup
+ *  Forms               · TextInput, DateInput, DropdownSelect, RadioOption, FormFieldGroup
  *  Actions             · PrimaryButton, SecondaryButton, TextButton
  *  Status & Feedback   · StatusBadge, AutosaveWidget, ContextBanner (guide / insight / promo / info variants)
  *  Navigation          · StepperRail
@@ -35,6 +35,68 @@
  */
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
+
+// ═══════════════════════════════════════════════════════════════════
+// ICON MAP
+// Each key maps to the inner JSX of a 24×24 viewBox SVG.
+// All icons use stroke="currentColor", fill="none", round caps/joins.
+// ═══════════════════════════════════════════════════════════════════
+const ICON_MAP = {
+  // ── Existing system icons (redrawn at 24×24) ──────────────────
+  "chevron-down":   <polyline points="4 9 12 17 20 9" />,
+  "check":          <polyline points="20 6 9 17 4 12" />,
+  "plus":           <>{/* plus */}<line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>,
+  "refresh":        <><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-4" /></>,
+  "info":           <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>,
+  "warning":        <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>,
+  "x":              <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>,
+  "external-link":  <><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></>,
+  "save":           <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></>,
+  "calendar":       <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>,
+  "star":           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
+  "ai":             <><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></>,
+  // ── Benefit-specific icons ─────────────────────────────────────
+  "shield-plus":    <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></>,
+  "award":          <><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" /></>,
+  "file-text":      <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></>,
+  "plane":          <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 2c-2-2-4-2-5.5-.5L10 5 1.8 6.2a1 1 0 0 0-.7 1l.6.6 4.5 4.5 1 2.5-2 2.5 2 2 2.5-2 4 1 4.2-4.2a1 1 0 0 0 .6-1z" />,
+  "building":       <><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18z" /><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" /><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" /><line x1="10" y1="6" x2="14" y2="6" /><line x1="10" y1="10" x2="14" y2="10" /><line x1="10" y1="14" x2="14" y2="14" /><line x1="10" y1="18" x2="14" y2="18" /></>,
+  "pie-chart":      <><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></>,
+  "fingerprint":    <><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4" /><path d="M5 19.5C5.5 18 6 15 6 12c0-.7.12-1.37.34-2" /><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" /><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /><path d="M8.65 22c.21-.66.45-1.32.57-2" /><path d="M14 13.12c0 2.38 0 6.38-1 8.88" /><path d="M2 16h.01" /><path d="M21.8 16c.2-2 .131-5.354 0-6" /><path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2" /></>,
+};
+
+/**
+ * Icon atom. Renders any named icon from the design system at a given size.
+ * Uses currentColor for stroke — tint by setting `color` or the CSS color of a parent.
+ *
+ * @param {object}  props
+ * @param {'chevron-down'|'check'|'plus'|'refresh'|'info'|'warning'|'x'|'external-link'|'save'|'calendar'|'star'|'ai'|'shield-plus'|'award'|'file-text'|'plane'|'building'|'pie-chart'|'fingerprint'} props.name
+ * @param {number}  [props.size=16]  Width and height in px.
+ * @param {string}  [props.color]    Explicit stroke color; falls back to currentColor.
+ * @param {object}  [props.style]    Extra inline styles on the <svg>.
+ * @param {string}  [props.className]
+ */
+export function Icon({ name, size = 16, color, style, className }) {
+  const paths = ICON_MAP[name];
+  if (!paths) return null;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color || "currentColor"}
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={style}
+      className={className}
+      aria-hidden="true"
+    >
+      {paths}
+    </svg>
+  );
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENT MANIFEST
@@ -121,20 +183,39 @@ export const COMPONENT_MANIFEST = [
   {
     name: "SectionCard",
     domain: "Forms",
-    tier: "atom",
+    tier: "molecule",
     description:
-      "White rounded card that wraps a group of related form fields. Renders a bold section title at the top and an optional ⓘ icon button for contextual help. Used for 'Team information', 'Employee personal details', 'Workplace information', etc. in the Add person flow.",
-    composedOf: [],
+      "White rounded card that wraps a group of related form fields. Renders a bold section title at the top with an optional leading icon, optional status badges inline after the title, an optional description line, an optional action button slot (e.g. 'Add Pension'), and an optional ⓘ icon button for contextual help. Used for 'Team information', 'Employee personal details', 'Fixed allowances', benefits cards, etc.",
+    composedOf: ["StatusBadge"],
     props: [
       { name: "title",          type: "string",    required: true,  description: "Bold section heading shown at the top of the card." },
+      { name: "description",    type: "string",    required: false, description: "Muted helper text rendered below the title, describing the section's purpose." },
+      { name: "icon",           type: "ReactNode", required: false, description: "Icon rendered to the left of the title. Pass any SVG or icon component." },
+      { name: "iconSize",       type: "number",    required: false, description: "Width and height of the icon container in px (default: 32)." },
+      { name: "badges",         type: "ReactNode", required: false, description: "One or more badges rendered inline after the title — typically <StatusBadge /> elements." },
+      { name: "action",         type: "ReactNode", required: false, description: "Element rendered in the top-right corner of the header — typically a small action button (e.g. Add, Create)." },
       { name: "showInfoButton", type: "boolean",   required: false, description: "When true, renders the ⓘ icon button on the right side of the title header." },
       { name: "onInfoClick",    type: "() => void", required: false, description: "Called when the ⓘ button is clicked. Also enables the button if showInfoButton is not set." },
       { name: "children",       type: "ReactNode", required: false, description: "Form fields or any content rendered inside the card body." },
     ],
-    usage: `<SectionCard title="Team information" showInfoButton onInfoClick={showHelp}>
-  <DropdownSelect label="Entity" options={entities} />
-  <DropdownSelect label="Group"  options={groups} />
-</SectionCard>`,
+    usage: `// With icon + badge + primary action (e.g. benefits card)
+<SectionCard
+  title="Pension"
+  icon={<PensionIcon />}
+  badges={<StatusBadge variant="mandatory" />}
+  action={<PrimaryButton size="sm" label="Add Pension" onClick={onAdd} />}
+  description="Comprehensive savings and pension plan for working employees."
+/>
+
+// Secondary action (default for header actions)
+<SectionCard
+  title="Fixed allowances"
+  description="Allowances written into the EOR contract, granted on a one-time or recurring basis."
+  action={<SecondaryButton size="sm" label="Add" onClick={onAdd} />}
+/>
+
+// Link / text action
+<SectionCard title="Pay schedule" action={<TextButton label="Create new schedule ↗" onClick={onOpen} />} />`,
   },
   {
     name: "SegmentedControl",
@@ -181,6 +262,44 @@ export const COMPONENT_MANIFEST = [
 />`,
   },
 
+  {
+    name: "DateInput",
+    domain: "Forms",
+    tier: "atom",
+    description:
+      "Date field with a × clear button and a calendar icon that opens the native date picker. Shows MM/DD/YYYY placeholder when empty. Shares the same label, error, helper-text, required, and disabled API as TextInput.",
+    composedOf: [],
+    props: [
+      { name: "label",       type: "string",   required: false, description: "Label displayed above the input." },
+      { name: "placeholder", type: "string",   required: false, description: "Placeholder shown when empty (default: 'MM/DD/YYYY')." },
+      { name: "value",       type: "string",   required: false, description: "Controlled ISO date value (YYYY-MM-DD)." },
+      { name: "required",    type: "boolean",  required: false, description: "Appends a red * to the label." },
+      { name: "disabled",    type: "boolean",  required: false, description: "Prevents interaction; mutes appearance." },
+      { name: "error",       type: "boolean",  required: false, description: "Red border + error background tint." },
+      { name: "helperText",  type: "string",   required: false, description: "Hint or error message shown below the input." },
+      { name: "onChange",    type: "(value: string) => void", required: false, description: "Called with the ISO date string on change." },
+    ],
+    usage: '<DateInput label="Agreement start date (MM/DD/YYYY)" required />',
+  },
+  {
+    name: "Icon",
+    domain: "Forms",
+    tier: "atom",
+    description:
+      "SVG icon atom. Renders any named icon from the design system at a configurable size. Uses currentColor for stroke — tint by setting the color prop or the CSS color of a parent element. Returns null for unknown names.",
+    composedOf: [],
+    props: [
+      { name: "name",      type: "'chevron-down' | 'check' | 'plus' | 'refresh' | 'info' | 'warning' | 'x' | 'external-link' | 'save' | 'calendar' | 'star' | 'ai' | 'shield-plus' | 'award' | 'file-text' | 'plane' | 'building' | 'pie-chart' | 'fingerprint'", required: true,  description: "Icon identifier. See ICON_MAP for the full list." },
+      { name: "size",      type: "number",  required: false, description: "Width and height in px (default: 16)." },
+      { name: "color",     type: "string",  required: false, description: "Explicit stroke color. Falls back to currentColor if omitted." },
+      { name: "style",     type: "CSSProperties", required: false, description: "Extra inline styles applied to the <svg> element." },
+      { name: "className", type: "string",  required: false, description: "CSS class applied to the <svg> element." },
+    ],
+    usage: `<Icon name="plane" size={20} />
+<Icon name="shield-plus" size={24} color="#EA580C" />
+<Icon name="fingerprint" size={20} />`,
+  },
+
   // ── Actions ────────────────────────────────────────────────────
   {
     name: "Buttons",
@@ -216,6 +335,18 @@ export const COMPONENT_MANIFEST = [
     usage: '<StatusBadge variant="mandatory" />\n<StatusBadge variant="completed" label="Job details" />',
   },
   {
+    name: "EmptyStateRow",
+    domain: "Status & Feedback",
+    tier: "atom",
+    description:
+      "Muted bordered row used inside list containers to signal the absence of items — e.g. 'No bonus added yet', 'No fixed allowances yet', 'No variable compensation yet'. Pairs a ⓘ info icon with a configurable label in a low-hierarchy, non-intrusive style.",
+    composedOf: [],
+    props: [
+      { name: "label", type: "string", required: false, description: "Empty state message (default: 'No items yet')." },
+    ],
+    usage: '<EmptyStateRow label="No fixed allowances yet" />',
+  },
+  {
     name: "AutosaveWidget",
     domain: "Status & Feedback",
     tier: "molecule",
@@ -234,10 +365,11 @@ export const COMPONENT_MANIFEST = [
     domain: "Status & Feedback",
     tier: "molecule",
     description:
-      "Unified contextual banner covering four semantic use cases via the variant prop: 'guide' (dismissable country hiring-guide link with flag imagery), 'insight' (inline AI callout with mascot + bold 'Deel Insight:' prefix + text link), 'promo' (persistent upsell tile with imagery on the right + outlined button CTA), and 'info' (non-dismissable inline note with ⓘ icon — used for field guidelines and reporting prompts). Replaces the separate HiringGuideBanner, InsightCallout, and PromoBanner components.",
+      "Unified contextual banner covering five semantic use cases via the variant prop: 'guide' (dismissable country hiring-guide link with flag imagery), 'insight' (inline AI callout with mascot + bold 'Deel Insight:' prefix + text link), 'promo' (persistent upsell tile with imagery on the right + outlined button CTA), 'info' (non-dismissable inline note with ⓘ icon — used for field guidelines and reporting prompts), and 'warning' (amber ⚠️ alert for mandatory-benefit notices and compliance constraints). Replaces the separate HiringGuideBanner, InsightCallout, and PromoBanner components.",
     composedOf: ["TextButton"],
     props: [
-      { name: "variant",     type: "'guide' | 'insight' | 'promo' | 'info'", required: false, description: "Semantic type — controls default styles, icon/media, CTA style, and dismissable behaviour." },
+      { name: "variant",     type: "'guide' | 'insight' | 'promo' | 'info' | 'warning'", required: false, description: "Semantic type — controls default styles, icon/media, CTA style, and dismissable behaviour." },
+      { name: "layout",      type: "'inline' | 'stacked'", required: false, description: "Title layout. 'stacked' puts the title on its own line above the body; 'inline' runs title and body on the same line. Default: 'stacked' for info, 'inline' for all others." },
       { name: "title",       type: "string",   required: false, description: "Bold label. Auto: null for guide/info, 'Deel Insight:' for insight, 'Foreign Entity Setup' for promo. For info, renders as a block heading above the body." },
       { name: "body",        type: "string",   required: false, description: "Body copy. For guide variant the country prop auto-populates this." },
       { name: "country",     type: "string",   required: false, description: "Convenience for guide variant — inserts country name into default body copy." },
@@ -252,7 +384,8 @@ export const COMPONENT_MANIFEST = [
     usage: `<ContextBanner variant="guide" country="Germany" onDismiss={handleDismiss} />
 <ContextBanner variant="insight" body="Severance in the US ranges from 0–26 weeks." />
 <ContextBanner variant="promo" title="Foreign Entity Setup" />
-<ContextBanner variant="info" title="Job scope guidelines" body='Always refer to your company as "the company".' ctaLabel="Learn more" ctaUrl="#" />`,
+<ContextBanner variant="info" title="Job scope guidelines" body='Always refer to your company as "the company".' ctaLabel="Learn more" ctaUrl="#" />
+<ContextBanner variant="warning" body="Healthcare is a mandatory benefit for United States" />`,
   },
 
   // ── Navigation ────────────────────────────────────────────────
@@ -320,6 +453,30 @@ export const COMPONENT_MANIFEST = [
 />`,
   },
 
+  // ── Country Standards ─────────────────────────────────────────
+  {
+    name: "CountryPolicyCard",
+    domain: "Compliance",
+    tier: "molecule",
+    description:
+      "Compact card displaying a statutory country policy. Renders a circular flag + policy title in a tinted header, a horizontal divider, and one or more label/value rows for the policy details (e.g. work hours range, sick leave days, notice period). Supports a dimmed state to indicate an inactive or not-applicable policy.",
+    composedOf: [],
+    props: [
+      { name: "flag",   type: "'none' | '🇺🇸' | '🇬🇧' | '🇩🇪' | '🇫🇷' | '🇨🇦' | '🇦🇺' | '🇧🇷' | '🇮🇳' | '🇳🇱' | '🇸🇬' | '🇯🇵' | '🇪🇸' | '🇮🇹' | '🇵🇹' | '🇲🇽'", required: true, description: "Country flag emoji shown in the header. Pass 'none' to hide the flag." },
+      { name: "title",  type: "string",                            required: true,  description: "Policy name shown in the header (e.g. 'Standard notice period in United States')." },
+      { name: "rows",   type: "{ label: string; value: string }[]", required: true, description: "Key–value pairs for the policy details rendered below the divider." },
+      { name: "dimmed", type: "boolean",                           required: false, description: "Mutes the header flag and title to indicate an inactive or not-applicable policy." },
+    ],
+    usage: `<CountryPolicyCard
+  flag="🇺🇸"
+  title="Standard notice period in United States"
+  rows={[
+    { label: "During probation", value: "No notice period" },
+    { label: "After probation",  value: "No notice period" },
+  ]}
+/>`,
+  },
+
   // ── Market Intelligence ───────────────────────────────────────
   {
     name: "MarketRateChart",
@@ -367,18 +524,26 @@ export const COMPONENT_MANIFEST = [
     domain: "Blocks",
     tier: "block",
     description:
-      "Full compensation section: employment type radio group, Annual/Hourly period toggle, salary input with currency prefix/suffix, live market rate histogram with bubble, and an empty signing bonus slot. Bubble repositions as salary changes.",
-    composedOf: ["RadioOption", "TextInput", "MarketRateChart", "PrimaryButton", "SecondaryButton"],
+      "Complete compensation block rendered as a vertical stack of ten SectionCards: (1) Employment type — Full-time / Part-time radio; (2) Compensation — Annual/Hourly toggle, salary input with $ prefix and USD suffix, live market-rate histogram with bubble, and signing/retention bonus empty state; (3) Work schedule — country policy card, work hours input, schedules dropdown; (4) Fixed allowances — Add button, empty state; (5) Variable compensation — Add button, empty state; (6) Employment terms — Indefinite / Definite radio, conditional contract-end DateInput with duration helper; (7) Desired start date — regulatory ContextBanner, agreement start DateInput; (8) Time off — description, Learn-more link, Minimum / Specific radio, conditional paid-vacation TextInput; (9) Sick leave — info ContextBanner, country policy card; (10) Notice period — info ContextBanner, disabled Standard / Custom radio, country policy card.",
+    composedOf: [
+      "SectionCard", "RadioOption", "TextInput", "DateInput", "DropdownSelect",
+      "SecondaryButton", "TextButton", "ContextBanner", "CountryPolicyCard", "EmptyStateRow",
+    ],
     props: [
-      { name: "defaultSalary",        type: "number",  required: false, description: "Starting gross annual salary (default: 77293.01)." },
-      { name: "defaultEmploymentType",type: "string",  required: false, description: "'full' | 'part' (default: 'full')." },
-      { name: "defaultPeriod",        type: "string",  required: false, description: "'annual' | 'hourly' (default: 'annual')." },
-      { name: "showMarketInsights",   type: "boolean", required: false, description: "Show/hide the market rate chart (default: true)." },
-      { name: "country",              type: "string",  required: false, description: "Country name shown in the helper text." },
-      { name: "onSalaryChange",       type: "(value: number, period: string) => void", required: false, description: "Called when salary or period changes." },
+      { name: "defaultSalary",           type: "number",  required: false, description: "Starting gross annual salary (default: 77293.01)." },
+      { name: "defaultEmploymentType",   type: "string",  required: false, description: "'full' | 'part' (default: 'full')." },
+      { name: "defaultPeriod",           type: "string",  required: false, description: "'annual' | 'hourly' (default: 'annual')." },
+      { name: "showMarketInsights",      type: "boolean", required: false, description: "Show/hide the market rate chart (default: true)." },
+      { name: "country",                 type: "string",  required: false, description: "Country name used across section copy (default: 'United States')." },
+      { name: "defaultEmploymentTerms",  type: "string",  required: false, description: "'indefinite' | 'definite' (default: 'indefinite')." },
+      { name: "defaultContractEndDate",  type: "string",  required: false, description: "ISO date string for the contract end date (default: '')." },
+      { name: "defaultStartDate",        type: "string",  required: false, description: "ISO date string for the agreement start date (default: '')." },
+      { name: "defaultTimeOff",          type: "string",  required: false, description: "'minimum' | 'specific' (default: 'minimum')." },
+      { name: "defaultWorkHours",        type: "string",  required: false, description: "Work hours per week value shown in the Work schedule input (default: '40')." },
+      { name: "onSalaryChange",          type: "(value: number, period: string) => void", required: false, description: "Called when salary or period changes." },
     ],
     usage: `<CompensationBlock
-  defaultSalary={77293.01}
+  defaultSalary={47062.51}
   defaultEmploymentType="full"
   country="United States"
 />`,
@@ -427,11 +592,11 @@ export const COMPONENT_MANIFEST = [
     domain: "Flows",
     tier: "flow",
     description:
-      "Complete 4-step EOR contract creation orchestration: (1) Personal details, (2) Job description with AI compliance, (3) Compensation with market insights, (4) Benefits. Wires together all Blocks, StepperRail, and AutosaveWidget into one navigable flow with an optional header and right-side rail.",
+      "Complete 4-step EOR contract creation orchestration: (1) Add person, (2) Job description with AI compliance, (3) Compensation with market insights, (4) Benefits. Wires together all Blocks, StepperRail, and AutosaveWidget into one navigable flow with an optional header and right-side rail.",
     composedOf: [
-      "JobDescriptionBlock", "CompensationBlock", "BenefitsBlock",
+      "AddPersonBlock", "JobDescriptionBlock", "CompensationBlock", "BenefitsBlock",
       "StepperRail", "AutosaveWidget",
-      "FormFieldGroup", "PrimaryButton", "SecondaryButton",
+      "PrimaryButton", "SecondaryButton",
     ],
     props: [
       { name: "initialStep",    type: "number",  required: false, description: "Step to start on (1–4, default: 1)." },
@@ -888,11 +1053,18 @@ export const makeLibraryCSS = (t, isDark) => {
 
   /* ── SectionCard ── */
   .sc { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 6}px; padding: 20px 20px 24px; box-shadow: ${t.shadow}; display: flex; flex-direction: column; gap: 16px; }
-  .sc-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .sc-header-left { display: flex; flex-direction: row; align-items: flex-start; gap: 12px; }
+  .sc-header-icon { display: flex; align-items: flex-start; flex-shrink: 0; }
+  .sc-header-text { display: flex; flex-direction: column; gap: 5px; }
+  .sc-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .sc-title { font-size: 15px; font-weight: 600; color: ${t.textMain}; letter-spacing: -.01em; }
+  .sc-desc { font-size: 13px; color: ${t.textMuted}; line-height: 1.5; margin: 0; max-width: 520px; }
   .sc-info-btn { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: ${t.textMuted}; padding: 3px; border-radius: 5px; transition: color .12s, background .12s; flex-shrink: 0; }
   .sc-info-btn:hover { color: ${t.textMain}; background: ${t.surfaceHover}; }
-  .sc-body { display: flex; flex-direction: column; gap: 12px; }
+  .sc-body { display: flex; flex-direction: column; gap: 20px; }
+  .sc--has-footer { padding-bottom: 0; overflow: hidden; }
+  .sc-footer { margin-top: -4px; }
 
   /* ── FormFieldGroup ── */
   .ffg { display: flex; flex-direction: column; gap: 14px; }
@@ -901,6 +1073,41 @@ export const makeLibraryCSS = (t, isDark) => {
   .ffg-row { display: grid; gap: 12px; }
   .ffg-row.cols-2 { grid-template-columns: 1fr 1fr; }
   .ffg-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* ── DateInput ── */
+  .di-wrap {
+    position: relative;
+    border: 1px solid ${t.border}; border-radius: ${br}px;
+    background: ${t.inputBg};
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .di-wrap:focus-within { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
+  .di-wrap.err { border-color: ${t.error}; background: ${t.errorBg}; }
+  .di-wrap.disabled { background: ${t.surfaceHover}; }
+  .di-wrap .di-inp {
+    width: 100%; height: 36px; padding: 0 62px 0 11px;
+    font-family: ${ff}; font-size: 13.5px; color: ${t.textMain};
+    background: transparent; border: none; border-radius: 0; outline: none; appearance: none; display: block;
+    box-shadow: none;
+  }
+  .di-wrap .di-inp:focus { border-color: transparent; box-shadow: none; }
+  .di-wrap .di-inp::-webkit-calendar-picker-indicator { display: none; }
+  .di-wrap .di-inp:disabled { color: ${t.textDisabled}; cursor: not-allowed; }
+  .di-wrap .di-inp.ph::-webkit-datetime-edit { color: ${t.textDisabled}; }
+  .di-wrap .di-inp.ph::-webkit-datetime-edit-text { color: ${t.textDisabled}; }
+  .di-actions {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    display: flex; align-items: center; padding-right: 2px;
+    pointer-events: none;
+  }
+  .di-clear, .di-cal {
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 6px; border: none; background: transparent;
+    color: ${t.textMuted}; cursor: pointer; flex-shrink: 0;
+    transition: color .12s; pointer-events: auto;
+  }
+  .di-clear:hover, .di-cal:hover:not(:disabled) { color: ${t.textMain}; }
+  .di-cal:disabled { opacity: .4; cursor: not-allowed; }
 
   /* ── Buttons ── */
   .btn {
@@ -959,6 +1166,10 @@ export const makeLibraryCSS = (t, isDark) => {
   .ctxb-info-icon { color: ${t.info}; flex-shrink: 0; margin-top: 1px; display: flex; }
   .ctxb.info-v .ctxb-body-row { font-size: 12.5px; line-height: 1.5; }
   .ctxb.info-v .ctxb-label { display: block; color: ${t.textMain}; font-size: 12.5px; font-weight: 600; }
+  .ctxb.warning-v { padding: 11px 13px; background: ${t.warningBg}; border: 1px solid ${t.warningBorder}; align-items: flex-start; }
+  .ctxb-warning-icon { color: ${t.warning}; flex-shrink: 0; margin-top: 1px; display: flex; }
+  .ctxb.warning-v .ctxb-body-row { font-size: 12.5px; line-height: 1.5; }
+  .ctxb.warning-v .ctxb-label { color: ${t.warning}; }
   .ctxb-media { display: flex; align-items: center; flex-shrink: 0; }
   .ctxb-media-item { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid ${t.surface}; font-size: 13px; display: flex; align-items: center; justify-content: center; background: ${t.surfaceHover}; }
   .ctxb-media-item:nth-child(n+2) { margin-left: -6px; }
@@ -1076,19 +1287,15 @@ export const makeLibraryCSS = (t, isDark) => {
   .warn-box-text { font-size: 12.5px; color: ${t.textMain}; line-height: 1.5; }
 
   /* ── BenefitsBlock ── */
-  .benefit-card        { border: 1px solid ${t.border}; border-radius: 10px; overflow: hidden; background: ${t.surface}; }
-  .benefit-card-inner  { padding: 18px 20px; }
-  .benefit-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  .benefit-card-left   { display: flex; align-items: center; gap: 10px; }
-  .benefit-icon        { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
-  .benefit-name        { font-size: 14px; font-weight: 600; color: ${t.textMain}; }
-  .benefit-desc        { font-size: 12.5px; color: ${t.textMuted}; line-height: 1.5; margin-bottom: 12px; }
+  .benefit-icon        { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: ${t.textMain}; }
   .benefit-mandatory-banner { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: ${t.warningBg}; border-top: 1px solid ${t.warningBorder}; }
   .benefit-mandatory-text   { font-size: 12px; color: ${t.warning}; font-weight: 500; }
   .benefit-added-bar   { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: ${t.successBg}; border-top: 1px solid ${t.successBorder}; }
   .benefit-added-text  { font-size: 12px; color: ${t.success}; font-weight: 500; }
   .benefit-grid        { display: flex; flex-direction: column; gap: 10px; }
   .benefit-section-label { font-size: 11.5px; font-weight: 600; color: ${t.textMuted}; letter-spacing: .04em; text-transform: uppercase; font-family: ${mf}; padding-bottom: 6px; border-bottom: 1px solid ${t.border}; margin-bottom: 2px; }
+  .benefit-learn-more  { font-size: 13px; color: ${t.info}; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+  .benefit-learn-more:hover { text-decoration: underline; }
 
   /* ── JobDescriptionBlock ── */
   .jdb-char-count { font-family: ${mf}; font-size: 10.5px; color: ${t.textMuted}; text-align: right; margin-top: 4px; }
@@ -1116,6 +1323,20 @@ export const makeLibraryCSS = (t, isDark) => {
   .bonus-empty { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: ${t.textMuted}; padding: 10px 0; }
   .bonus-dot { width: 6px; height: 6px; border-radius: 50%; background: ${t.textDisabled}; flex-shrink: 0; }
 
+  /* ── CountryPolicyCard ── */
+  .pcrd { background: ${t.surface}; border: 1px solid ${t.border}; border-radius: ${br + 4}px; box-shadow: ${t.shadow}; overflow: hidden; }
+  .pcrd-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: ${t.surfaceHover}; }
+  .pcrd-flag { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; overflow: hidden; flex-shrink: 0; transition: opacity .15s; }
+  .pcrd-title { font-size: 13.5px; font-weight: 500; color: ${t.textMain}; line-height: 1.35; transition: color .15s; }
+  .pcrd.dimmed .pcrd-flag { opacity: .4; }
+  .pcrd.dimmed .pcrd-title { color: ${t.textMuted}; }
+  .pcrd-divider { height: 1px; background: ${t.border}; }
+  .pcrd-rows { display: flex; flex-direction: column; }
+  .pcrd-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; }
+  .pcrd-row + .pcrd-row { border-top: 1px solid ${t.border}; }
+  .pcrd-row-label { font-size: 13px; color: ${t.textMuted}; }
+  .pcrd-row-value { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; text-align: right; }
+
   /* ── Spinners / shimmer ── */
   .spin    { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid ${isDark ? "rgba(9,9,11,.3)" : "rgba(255,255,255,.3)"}; border-top-color: ${t.btnText}; animation: sp .55s linear infinite; }
   .spin-sm { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid ${t.border}; border-top-color: ${t.purple}; animation: sp .55s linear infinite; }
@@ -1123,6 +1344,25 @@ export const makeLibraryCSS = (t, isDark) => {
   @keyframes sp { to { transform: rotate(360deg); } }
   .shimmer { height: 44px; border-radius: 8px; background: linear-gradient(90deg,${t.surfaceHover} 25%,${t.border} 50%,${t.surfaceHover} 75%); background-size: 200% 100%; animation: shim 1.4s infinite; }
   @keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* ── EmptyStateRow ── */
+  .esr { display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: ${t.surfaceHover}; border: 1px solid ${t.border}; border-radius: ${br + 2}px; }
+  .esr-icon { color: ${t.textDisabled}; flex-shrink: 0; display: flex; }
+  .esr-text { font-size: 13px; color: ${t.textMuted}; }
+
+  /* ── Block outer shells (shared layout) ── */
+  .add-person-shell    { display: flex; flex-direction: column; gap: 16px; }
+  .compensation-shell  { display: flex; flex-direction: column; gap: 16px; }
+  .mri-label { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; }
+  .mri-desc  { font-size: 12px; color: ${t.textMuted}; margin-bottom: 12px; }
+
+  /* ── EORContractCreationFlow ── */
+  .flow-shell        { background: ${t.bg}; width: 100%; }
+  .flow-header       { display: flex; align-items: center; justify-content: space-between; padding: 12px 28px; background: ${t.surface}; border-bottom: 1px solid ${t.border}; }
+  .flow-header-title { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; }
+  .flow-header-sub   { font-size: 11.5px; color: ${t.textMuted}; }
+  .flow-footer       { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid ${t.border}; }
+  .flow-rail         { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
 `;
   let out = css;
   if (fsc !== 1) out = out.replace(/font-size:\s*([\d.]+)px/g, (_, n) => `font-size: ${Math.round(+n * fsc * 10) / 10}px`);
@@ -1154,6 +1394,7 @@ const InfoSmall  = () => <svg width="11" height="11" viewBox="0 0 11 11" fill="n
 const X          = () => <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="2.5" y1="2.5" x2="10.5" y2="10.5"/><line x1="10.5" y1="2.5" x2="2.5" y2="10.5"/></svg>;
 const ExternalLink = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7"/><polyline points="8 1 11 1 11 4"/><line x1="5.5" y1="6.5" x2="11" y2="1"/></svg>;
 const Disk       = () => <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><rect x="1" y="1" width="9" height="9" rx="1.5"/><rect x="3" y="1" width="5" height="3.5" rx=".5" fill="currentColor" stroke="none"/><rect x="2.5" y="6" width="6" height="3" rx=".5"/></svg>;
+const CalendarIcon = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><line x1="1.5" y1="5.5" x2="12.5" y2="5.5"/><line x1="4.5" y1="1" x2="4.5" y2="4"/><line x1="9.5" y1="1" x2="9.5" y2="4"/></svg>;
 
 // ═══════════════════════════════════════════════════════════════════
 // DOMAIN: Forms
@@ -1198,6 +1439,55 @@ export function TextInput({ label, placeholder, value, required, disabled, error
           {suffix && <span className="fi-suf">{suffix}</span>}
         </div>
       ) : inputEl}
+      {helperText && <span className={`fhint${error ? " err" : ""}`}>{helperText}</span>}
+    </div>
+  );
+}
+
+/**
+ * Date field atom with a × clear button and a calendar icon.
+ *
+ * @param {string}   [label]       - Label displayed above the input.
+ * @param {string}   [value]       - Controlled ISO date value (YYYY-MM-DD).
+ * @param {boolean}  [required]    - Appends * to the label.
+ * @param {boolean}  [disabled]    - Prevents interaction.
+ * @param {boolean}  [error]       - Red border + error background.
+ * @param {string}   [helperText]  - Hint or error message below the input.
+ * @param {function} [onChange]    - Called with the ISO date string on change.
+ */
+export function DateInput({ label, value, required, disabled, error, helperText, onChange }) {
+  const [v, setV] = useState(value ?? "");
+  const inputRef = useRef(null);
+  const handleChange = e => { setV(e.target.value); onChange?.(e.target.value); };
+  const handleClear = () => { setV(""); onChange?.(""); };
+  const handleCalClick = () => inputRef.current?.showPicker?.();
+  return (
+    <div className="fi">
+      {label && (
+        <label className="fl">
+          {label}{required && <span className="req">*</span>}
+        </label>
+      )}
+      <div className={`di-wrap${error ? " err" : ""}${disabled ? " disabled" : ""}`}>
+        <input
+          ref={inputRef}
+          type="date"
+          className={`di-inp${!v ? " ph" : ""}`}
+          value={v}
+          disabled={disabled}
+          onChange={handleChange}
+        />
+        <div className="di-actions">
+          {v && !disabled && (
+            <button type="button" className="di-clear" onClick={handleClear} aria-label="Clear date">
+              <X />
+            </button>
+          )}
+          <button type="button" className="di-cal" onClick={handleCalClick} disabled={disabled} tabIndex={-1} aria-label="Open date picker">
+            <CalendarIcon />
+          </button>
+        </div>
+      </div>
       {helperText && <span className={`fhint${error ? " err" : ""}`}>{helperText}</span>}
     </div>
   );
@@ -1303,35 +1593,61 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
 /**
  * White rounded card wrapping a group of related form fields.
  *
- * @param {string}      title       - Bold section heading at the top of the card.
- * @param {Function}    [onInfoClick] - Renders a ⓘ icon button when provided; called on click.
- * @param {ReactNode}   [children]  - Form fields or any content inside the card.
+ * @param {string}      title           - Bold section heading at the top of the card.
+ * @param {string}      [description]   - Optional muted text rendered below the title.
+ * @param {ReactNode}   [icon]          - Optional icon rendered to the left of the title.
+ * @param {number}      [iconSize]      - Width/height of the icon container in px (default: 32).
+ * @param {ReactNode}   [badges]        - One or more badges rendered inline after the title.
+ * @param {ReactNode}   [action]        - Optional element rendered in the top-right corner (e.g. an Add button).
+ * @param {Function}    [onInfoClick]   - Renders a ⓘ icon button when provided; called on click.
+ * @param {ReactNode}   [children]      - Form fields or any content inside the card.
  */
-export function SectionCard({ title, showInfoButton, onInfoClick, bodyGap, children }) {
-  const showBtn = showInfoButton || !!onInfoClick;
-  const showHeader = !!(title || showBtn);
+export function SectionCard({ title, description, icon, iconSize = 32, badges, showInfoButton, onInfoClick, action, bodyGap, footer, children }) {
+  const showInfoBtn = showInfoButton || !!onInfoClick;
+  const showHeader = !!(title || description || showInfoBtn || action || icon || badges);
   return (
-    <div className="sc">
+    <div className={`sc${footer ? " sc--has-footer" : ""}`}>
       {showHeader && (
       <div className="sc-header">
-        {title && <span className="sc-title">{title}</span>}
-        {showBtn && (
-          <button
-            type="button"
-            className="sc-info-btn"
-            onClick={onInfoClick}
-            aria-label="More information"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="8" cy="8" r="6.5" />
-              <line x1="8" y1="7.5" x2="8" y2="11" />
-              <circle cx="8" cy="5.5" r=".8" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
+        <div className="sc-header-left">
+          {icon && (
+            <div className="sc-header-icon" style={{ width: iconSize, height: iconSize }}>
+              {icon}
+            </div>
+          )}
+          <div className="sc-header-text">
+            {(title || badges) && (
+              <div className="sc-title-row">
+                {title && <span className="sc-title">{title}</span>}
+                {badges}
+              </div>
+            )}
+            {description && <p className="sc-desc">{description}</p>}
+          </div>
+        </div>
+        {(action || showInfoBtn) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            {action}
+            {showInfoBtn && (
+              <button
+                type="button"
+                className="sc-info-btn"
+                onClick={onInfoClick}
+                aria-label="More information"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="8" cy="8" r="6.5" />
+                  <line x1="8" y1="7.5" x2="8" y2="11" />
+                  <circle cx="8" cy="5.5" r=".8" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
+            )}
+          </div>
         )}
       </div>
       )}
       {children && <div className="sc-body" style={bodyGap !== undefined ? { gap: bodyGap } : undefined}>{children}</div>}
+      {footer && <div className="sc-footer">{footer}</div>}
     </div>
   );
 }
@@ -1526,6 +1842,21 @@ export function StatusBadge({ variant = "mandatory", label, dot = true }) {
 }
 
 /**
+ * Muted bordered empty state row for use inside list containers.
+ * Shows a ⓘ info icon alongside a label when a list has no items.
+ *
+ * @param {string} [label] - Empty state message (default: 'No items yet').
+ */
+export function EmptyStateRow({ label = "No items yet" }) {
+  return (
+    <div className="esr">
+      <span className="esr-icon"><Info /></span>
+      <span className="esr-text">{label}</span>
+    </div>
+  );
+}
+
+/**
  * Right-rail autosave status card.
  * Transitions between saved (green dot + timestamp) and saving (spinner + amber dot).
  *
@@ -1571,6 +1902,7 @@ export function AutosaveWidget({ status = "saved", lastSaved, onDeleteDraft }) {
  */
 export function ContextBanner({
   variant = "guide",
+  layout,
   title,
   body,
   country,
@@ -1589,20 +1921,23 @@ export function ContextBanner({
   const isInsight = variant === "insight";
   const isPromo   = variant === "promo";
   const isInfo    = variant === "info";
+  const isWarning = variant === "warning";
 
   const resolvedBody = body ?? (
     isGuide   ? `View Deel's global hiring guide for ${country ?? "your country"}.` :
     isInsight ? "Severance in the United States typically ranges from 0–26 weeks depending on tenure." :
     isInfo    ? "" :
+    isWarning ? "" :
                 "Set up a foreign entity with Deel — we handle compliance, payroll, and local filings."
   );
   const resolvedTitle = title !== undefined ? title : (
     isInsight ? "Deel Insight:" :
     isPromo   ? "Foreign Entity Setup" : null
   );
-  const resolvedMedia       = media ?? (isInsight || isInfo ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
+  const resolvedMedia       = media ?? (isInsight || isInfo || isWarning ? null : ["🌍", isGuide ? "🇺🇸" : "🏢"]);
   const resolvedCtaLabel    = ctaLabel ?? (isGuide ? "View" : "Learn more");
   const resolvedCtaStyle    = ctaStyle ?? (isPromo ? "button" : "link");
+  const resolvedLayout      = layout ?? (isInfo ? "stacked" : "inline");
   const resolvedDismissable = dismissable ?? isGuide;
   const handleCtaClick      = () => onCtaClick ? onCtaClick() : window.open(ctaUrl, "_blank", "noreferrer");
 
@@ -1619,6 +1954,8 @@ export function ContextBanner({
       {!isPromo && (
         isInfo
           ? <span className="ctxb-info-icon"><Info /></span>
+          : isWarning
+          ? <span className="ctxb-warning-icon"><Warning /></span>
           : isInsight
           ? <div className="ctxb-mascot">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
@@ -1631,7 +1968,7 @@ export function ContextBanner({
       {/* Content */}
       <div className="ctxb-content">
         <div className="ctxb-body-row">
-          {resolvedTitle && <span className="ctxb-label">{resolvedTitle} </span>}
+          {resolvedTitle && <span className="ctxb-label" style={resolvedLayout === "stacked" ? { display: "block" } : undefined}>{resolvedTitle} </span>}
           <span className="ctxb-body">{resolvedBody}</span>
           {resolvedCtaStyle === "link" && (!isInfo || ctaLabel) && (
             <button
@@ -1806,6 +2143,40 @@ export function ComplianceCheckPanel({ results = [], isRunning = false, onRunChe
           </span>
         </div>
       )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DOMAIN: Country Standards
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Compact card displaying a statutory country policy.
+ * Renders a flag + title in a tinted header, a divider, and one or
+ * more label/value rows for the policy details.
+ *
+ * @param {string}   flag    - Country flag emoji (e.g. "🇺🇸").
+ * @param {string}   title   - Policy title shown in the header.
+ * @param {Array}    rows    - Array of { label: string; value: string }.
+ * @param {boolean}  [dimmed] - Mutes the header to indicate an inactive policy.
+ */
+export function CountryPolicyCard({ flag, title, rows = [], dimmed }) {
+  return (
+    <div className={`pcrd${dimmed ? " dimmed" : ""}`}>
+      <div className="pcrd-header">
+        {flag !== "none" && <span className="pcrd-flag">{flag}</span>}
+        <span className="pcrd-title">{title}</span>
+      </div>
+      <div className="pcrd-divider" />
+      <div className="pcrd-rows">
+        {rows.map((row, i) => (
+          <div key={i} className="pcrd-row">
+            <span className="pcrd-row-label">{row.label}</span>
+            <span className="pcrd-row-value">{row.value}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -2029,17 +2400,23 @@ const MARKET_DATA_BLOCK = {
 };
 
 /**
- * Full compensation section block.
- * Includes: employment-type radio group, Annual/Hourly period toggle,
- * salary input with currency prefix/suffix, live market rate histogram,
- * and an empty signing-bonus slot.
+ * Complete compensation section block — covers all contract compensation fields.
+ * Rendered as a vertical stack of SectionCards:
+ *   Employment type · Compensation (with market rate + signing bonus) · Work schedule ·
+ *   Fixed allowances · Variable compensation · Employment terms · Desired start date ·
+ *   Time off · Sick leave · Notice period.
  *
- * @param {number}   [defaultSalary]         - Starting gross annual salary (default: 77293.01).
- * @param {string}   [defaultEmploymentType] - 'full' | 'part' (default: 'full').
- * @param {string}   [defaultPeriod]         - 'annual' | 'hourly' (default: 'annual').
- * @param {boolean}  [showMarketInsights]    - Show/hide market rate chart (default: true).
- * @param {string}   [country]               - Country name in helper text.
- * @param {function} [onSalaryChange]        - (value, period) => void.
+ * @param {number}   [defaultSalary]            - Starting gross annual salary (default: 77293.01).
+ * @param {string}   [defaultEmploymentType]    - 'full' | 'part' (default: 'full').
+ * @param {string}   [defaultPeriod]            - 'annual' | 'hourly' (default: 'annual').
+ * @param {boolean}  [showMarketInsights]        - Show/hide market rate chart (default: true).
+ * @param {string}   [country]                  - Country name used across section copy.
+ * @param {string}   [defaultEmploymentTerms]   - 'indefinite' | 'definite' (default: 'indefinite').
+ * @param {string}   [defaultContractEndDate]   - ISO date string for contract end (default: '').
+ * @param {string}   [defaultStartDate]         - ISO date string for agreement start (default: '').
+ * @param {string}   [defaultTimeOff]           - 'minimum' | 'specific' (default: 'minimum').
+ * @param {string}   [defaultWorkHours]         - Work hours per week value (default: '40').
+ * @param {function} [onSalaryChange]           - (value: number, period: string) => void.
  */
 export function CompensationBlock({
   defaultSalary = 77293.01,
@@ -2047,18 +2424,28 @@ export function CompensationBlock({
   defaultPeriod = "annual",
   showMarketInsights = true,
   country = "United States",
+  defaultEmploymentTerms = "indefinite",
+  defaultContractEndDate = "",
+  defaultStartDate = "",
+  defaultTimeOff = "minimum",
+  defaultWorkHours = "40",
   onSalaryChange,
 }) {
-  const [empType,     setEmpType]     = useState(defaultEmploymentType);
-  const [salPeriod,   setSalPeriod]   = useState(defaultPeriod);
-  const [salary,      setSalary]      = useState(defaultSalary);
-  const [chartPeriod, setChartPeriod] = useState(defaultPeriod);
-  const [animated,    setAnimated]    = useState(false);
+  const [empType,         setEmpType]         = useState(defaultEmploymentType);
+  const [salPeriod,       setSalPeriod]       = useState(defaultPeriod);
+  const [salary,          setSalary]          = useState(defaultSalary);
+  const [chartPeriod,     setChartPeriod]     = useState(defaultPeriod);
+  const [animated,        setAnimated]        = useState(false);
+  const [empTerms,        setEmpTerms]        = useState(defaultEmploymentTerms);
+  const [contractEndDate, setContractEndDate] = useState(defaultContractEndDate);
+  const [startDate,       setStartDate]       = useState(defaultStartDate);
+  const [timeOff,         setTimeOff]         = useState(defaultTimeOff);
+  const [vacationDays,    setVacationDays]    = useState("");
 
   useEffect(() => {
     setAnimated(false);
-    const t = setTimeout(() => setAnimated(true), 60);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setAnimated(true), 60);
+    return () => clearTimeout(timer);
   }, [chartPeriod, salary]);
 
   const handleSalaryChange = val => {
@@ -2066,114 +2453,242 @@ export function CompensationBlock({
     onSalaryChange?.(val, salPeriod);
   };
 
-  const data       = MARKET_DATA_BLOCK[chartPeriod];
-  const displaySal = chartPeriod === "annual" ? salary : salary / 12;
-  const salPos     = Math.max(0, Math.min(1, (displaySal - data.low) / (data.high - data.low)));
+  const contractDuration = (() => {
+    if (!contractEndDate) return null;
+    const end = new Date(contractEndDate);
+    const now = new Date();
+    const days = Math.round((end - now) / (1000 * 60 * 60 * 24));
+    return days > 0 ? `Duration of definite contract: ${days} days` : null;
+  })();
+
+  const data         = MARKET_DATA_BLOCK[chartPeriod];
+  const displaySal   = chartPeriod === "annual" ? salary : salary / 12;
+  const salPos       = Math.max(0, Math.min(1, (displaySal - data.low) / (data.high - data.low)));
   const activeBucket = Math.round(salPos * (data.buckets.length - 1));
-  const maxBucket  = Math.max(...data.buckets);
+  const maxBucket    = Math.max(...data.buckets);
 
   return (
-    <div className="block-shell">
-      {/* Employment type */}
-      <div>
-        <div className="block-title" style={{ marginBottom: 12 }}>Employment type</div>
+    <div className="compensation-shell">
+
+      {/* 1 · Employment type */}
+      <SectionCard title="Employment type">
         <div className="rstack">
           <RadioOption label="Full-time" selected={empType === "full"} onClick={() => setEmpType("full")} />
           <RadioOption label="Part-time" selected={empType === "part"} onClick={() => setEmpType("part")} />
         </div>
-      </div>
-      <div className="block-divider" />
+      </SectionCard>
 
-      {/* Compensation */}
-      <div>
-        <div className="block-title" style={{ marginBottom: 4 }}>Compensation</div>
-        <div className="fhint" style={{ marginBottom: 14 }}>
-          All compensation will be awarded in US Dollar (USD). Due to compliance, contract currencies are not customizable in EOR.
-        </div>
-        <div className="cb-toggle-wrap" style={{ marginBottom: 12 }}>
-          <button type="button" className={`cb-toggle-btn${salPeriod === "annual" ? " active" : ""}`} onClick={() => setSalPeriod("annual")}>Annual</button>
-          <button type="button" className={`cb-toggle-btn${salPeriod === "hourly" ? " active" : ""}`} onClick={() => setSalPeriod("hourly")}>Hourly</button>
-        </div>
-        <div className="fi" style={{ marginBottom: 16 }}>
-          <label className="fl">{salPeriod === "annual" ? "Gross annual base salary" : "Hourly rate"} <span className="req">*</span></label>
-          <div className="cb-salary-wrap">
-            <span className="cb-currency-prefix">$</span>
-            <input className="cb-salary-input" type="number" value={salary}
-              onChange={e => handleSalaryChange(parseFloat(e.target.value) || 0)} />
-            <span className="cb-currency-suffix">USD</span>
-          </div>
-        </div>
+      {/* 2 · Compensation + market rate + signing bonus */}
+      <SectionCard
+        title="Compensation"
+        description={`All compensation will be awarded in US Dollar (USD). Due to compliance, contract currencies are not customizable in EOR.`}
+      >
+        <SegmentedControl
+          fullWidth
+          options={[{ value: "annual", label: "Annual" }, { value: "hourly", label: "Hourly" }]}
+          value={salPeriod}
+          onChange={v => setSalPeriod(v)}
+        />
+        <TextInput
+          label={salPeriod === "annual" ? "Gross annual base salary" : "Hourly rate"}
+          required
+          prefix="$"
+          suffix="USD"
+          value={String(salary)}
+          onChange={v => handleSalaryChange(parseFloat(v) || 0)}
+        />
 
         {showMarketInsights && (
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 600 }}>Market rate insights</span>
-              <div className="mrc-ptoggle">
-                <button type="button" className={`mrc-pbtn${chartPeriod === "annual" ? " on" : ""}`} onClick={() => setChartPeriod("annual")}>Annual</button>
-                <button type="button" className={`mrc-pbtn${chartPeriod === "monthly" ? " on" : ""}`} onClick={() => setChartPeriod("monthly")}>Monthly</button>
+              <span className="mri-label">Market rate insights</span>
+              <SegmentedControl
+                size="sm"
+                options={[{ value: "annual", label: "Annual" }, { value: "monthly", label: "Monthly" }]}
+                value={chartPeriod}
+                onChange={v => setChartPeriod(v)}
+              />
+            </div>
+            <div className="mri-desc">
+              Mid Executive Assistant {chartPeriod} compensation in {country}. Market rate insights will not be shown to employees.
+            </div>
+            <div className="mrc-bars-wrap">
+              <div className="mrc-bars">
+                {data.buckets.map((h, i) => {
+                  const hPct = (h / maxBucket) * 100;
+                  const isActive = i === activeBucket;
+                  return (
+                    <div key={i} className="mrc-bar-col">
+                      <div className={`mrc-bar${isActive ? " active-bar" : ""}`} style={{ height: animated ? `${hPct}%` : "0%" }} />
+                      {isActive && (
+                        <>
+                          <div className="mrc-dashed" />
+                          <div className="mrc-bubble-wrap">
+                            <div className="mrc-bubble">{fmtK(displaySal)}</div>
+                            <div className="mrc-bubble-arrow" />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: 12, color: "#71717A", marginBottom: 12 }}>
-                Mid Executive Assistant {chartPeriod} compensation in {country}. Market rate insights will not be shown to employees.
-              </div>
-              <div className="mrc-bars-wrap">
-                <div className="mrc-bars">
-                  {data.buckets.map((h, i) => {
-                    const hPct = (h / maxBucket) * 100;
-                    const isActive = i === activeBucket;
-                    return (
-                      <div key={i} className="mrc-bar-col">
-                        <div className={`mrc-bar${isActive ? " active-bar" : ""}`} style={{ height: animated ? `${hPct}%` : "0%" }} />
-                        {isActive && (
-                          <>
-                            <div className="mrc-dashed" />
-                            <div className="mrc-bubble-wrap">
-                              <div className="mrc-bubble">{fmtK(displaySal)}</div>
-                              <div className="mrc-bubble-arrow" />
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
+            <div className="mrc-axis">
+              {[["Low", data.low], ["Median", data.median], ["High", data.high]].map(([lbl, val]) => (
+                <div key={lbl} className="mrc-axis-item">
+                  <span className="mrc-axis-val">{fmtK(val)}</span>
+                  <span className="mrc-axis-lbl">{lbl}</span>
                 </div>
-              </div>
-              <div className="mrc-axis">
-                {[["Low", data.low], ["Median", data.median], ["High", data.high]].map(([lbl, val]) => (
-                  <div key={lbl} className="mrc-axis-item">
-                    <span className="mrc-axis-val">{fmtK(val)}</span>
-                    <span className="mrc-axis-lbl">{lbl}</span>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         )}
-      </div>
-      <div className="block-divider" />
 
-      {/* Signing bonus */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        {/* Signing / retention bonus */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <div className="block-title">Signing / retention bonus</div>
-            <div className="fhint" style={{ marginTop: 2 }}>One-time payment on a specific date or as part of their first payroll.</div>
+            <div className="block-title" style={{ fontSize: 14 }}>Signing/retention bonus</div>
+            <div className="fhint" style={{ marginTop: 3 }}>One time payment to the employee on specific date or as part of their first payroll.</div>
           </div>
-          <SecondaryButton size="sm" label="Add" icon={<Plus />} />
+          <SecondaryButton size="sm" label="Add" />
         </div>
-        <div className="bonus-empty"><span className="bonus-dot" /> No bonus added yet</div>
-      </div>
+        <EmptyStateRow label="No bonus added yet" />
+      </SectionCard>
+
+      {/* 3 · Work schedule */}
+      <SectionCard
+        title="Work schedule"
+        action={<SecondaryButton size="sm" label="Create new schedule" icon={<ExternalLink />} />}
+      >
+        <CountryPolicyCard
+          flag="🇺🇸"
+          title={`Standard full time work hour per week in ${country}`}
+          rows={[{ label: "Work hours per week", value: "30.00 - 40.00" }]}
+        />
+        <TextInput
+          label="Work hours per week"
+          required
+          value={defaultWorkHours}
+          suffix="Hours"
+        />
+        <DropdownSelect
+          label={`${empType === "full" ? "Full-time" : "Part-time"} schedules`}
+          required
+          options={[]}
+          placeholder="Select schedule…"
+        />
+      </SectionCard>
+
+      {/* 4 · Fixed allowances */}
+      <SectionCard
+        title="Fixed allowances"
+        description="Allowances that are written into the EOR contract that may be granted on a one-time or monthly recurring basis (E.g. Moving allowance, wellness allowance etc)"
+        action={<SecondaryButton size="sm" label="Add" />}
+      >
+        <EmptyStateRow label="No fixed allowances yet" />
+      </SectionCard>
+
+      {/* 5 · Variable compensation */}
+      <SectionCard
+        title="Variable compensation"
+        description="Add additional compensation that will be included within the EOR contract."
+        action={<SecondaryButton size="sm" label="Add" />}
+      >
+        <EmptyStateRow label="No variable compensation yet" />
+      </SectionCard>
+
+      {/* 6 · Employment terms */}
+      <SectionCard title="Employment terms">
+        <div className="rstack">
+          <RadioOption label="Indefinite" selected={empTerms === "indefinite"} onClick={() => setEmpTerms("indefinite")} />
+          <RadioOption label="Definite"   selected={empTerms === "definite"}   onClick={() => setEmpTerms("definite")} />
+        </div>
+        {empTerms === "definite" && (
+          <DateInput
+            label="Contract end date (MM/DD/YYYY)"
+            required
+            value={contractEndDate}
+            helperText={contractDuration || undefined}
+            onChange={setContractEndDate}
+          />
+        )}
+      </SectionCard>
+
+      {/* 7 · Desired start date */}
+      <SectionCard title="Desired start date" description="Select the worker's start date.">
+        <ContextBanner
+          variant="info"
+          body={`Due to regulatory requirements, the earliest possible start date is Mar 4th 2026. If you need a later start date, please ensure that the contract end date allows for at least a 3-month duration. This provides enough time to complete onboarding in ${country}. Delays in providing information may postpone this date.`}
+        />
+        <DateInput
+          label="Agreement start date (MM/DD/YYYY)"
+          required
+          value={startDate}
+          onChange={setStartDate}
+        />
+      </SectionCard>
+
+      {/* 8 · Time off */}
+      <SectionCard
+        title="Time off"
+        description="Deel recommends opting for the minimum PTO for adhering to the local best practices and using internal policies for handling additional holidays."
+      >
+        <TextButton label={`Learn more about time-off policies in ${country}`} />
+        <div className="rstack">
+          <RadioOption label="Minimum legal requirement" selected={timeOff === "minimum"} onClick={() => setTimeOff("minimum")} />
+          <RadioOption label="Specific"                  selected={timeOff === "specific"} onClick={() => setTimeOff("specific")} />
+        </div>
+        {timeOff === "specific" && (
+          <TextInput label="Paid vacation days" required value={vacationDays} onChange={setVacationDays} />
+        )}
+      </SectionCard>
+
+      {/* 9 · Sick leave */}
+      <SectionCard title="Sick leave">
+        <ContextBanner
+          variant="info"
+          body={`Sick leave entitlements in ${country} vary depending on the specifics of the leave request. Please reach out to your CSM for more information about paid sick leave in ${country}`}
+        />
+        <CountryPolicyCard
+          flag="🇺🇸"
+          title={`Standard sick leave in ${country}`}
+          rows={[{ label: "Sick leave days", value: "Not applicable" }]}
+        />
+      </SectionCard>
+
+      {/* 10 · Notice period */}
+      <SectionCard title="Notice period">
+        <ContextBanner
+          variant="info"
+          body={`When hiring in ${country}, you can only select the standard, local regulations for notice period.`}
+        />
+        <div className="rstack">
+          <RadioOption label="Standard" selected disabled />
+          <RadioOption label="Custom"   disabled />
+        </div>
+        <CountryPolicyCard
+          flag="🇺🇸"
+          title={`Standard notice period in ${country}`}
+          rows={[
+            { label: "During probation", value: "No notice period" },
+            { label: "After probation",  value: "No notice period" },
+          ]}
+        />
+      </SectionCard>
+
     </div>
   );
 }
 
 const BENEFITS_DATA = [
-  { id: "healthcare",   icon: "🛡️", iconBg: "#EFF6FF", name: "Healthcare",               mandatory: true,  isNew: false, desc: "Ensure the employee is covered by a healthcare option — a monthly gross allowance or a localised plan.",                                     ctaLabel: "Add Healthcare"        },
-  { id: "pension",      icon: "🏦", iconBg: "#F0FDF4", name: "Pension",                   mandatory: true,  isNew: false, desc: "Comprehensive savings and pension plan for working employees to fund their retirement in the future.",                                        ctaLabel: "Add Pension"           },
-  { id: "lifeinsurance",icon: "📋", iconBg: "#FFF7ED", name: "Life Insurance",             mandatory: true,  isNew: false, desc: "Provide financial security in the event of an unexpected death, allowing employees to maintain their lifestyle.",                            ctaLabel: "Add Life Insurance"    },
-  { id: "travel",       icon: "✈️", iconBg: "#F5F3FF", name: "Business Travel Insurance", mandatory: false, isNew: true,  desc: "Tap into Deel's corporate travel insurance and get emergency coverage, crisis assistance, and 24/7 support.",                               ctaLabel: "Add"                   },
-  { id: "coworking",    icon: "🏢", iconBg: "#FAFAFA", name: "Coworking Space Membership", mandatory: false, isNew: false, desc: "Request monthly access to WeWork. Explore available WeWork locations.",                                                                      ctaLabel: "Add"                   },
+  { id: "healthcare",   icon: <Icon name="shield-plus" size={24} />, iconBg: "#EFF6FF", name: "Healthcare",                mandatory: true,  isNew: false, desc: "Ensure the employee is covered by a healthcare option — a monthly gross allowance or a localised plan.",                                                                                                                                   ctaLabel: "Add Healthcare"  },
+  { id: "pension",      icon: <Icon name="award"       size={24} />, iconBg: "#F0FDF4", name: "Pension",                    mandatory: true,  isNew: false, desc: "Comprehensive savings and pension plan for working employees to fund their retirement in the future.",                                                                                                                                      ctaLabel: "Add Pension"     },
+  { id: "lifeinsurance",icon: <Icon name="file-text"   size={24} />, iconBg: "#FFF7ED", name: "Life Insurance",              mandatory: true,  isNew: false, desc: "Provide financial security in the event of an unexpected death, allowing employees to maintain their lifestyle.",                                                                                                                          ctaLabel: "Add Life Insurance" },
+  { id: "travel",       icon: <Icon name="plane"       size={24} />, iconBg: "#F5F3FF", name: "Business Travel Insurance",  mandatory: false, isNew: true,  desc: "Tap into Deel's corporate travel insurance and get emergency coverage, crisis assistance, and 24/7 support for your workers, before and during their trip.",                                                                               ctaLabel: "Add",            learnMoreUrl: "#" },
+  { id: "coworking",    icon: <Icon name="building"    size={24} />, iconBg: "#F8FAFC", name: "Coworking Space Membership", mandatory: false, isNew: false, desc: "Request monthly access to WeWork. Explore available WeWork locations.",                                                                                                                                                                    ctaLabel: "Add",            learnMoreUrl: "#" },
+  { id: "equity",       icon: <Icon name="pie-chart"   size={24} />, iconBg: "#F8FAFC", name: "Equity & Tokens",            mandatory: false, isNew: false, desc: "Easily include equity in your EOR employee contracts with our Equity & Tokens Service. We'll help ensure proper classification so your company stays compliant and your team shares in your growth.",                                       ctaLabel: "Add",            learnMoreUrl: "#" },
+  { id: "background",   icon: <Icon name="fingerprint" size={24} />, iconBg: "#F8FAFC", name: "Background Check",           mandatory: false, isNew: false, desc: "Confirm a new team member's background for peace of mind and a smooth onboarding process.",                                                                                                                                                ctaLabel: "Add now",        learnMoreUrl: "#" },
 ];
 
 /**
@@ -2194,81 +2709,44 @@ export function BenefitsBlock({ country = "United States", benefits, onAddBenefi
     if (next) onAddBenefit?.(id);
   };
 
-  const mandatory = list.filter(b => b.mandatory);
-  const optional  = list.filter(b => !b.mandatory);
+
+  const renderCard = (b) => (
+    <SectionCard
+      key={b.id}
+      icon={b.icon}
+      title={b.name}
+      badges={b.mandatory ? <StatusBadge variant="mandatory" /> : b.isNew ? <StatusBadge variant="new" /> : null}
+      action={
+        added[b.id]
+          ? <SecondaryButton size="sm" label="Added" icon={<CheckLg />} onClick={() => toggle(b.id)} />
+          : b.mandatory
+            ? <PrimaryButton   size="sm" label={b.ctaLabel} icon={<Plus />} onClick={() => toggle(b.id)} />
+            : <SecondaryButton size="sm" label={b.ctaLabel} icon={<Plus />} onClick={() => toggle(b.id)} />
+      }
+      footer={
+        added[b.id] ? (
+          <div className="benefit-added-bar">
+            <CheckLg />
+            <span className="benefit-added-text">{b.name} has been added</span>
+          </div>
+        ) : null
+      }
+    >
+      <p className="sc-desc">{b.desc}</p>
+      {b.learnMoreUrl && (
+        <div style={{ alignSelf: "flex-start" }}>
+          <TextButton label="Learn more" onClick={() => window.open(b.learnMoreUrl, "_blank")} />
+        </div>
+      )}
+      {b.mandatory && !added[b.id] && (
+        <ContextBanner variant="warning" body={`${b.name} is a mandatory benefit for ${country}`} />
+      )}
+    </SectionCard>
+  );
 
   return (
-    <div className="block-shell">
-      <div>
-        <div className="block-title">Benefits and extras</div>
-        <div className="block-subtitle">Configure benefits for {country}. Mandatory benefits are required by law.</div>
-      </div>
-
-      <div className="benefit-grid">
-        <div className="benefit-section-label">Mandatory benefits</div>
-        {mandatory.map(b => (
-          <div key={b.id} className="benefit-card">
-            <div className="benefit-card-inner">
-              <div className="benefit-card-header">
-                <div className="benefit-card-left">
-                  <div className="benefit-icon" style={{ background: b.iconBg }}>{b.icon}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <span className="benefit-name">{b.name}</span>
-                    <StatusBadge variant="mandatory" />
-                  </div>
-                </div>
-                {added[b.id]
-                  ? <SecondaryButton size="sm" label="Added" icon={<CheckLg />} onClick={() => toggle(b.id)} />
-                  : <PrimaryButton   size="sm" label={b.ctaLabel} icon={<Plus />}    onClick={() => toggle(b.id)} />}
-              </div>
-              <div className="benefit-desc">{b.desc}</div>
-            </div>
-            {!added[b.id] && (
-              <div className="benefit-mandatory-banner">
-                <Warning />
-                <span className="benefit-mandatory-text">{b.name} is a mandatory benefit for {country}</span>
-              </div>
-            )}
-            {added[b.id] && (
-              <div className="benefit-added-bar">
-                <CheckLg />
-                <span className="benefit-added-text">{b.name} has been added</span>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="block-divider" />
-
-      <div className="benefit-grid">
-        <div className="benefit-section-label">Optional extras</div>
-        {optional.map(b => (
-          <div key={b.id} className="benefit-card">
-            <div className="benefit-card-inner">
-              <div className="benefit-card-header">
-                <div className="benefit-card-left">
-                  <div className="benefit-icon" style={{ background: b.iconBg }}>{b.icon}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <span className="benefit-name">{b.name}</span>
-                    {b.isNew && <StatusBadge variant="new" />}
-                  </div>
-                </div>
-                {added[b.id]
-                  ? <SecondaryButton size="sm" label="Added" icon={<CheckLg />} onClick={() => toggle(b.id)} />
-                  : <SecondaryButton size="sm" label={b.ctaLabel} icon={<Plus />}    onClick={() => toggle(b.id)} />}
-              </div>
-              <div className="benefit-desc">{b.desc}</div>
-            </div>
-            {added[b.id] && (
-              <div className="benefit-added-bar">
-                <CheckLg />
-                <span className="benefit-added-text">{b.name} has been added</span>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+    <div className="benefit-grid">
+      {list.map(renderCard)}
     </div>
   );
 }
@@ -2376,7 +2854,7 @@ export function AddPersonBlock({
   const showState = employmentCountry === "us";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div className="add-person-shell">
       {/* Page heading */}
       <div>
         <div className="block-title">Add person</div>
@@ -2384,7 +2862,7 @@ export function AddPersonBlock({
       </div>
 
       {/* ── 1. Team information ── */}
-      <SectionCard title="Team information" showInfoButton bodyGap={20}>
+      <SectionCard title="Team information" showInfoButton>
         <DropdownSelect label="Entity" required
           options={ENTITY_OPTIONS} value={defaultEntity} />
         <DropdownSelect label="Group" required
@@ -2392,7 +2870,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 2. Employee personal details ── */}
-      <SectionCard title="Employee personal details" bodyGap={20}>
+      <SectionCard title="Employee personal details">
         <ToggleRow
           label="I don't know the worker's personal details yet"
           description="Get a cost estimate without providing worker details"
@@ -2430,7 +2908,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 3. Workplace information ── */}
-      <SectionCard title="Workplace information" bodyGap={20}>
+      <SectionCard title="Workplace information">
         <div>
           <DropdownSelect label="Job Position" optional placeholder="Job Position (optional)"
             options={JOB_POSITION_OPTIONS} />
@@ -2451,7 +2929,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 4. Organizational structure ── */}
-      <SectionCard title="Organizational structure" bodyGap={20}>
+      <SectionCard title="Organizational structure">
         <DropdownSelect label="Department" optional placeholder="Department (optional)"
           options={DEPARTMENT_OPTIONS} />
         <DropdownSelect label="Teams" optional placeholder="Teams (optional)"
@@ -2459,7 +2937,7 @@ export function AddPersonBlock({
       </SectionCard>
 
       {/* ── 5. Hiring objective ── */}
-      <SectionCard title="Hiring objective" bodyGap={20}>
+      <SectionCard title="Hiring objective">
         <DropdownSelect
           label="What's your hiring objective?"
           required
@@ -2484,7 +2962,7 @@ export function AddPersonBlock({
 // ═══════════════════════════════════════════════════════════════════
 
 const FLOW_STEPS = [
-  { label: "Personal details" },
+  { label: "Add person" },
   { label: "Job details" },
   { label: "Compensation and dates" },
   { label: "Benefits and extras" },
@@ -2492,7 +2970,7 @@ const FLOW_STEPS = [
 
 /**
  * Complete EOR contract creation flow.
- * Wires together all blocks (JobDescriptionBlock, CompensationBlock, BenefitsBlock)
+ * Wires together all blocks (AddPersonBlock, JobDescriptionBlock, CompensationBlock, BenefitsBlock)
  * with StepperRail, AutosaveWidget, and HiringGuideBanner into a 4-step navigable flow.
  *
  * @param {number}   [initialStep]  - Step to start on (1–4, default: 1).
@@ -2525,67 +3003,21 @@ export function EORContractCreationFlow({
   const back = () => { if (step > 1) goTo(step - 1); };
 
   const stepContent = {
-    1: (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ background: "var(--surface, #FFF)", border: "1px solid var(--border, #E4E4E7)", borderRadius: 12, padding: "20px 24px" }}>
-          <FormFieldGroup
-            title="Personal details"
-            columns={2}
-            fields={[
-              { type: "text",   label: "First name",    required: true,  placeholder: "e.g. Jane" },
-              { type: "text",   label: "Last name",     required: true,  placeholder: "e.g. Smith" },
-              { type: "text",   label: "Email address", required: true,  placeholder: "worker@company.com" },
-              { type: "select", label: "Nationality",
-                options: [
-                  { value: "us", label: "United States" },
-                  { value: "de", label: "Germany" },
-                  { value: "gb", label: "United Kingdom" },
-                  { value: "au", label: "Australia" },
-                  { value: "ca", label: "Canada" },
-                ]},
-            ]}
-          />
-        </div>
-        <div style={{ background: "var(--surface, #FFF)", border: "1px solid var(--border, #E4E4E7)", borderRadius: 12, padding: "20px 24px" }}>
-          <FormFieldGroup
-            title="Employment details"
-            columns={2}
-            fields={[
-              { type: "text",   label: "Worker ID",         value: "EMP-2024-260", disabled: true,
-                helperText: "Auto-assigned — cannot be changed" },
-              { type: "text",   label: "Start date",        required: true, placeholder: "YYYY-MM-DD" },
-              { type: "select", label: "Country of hiring", required: true, value: "us",
-                options: [
-                  { value: "us", label: "United States" },
-                  { value: "de", label: "Germany" },
-                  { value: "gb", label: "United Kingdom" },
-                  { value: "au", label: "Australia" },
-                  { value: "ca", label: "Canada" },
-                ]},
-              { type: "select", label: "Employment type",
-                options: [
-                  { value: "full", label: "Full-time" },
-                  { value: "part", label: "Part-time" },
-                ]},
-            ]}
-          />
-        </div>
-      </div>
-    ),
+    1: <AddPersonBlock />,
     2: <JobDescriptionBlock defaultTitle="Executive Assistant" defaultSeniority="mid" />,
     3: <CompensationBlock defaultSalary={77293.01} country={country} />,
     4: <BenefitsBlock country={country} />,
   };
 
   return (
-    <div style={{ background: "var(--bg, #FAFAFA)", width: "100%" }}>
+    <div className="flow-shell">
       {/* Top bar */}
       {showHeader && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 28px", background: "var(--surface, #FFF)", borderBottom: "1px solid var(--border, #E4E4E7)" }}>
+        <div className="flow-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div>
-              <div style={{ fontSize: 13.5, fontWeight: 600 }}>{headerTitle}</div>
-              <div style={{ fontSize: 11.5, color: "#71717A" }}>{headerSubtitle ?? `Full-time · ${country}`}</div>
+              <div className="flow-header-title">{headerTitle}</div>
+              <div className="flow-header-sub">{headerSubtitle ?? `Full-time · ${country}`}</div>
             </div>
           </div>
         </div>
@@ -2596,14 +3028,14 @@ export function EORContractCreationFlow({
         {/* Main content */}
         <div style={{ minWidth: 0, paddingRight: 28 }}>
           {stepContent[step]}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border, #E4E4E7)" }}>
+          <div className="flow-footer">
             <SecondaryButton label="Back" disabled={step === 1} onClick={back} />
             <PrimaryButton label={step === 4 ? "Submit contract" : "Continue"} onClick={next} />
           </div>
         </div>
 
         {/* Rail */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, position: "sticky", top: 20 }}>
+        <div className="flow-rail">
           <StepperRail steps={FLOW_STEPS} currentStep={step} onStepClick={n => n < step && goTo(n)} />
           <AutosaveWidget status={saveStatus} lastSaved={saveStatus === "saved" ? "just now" : undefined} />
         </div>

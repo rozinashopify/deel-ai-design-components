@@ -8,14 +8,15 @@ import {
   APPEARANCE_DEFAULTS,
   applyAppearance,
   // ── Atoms
-  TextInput, DropdownSelect, RadioOption, ToggleRow, SectionCard, SegmentedControl,
+  TextInput, DateInput, DropdownSelect, RadioOption, ToggleRow, SectionCard, SegmentedControl,
+  EmptyStateRow, Icon,
   // ── Molecules
   FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
   AutosaveWidget, ContextBanner, HiringGuideBanner,
   // ── Navigation
   StepperRail,
   // ── Compliance
-  ComplianceCheckCard, ComplianceCheckPanel,
+  ComplianceCheckCard, ComplianceCheckPanel, CountryPolicyCard,
   // ── Market Intelligence
   MarketRateChart,
   // ── Blocks
@@ -472,12 +473,13 @@ const WAVES = [
     name: "Atoms",
     subtitle: "Wave 1",
     file: "Deel_Atoms_Wave1.jsx",
-    tag: "8 components · 24 variants",
+    tag: "9 components · 24 variants",
     tagKey: "atoms",
     desc: "Foundation primitives — every higher-level component is assembled from these. All support light/dark mode, controlled & uncontrolled usage, disabled states, and validation.",
     ai: false,
     components: [
       { icon: "⌨️", name: "TextInput",      desc: "Single-line text field with label, validation, helper text" },
+      { icon: "📅", name: "DateInput",       desc: "Date field with × clear and calendar-icon date picker" },
       { icon: "▾",  name: "DropdownSelect", desc: "Bordered select for job titles, departments, seniority" },
       { icon: "⬤",  name: "StatusBadge",    desc: "Compact pill — mandatory, new, completed, failed" },
       { icon: "◯",  name: "RadioOption",    desc: "Full-width tappable row with optional sublabel" },
@@ -485,6 +487,8 @@ const WAVES = [
       { icon: "◑",  name: "ToggleRow",         desc: "Bordered row with iOS-style toggle for binary settings" },
       { icon: "▭",  name: "SectionCard",        desc: "White rounded card with bold title + optional ⓘ button for form sections" },
       { icon: "⊟",  name: "SegmentedControl",   desc: "Adjacent pill-buttons for Annual/Hourly, Annual/Monthly and other small exclusive selections" },
+      { icon: "○",  name: "EmptyStateRow",       desc: "Muted bordered row with ⓘ icon for empty list containers" },
+      { icon: "◈",  name: "Icon",                desc: "SVG icon atom — 19 named icons, configurable size and color" },
     ],
   },
   {
@@ -492,15 +496,16 @@ const WAVES = [
     name: "Molecules",
     subtitle: "Wave 2",
     file: "Deel_Molecules_Wave2.jsx",
-    tag: "4 molecules",
+    tag: "5 molecules",
     tagKey: "mol",
     desc: "Composed UI patterns that group atoms into reusable interactive units. Each molecule declares its atom dependencies explicitly.",
     ai: false,
     components: [
-      { icon: "⊞", name: "FormFieldGroup",    desc: "Labelled group of 1–4 inputs with shared title & description" },
-      { icon: "☰", name: "StepperRail",       desc: "Vertical progress rail — tracks completed, active, upcoming steps" },
-      { icon: "💾", name: "AutosaveWidget",    desc: "Right-rail card — saved/saving state + delete draft CTA" },
-      { icon: "ⓘ", name: "ContextBanner", desc: "Guide / Insight / Promo / Info — unified contextual banner with 4 variants" },
+      { icon: "⊞", name: "FormFieldGroup",      desc: "Labelled group of 1–4 inputs with shared title & description" },
+      { icon: "☰", name: "StepperRail",         desc: "Vertical progress rail — tracks completed, active, upcoming steps" },
+      { icon: "💾", name: "AutosaveWidget",      desc: "Right-rail card — saved/saving state + delete draft CTA" },
+      { icon: "ⓘ", name: "ContextBanner",       desc: "Guide / Insight / Promo / Info — unified contextual banner with 4 variants" },
+      { icon: "🏳", name: "CountryPolicyCard",  desc: "Flag + policy title + key–value rows for country statutory standards" },
     ],
   },
   {
@@ -544,7 +549,7 @@ const WAVES = [
     desc: "Full EOR contract creation orchestration — all atoms, molecules, AI molecules and blocks wired together into a complete navigation flow with autosave, stepper rail, and submission.",
     ai: true,
     components: [
-      { icon: "🌊", name: "EORContractCreationFlow", desc: "4-step flow: Personal · Job · Compensation · Benefits → Submit" },
+      { icon: "🌊", name: "EORContractCreationFlow", desc: "4-step flow: Add person · Job · Compensation · Benefits → Submit" },
     ],
   },
 ];
@@ -572,6 +577,30 @@ function MiniTextInput({ t }) {
         value={v} onChange={e => setV(e.target.value)}
       />
       <span style={{ fontFamily:"Inter,sans-serif", fontSize:10.5, color:t.textMuted }}>Auto-assigned from HR system</span>
+    </div>
+  );
+}
+
+function MiniDateInput({ t }) {
+  const [v, setV] = useState("");
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:5, width:"100%" }}>
+      <span style={{ fontFamily:"Inter,sans-serif", fontSize:11, fontWeight:600, color:t.textMain }}>
+        Agreement start date (MM/DD/YYYY) <span style={{ color:t.error }}>*</span>
+      </span>
+      <div style={{ display:"flex", alignItems:"stretch", border:`1px solid ${t.border}`, borderRadius:7, overflow:"hidden", background:t.inputBg }}>
+        <input
+          type="date"
+          style={{ flex:1, minWidth:0, height:34, padding:"0 9px", fontFamily:"Inter,sans-serif", fontSize:12.5, color:t.textMain, background:"transparent", border:"none", outline:"none", appearance:"none" }}
+          value={v} onChange={e => setV(e.target.value)}
+        />
+        {v && (
+          <button type="button" onClick={() => setV("")} style={{ display:"flex", alignItems:"center", padding:"0 7px", border:"none", background:"transparent", color:t.textMuted, cursor:"pointer", fontSize:13 }}>×</button>
+        )}
+        <span style={{ display:"flex", alignItems:"center", padding:"0 9px", borderLeft:`1px solid ${t.border}`, color:t.textMuted }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><line x1="1.5" y1="5.5" x2="12.5" y2="5.5"/><line x1="4.5" y1="1" x2="4.5" y2="4"/><line x1="9.5" y1="1" x2="9.5" y2="4"/></svg>
+        </span>
+      </div>
     </div>
   );
 }
@@ -610,6 +639,32 @@ function MiniStatusBadge({ t }) {
           <span style={{ width:5, height:5, borderRadius:"50%", background:b.color, flexShrink:0 }} />
           {b.label}
         </span>
+      ))}
+    </div>
+  );
+}
+
+function MiniEmptyStateRow({ t }) {
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"11px 14px", background:t.surfaceHover, border:`1px solid ${t.border}`, borderRadius:10, width:"100%" }}>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={t.textDisabled} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink:0 }}>
+        <circle cx="7" cy="7" r="5.5" />
+        <line x1="7" y1="6.5" x2="7" y2="10" />
+        <circle cx="7" cy="4.5" r=".8" fill={t.textDisabled} stroke="none" />
+      </svg>
+      <span style={{ fontFamily:"Inter,sans-serif", fontSize:12.5, color:t.textMuted }}>No fixed allowances yet</span>
+    </div>
+  );
+}
+
+function MiniIcon({ t }) {
+  const icons = ["shield-plus","award","file-text","plane","building","pie-chart","fingerprint","info","warning","plus","x","external-link","calendar"];
+  return (
+    <div style={{ display:"flex", flexWrap:"wrap", gap:10, padding:"4px 0" }}>
+      {icons.map(name => (
+        <div key={name} title={name} style={{ display:"flex", alignItems:"center", justifyContent:"center", width:32, height:32, borderRadius:8, border:`1px solid ${t.border}`, background:t.surface, color:t.textMain }}>
+          <Icon name={name} size={16} />
+        </div>
       ))}
     </div>
   );
@@ -1026,10 +1081,35 @@ function MiniFlow({ t, onOpen }) {
   );
 }
 
+function MiniCountryPolicyCard({ t }) {
+  const rows = [
+    { label: "During probation", value: "No notice period" },
+    { label: "After probation",  value: "No notice period" },
+  ];
+  return (
+    <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, overflow: "hidden", width: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: t.surfaceHover }}>
+        <span style={{ fontSize: 16 }}>🇺🇸</span>
+        <span style={{ fontFamily: "Inter,sans-serif", fontSize: 11, fontWeight: 500, color: t.textMain, lineHeight: 1.35 }}>Standard notice period in United States</span>
+      </div>
+      <div style={{ height: 1, background: t.border }} />
+      {rows.map((row, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 12px", borderTop: i > 0 ? `1px solid ${t.border}` : undefined }}>
+          <span style={{ fontFamily: "Inter,sans-serif", fontSize: 11, color: t.textMuted }}>{row.label}</span>
+          <span style={{ fontFamily: "Inter,sans-serif", fontSize: 11, fontWeight: 600, color: t.textMain }}>{row.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"TextInput",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniTextInput t={t} /> },
+  { name:"DateInput",               wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniDateInput t={t} /> },
   { name:"DropdownSelect",         wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniDropdown t={t} /> },
   { name:"StatusBadge",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniStatusBadge t={t} /> },
+  { name:"EmptyStateRow",          wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniEmptyStateRow t={t} /> },
+  { name:"Icon",                   wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniIcon t={t} /> },
   { name:"RadioOption",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniRadioOption t={t} /> },
   { name:"Buttons",                wave:"Wave 1", waveKey:"atoms",  composed:"Primary · Secondary · Text",                      preview:<MiniButtons t={t} /> },
   { name:"ToggleRow",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniToggleRow t={t} /> },
@@ -1039,6 +1119,7 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"StepperRail",            wave:"Wave 2", waveKey:"mol",    composed:"StepIndicator + connector + StatusBadge",         preview:<MiniStepperRail t={t} /> },
   { name:"AutosaveWidget",         wave:"Wave 2", waveKey:"mol",    composed:"InfoIcon + status dot + SecondaryButton",         preview:<MiniAutosave t={t} /> },
   { name:"ContextBanner",          wave:"Wave 2", waveKey:"mol",    composed:"guide / insight / promo variants",                  preview:<MiniContextBanner t={t} /> },
+  { name:"CountryPolicyCard",       wave:"Wave 2", waveKey:"mol",    composed:"flag + title header + divider + key–value rows",  preview:<MiniCountryPolicyCard t={t} /> },
   { name:"ComplianceCheckCard",    wave:"Wave 3", waveKey:"ai",     composed:"rule text + StatusBadge + detail line",           preview:<MiniComplianceCard t={t} /> },
   { name:"ComplianceCheckPanel",   wave:"Wave 3", waveKey:"ai",     composed:"AI banner + CheckCard × n + shimmer",             preview:<MiniCompliancePanel t={t} /> },
   { name:"MarketRateChart",        wave:"Wave 3", waveKey:"ai",     composed:"period toggle + histogram + bubble + axis",       preview:<MiniMarketChart t={t} /> },
@@ -1092,6 +1173,15 @@ const COMPONENT_DEMOS = {
       <TextInput label="Work hours per week" placeholder="40" suffix="Hours" />
       <TextInput label="Validation error" value="bad input" error helperText="This field contains an invalid value" />
       <TextInput label="Disabled field" value="Read only" disabled />
+    </div>
+  ),
+  DateInput: (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 400 }}>
+      <DateInput label="Agreement start date (MM/DD/YYYY)" required />
+      <DateInput label="Contract end date" helperText="Leave blank for open-ended contracts" />
+      <DateInput label="With a pre-set date" value="2025-03-01" />
+      <DateInput label="Validation error" error helperText="Start date must be in the future" />
+      <DateInput label="Disabled" value="2024-12-15" disabled />
     </div>
   ),
   DropdownSelect: (
@@ -1151,7 +1241,16 @@ const COMPONENT_DEMOS = {
         <TextInput label="First name" required placeholder="Alex" />
         <TextInput label="Last name" required placeholder="Johnson" />
       </SectionCard>
-      <SectionCard title="No children (title only)" />
+      <SectionCard
+        title="Fixed allowances"
+        description="Allowances that are written into the EOR contract that may be granted on a one-time or monthly recurring basis (E.g. Moving allowance, wellness allowance etc)"
+        action={<Button variant="secondary" size="sm" label="Add" onClick={() => alert('Add allowance')} />}
+      />
+      <SectionCard
+        title="Variable compensation"
+        description="Add additional compensation that will be included within the EOR contract."
+        action={<Button variant="secondary" size="sm" label="Add" onClick={() => alert('Add compensation')} />}
+      />
     </div>
   ),
   SegmentedControl: (
@@ -1250,6 +1349,36 @@ const COMPONENT_DEMOS = {
       <StatusBadge variant="new" dot={false} label="Feature preview" />
     </div>
   ),
+  EmptyStateRow: (
+    <div style={{ maxWidth: 500, display: "flex", flexDirection: "column", gap: 10 }}>
+      <EmptyStateRow label="No bonus added yet" />
+      <EmptyStateRow label="No fixed allowances yet" />
+      <EmptyStateRow label="No variable compensation yet" />
+    </div>
+  ),
+  Icon: (() => {
+    const groups = [
+      { label: "Benefits", icons: ["shield-plus","award","file-text","plane","building","pie-chart","fingerprint"] },
+      { label: "System",   icons: ["chevron-down","check","plus","refresh","info","warning","x","external-link","save","calendar","star","ai"] },
+    ];
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:24, fontFamily:"Inter,sans-serif" }}>
+        {groups.map(({ label, icons }) => (
+          <div key={label}>
+            <div style={{ fontSize:11, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em", color:"#71717A", marginBottom:12 }}>{label}</div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+              {icons.map(name => (
+                <div key={name} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"12px 10px", border:"1px solid #E4E4E7", borderRadius:10, background:"#FFF", minWidth:72 }}>
+                  <Icon name={name} size={20} />
+                  <span style={{ fontSize:10, color:"#71717A", whiteSpace:"nowrap" }}>{name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  })(),
   AutosaveWidget: (
     <div style={{ maxWidth: 280 }}>
       <AutosaveWidget status="saved" lastSaved="2 minutes ago" />
@@ -1276,6 +1405,31 @@ const COMPONENT_DEMOS = {
           { label: "Benefits and extras" },
         ]}
         currentStep={2}
+      />
+    </div>
+  ),
+
+  // Country Standards
+  CountryPolicyCard: (
+    <div style={{ maxWidth: 480, display: "flex", flexDirection: "column", gap: 10 }}>
+      <CountryPolicyCard
+        flag="🇺🇸"
+        title="Standard full time work hour per week in United States"
+        rows={[{ label: "Work hours per week", value: "30.00 – 40.00" }]}
+      />
+      <CountryPolicyCard
+        flag="🇺🇸"
+        title="Standard sick leave in United States"
+        rows={[{ label: "Sick leave days", value: "Not applicable" }]}
+        dimmed
+      />
+      <CountryPolicyCard
+        flag="🇺🇸"
+        title="Standard notice period in United States"
+        rows={[
+          { label: "During probation", value: "No notice period" },
+          { label: "After probation",  value: "No notice period" },
+        ]}
       />
     </div>
   ),
@@ -1513,21 +1667,175 @@ const COMPONENT_PLAYGROUND_CONFIG = {
   },
   SectionCard: {
     defaults: {
-      title:          "Team information",
-      showInfoButton: true,
+      title:          "Fixed allowances",
+      description:    "Allowances written into the EOR contract, granted on a one-time or recurring basis.",
+      showInfoButton: false,
+      showIcon:       false,
+      iconName:       "award",
+      iconSize:       32,
+      showBadge:      false,
+      badgeVariant:   "mandatory",
+      showAction:     true,
+      actionVariant:  "secondary",
+      actionLabel:    "Add",
     },
-    render: (p) => (
-      <div style={{ maxWidth: 520 }}>
-        <SectionCard
-          title={p.title}
-          showInfoButton={p.showInfoButton}
-          onInfoClick={p.showInfoButton ? () => alert('Section info!') : undefined}
-        >
-          <TextInput label="Entity" placeholder="Select entity" />
-          <TextInput label="Group" placeholder="Select group" />
-        </SectionCard>
-      </div>
-    ),
+    render: (p) => {
+      const variant = p.actionVariant || "secondary";
+      const label   = p.actionLabel  || "Add";
+      const action  = p.showAction
+        ? <Button variant={variant} size={variant === "text" ? undefined : "sm"} label={label} onClick={() => alert(label)} />
+        : undefined;
+      const icon   = p.showIcon  ? <Icon name={p.iconName || "award"} size={p.iconSize || 32} /> : undefined;
+      const badges = p.showBadge ? <StatusBadge variant={p.badgeVariant || "mandatory"} /> : undefined;
+      return (
+        <div style={{ maxWidth: 520 }}>
+          <SectionCard
+            title={p.title}
+            description={p.description || undefined}
+            icon={icon}
+            iconSize={p.iconSize || 32}
+            badges={badges}
+            showInfoButton={p.showInfoButton}
+            onInfoClick={p.showInfoButton ? () => alert('Section info!') : undefined}
+            action={action}
+          >
+            <TextInput label="Entity" placeholder="Select entity" />
+            <TextInput label="Group" placeholder="Select group" />
+          </SectionCard>
+        </div>
+      );
+    },
+    customControls: (liveProps, setProp, t) => {
+      const inputBase = {
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+        padding: "5px 9px", borderRadius: 7,
+        border: `1px solid ${t.border}`,
+        background: t.inputBg || t.bg, color: t.textMain, outline: "none",
+      };
+      const selectStyle = {
+        ...inputBase, appearance: "none", minWidth: 130, paddingRight: 26,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2371717A' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center",
+      };
+      const rowStyle   = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 20px", borderBottom: `1px solid ${t.border}`, gap: 16 };
+      const labelStyle = { fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: t.textMain, fontWeight: 500 };
+      const typeStyle  = { fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple };
+      const mkToggle   = (key) => {
+        const active = Boolean(liveProps[key]);
+        return (
+          <button
+            type="button" aria-checked={active}
+            onClick={() => setProp(key, !active)}
+            style={{
+              display: "flex", alignItems: "center", flexShrink: 0,
+              background: active ? t.primary : t.surfaceHover,
+              border: `1.5px solid ${active ? t.primary : t.border}`,
+              borderRadius: 999, padding: 2, cursor: "pointer",
+              width: 40, height: 22, transition: "background .15s, border-color .15s",
+            }}
+          >
+            <div style={{
+              width: 16, height: 16, borderRadius: "50%",
+              background: active ? t.btnText : t.textDisabled,
+              transform: active ? "translateX(18px)" : "translateX(0)",
+              transition: "transform .15s",
+            }} />
+          </button>
+        );
+      };
+      const showIcon   = Boolean(liveProps.showIcon);
+      const showBadge  = Boolean(liveProps.showBadge);
+      const showAction = Boolean(liveProps.showAction);
+      return (
+        <>
+          {/* ── icon ── */}
+          <div style={rowStyle}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={labelStyle}>showIcon</span>
+              <span style={typeStyle}>boolean</span>
+            </div>
+            {mkToggle("showIcon")}
+          </div>
+          {showIcon && (
+            <div style={rowStyle}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={labelStyle}>iconName</span>
+                <span style={typeStyle}>string</span>
+              </div>
+              <select value={liveProps.iconName || "award"} onChange={e => setProp("iconName", e.target.value)} style={selectStyle}>
+                {["award", "shield-plus", "file-text", "plane", "building", "pie-chart", "fingerprint", "star", "calendar", "info", "warning"].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+          )}
+          {showIcon && (
+            <div style={rowStyle}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={labelStyle}>iconSize</span>
+                <span style={typeStyle}>number</span>
+              </div>
+              <input
+                type="number" min="16" max="64" step="4"
+                value={liveProps.iconSize ?? 32}
+                onChange={e => setProp("iconSize", Number(e.target.value))}
+                style={{ ...inputBase, minWidth: 80 }}
+              />
+            </div>
+          )}
+          {/* ── badge ── */}
+          <div style={rowStyle}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={labelStyle}>showBadge</span>
+              <span style={typeStyle}>boolean</span>
+            </div>
+            {mkToggle("showBadge")}
+          </div>
+          {showBadge && (
+            <div style={rowStyle}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={labelStyle}>badgeVariant</span>
+                <span style={typeStyle}>'mandatory' | 'new' | 'completed' | 'failed'</span>
+              </div>
+              <select value={liveProps.badgeVariant || "mandatory"} onChange={e => setProp("badgeVariant", e.target.value)} style={selectStyle}>
+                {["mandatory", "new", "completed", "failed"].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+          )}
+          {/* ── action ── */}
+          <div style={rowStyle}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={labelStyle}>showAction</span>
+              <span style={typeStyle}>boolean</span>
+            </div>
+            {mkToggle("showAction")}
+          </div>
+          {showAction && (
+            <div style={rowStyle}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={labelStyle}>actionVariant</span>
+                <span style={typeStyle}>'primary' | 'secondary' | 'text'</span>
+              </div>
+              <select value={liveProps.actionVariant || "secondary"} onChange={e => setProp("actionVariant", e.target.value)} style={selectStyle}>
+                {["secondary", "primary", "text"].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+          )}
+          {showAction && (
+            <div style={rowStyle}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={labelStyle}>actionLabel</span>
+                <span style={typeStyle}>string</span>
+              </div>
+              <input
+                type="text"
+                value={liveProps.actionLabel ?? "Add"}
+                onChange={e => setProp("actionLabel", e.target.value)}
+                style={{ ...inputBase, minWidth: 160 }}
+              />
+            </div>
+          )}
+        </>
+      );
+    },
   },
   SegmentedControl: {
     defaults: { fullWidth: false, disabled: false },
@@ -1558,6 +1866,14 @@ const COMPONENT_PLAYGROUND_CONFIG = {
     defaults: { variant: "completed", label: "Step complete", dot: true },
     render: (p) => <StatusBadge {...p} />,
   },
+  EmptyStateRow: {
+    defaults: { label: "No fixed allowances yet" },
+    render: (p) => <div style={{ maxWidth: 460 }}><EmptyStateRow {...p} /></div>,
+  },
+  Icon: {
+    defaults: { name: "plane", size: 24 },
+    render: (p) => <Icon {...p} />,
+  },
   AutosaveWidget: {
     defaults: { status: "saved", lastSaved: "2 minutes ago" },
     render: (p) => <AutosaveWidget {...p} />,
@@ -1565,6 +1881,7 @@ const COMPONENT_PLAYGROUND_CONFIG = {
   ContextBanner: {
     defaults: {
       variant:   "guide",
+      layout:    "inline",
       country:   "United States",
       title:     "",
       body:      "",
@@ -1575,6 +1892,7 @@ const COMPONENT_PLAYGROUND_CONFIG = {
       <div style={{ maxWidth: 580 }}>
         <ContextBanner
           variant={p.variant}
+          layout={p.layout || undefined}
           country={p.country || undefined}
           title={p.title || undefined}
           body={p.body || undefined}
@@ -1639,6 +1957,76 @@ const COMPONENT_PLAYGROUND_CONFIG = {
                 onClick={() => setProp("steps", [...steps, { label: `Step ${steps.length + 1}` }])}
                 style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: t.primary, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 7, padding: "5px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
               >+ Add step</button>
+            </div>
+          </div>
+        </>
+      );
+    },
+  },
+  CountryPolicyCard: {
+    defaults: {
+      flag: "🇺🇸",
+      title: "Standard notice period in United States",
+      dimmed: false,
+      rows: [
+        { label: "During probation", value: "No notice period" },
+        { label: "After probation",  value: "No notice period" },
+      ],
+    },
+    render: (p) => (
+      <div style={{ maxWidth: 480 }}>
+        <CountryPolicyCard flag={p.flag} title={p.title} dimmed={p.dimmed} rows={p.rows ?? []} />
+      </div>
+    ),
+    customControls: (liveProps, setProp, t) => {
+      const rows = liveProps.rows || [];
+      const inputBase = {
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+        padding: "5px 9px", borderRadius: 7,
+        border: `1px solid ${t.border}`,
+        background: t.inputBg || t.bg, color: t.textMain, outline: "none",
+        flex: 1, minWidth: 0,
+      };
+      return (
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 20px", borderBottom: `1px solid ${t.border}` }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: t.textMain, fontWeight: 500 }}>rows</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.purple }}>{"{ label: string; value: string }[]"}</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {rows.map((row, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 20px", borderBottom: `1px solid ${t.border}` }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: t.textDisabled, flexShrink: 0, width: 14, textAlign: "right" }}>{i + 1}</span>
+                <input
+                  type="text"
+                  value={row.label}
+                  placeholder="Label"
+                  onChange={e => setProp("rows", rows.map((r, j) => j === i ? { ...r, label: e.target.value } : r))}
+                  style={inputBase}
+                />
+                <input
+                  type="text"
+                  value={row.value}
+                  placeholder="Value"
+                  onChange={e => setProp("rows", rows.map((r, j) => j === i ? { ...r, value: e.target.value } : r))}
+                  style={inputBase}
+                />
+                <button
+                  type="button"
+                  onClick={() => rows.length > 1 && setProp("rows", rows.filter((_, j) => j !== i))}
+                  style={{ background: "none", border: "none", cursor: rows.length > 1 ? "pointer" : "default", color: rows.length > 1 ? t.textMuted : t.textDisabled, fontSize: 15, padding: "2px 4px", lineHeight: 1, flexShrink: 0 }}
+                  title="Remove row"
+                >×</button>
+              </div>
+            ))}
+            <div style={{ padding: "10px 20px" }}>
+              <button
+                type="button"
+                onClick={() => setProp("rows", [...rows, { label: "", value: "" }])}
+                style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500, color: t.primary, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 7, padding: "5px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+              >+ Add row</button>
             </div>
           </div>
         </>
@@ -1826,6 +2214,157 @@ export function Demo() {
               { value: "con",  label: "Contractor" },
             ]}
           />
+        </div>
+      ),
+    },
+  ],
+
+  SectionCard: [
+    {
+      id: "basic", title: "Basic",
+      description: "A titled card wrapping related form fields — the standard building block for multi-step forms.",
+      code: `import { SectionCard, TextInput, DropdownSelect } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <SectionCard title="Team information">
+      <DropdownSelect label="Entity" options={[
+        { value: "au",  label: "AU entity — Payroll Connect" },
+        { value: "sg",  label: "SG entity — Deel" },
+      ]} />
+      <DropdownSelect label="Group" options={[
+        { value: "g1", label: "AU — Payroll Connect — group" },
+        { value: "g2", label: "SG — Deel — group" },
+      ]} />
+    </SectionCard>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 520 }}>
+          <SectionCard title="Team information">
+            <DropdownSelect label="Entity" options={[
+              { value: "au", label: "AU entity — Payroll Connect" },
+              { value: "sg", label: "SG entity — Deel" },
+            ]} />
+            <DropdownSelect label="Group" options={[
+              { value: "g1", label: "AU — Payroll Connect — group" },
+              { value: "g2", label: "SG — Deel — group" },
+            ]} />
+          </SectionCard>
+        </div>
+      ),
+    },
+    {
+      id: "info-button", title: "With info button",
+      description: "Pass onInfoClick to render a contextual help button in the header.",
+      code: `import { SectionCard, TextInput } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <SectionCard
+      title="Employee personal details"
+      onInfoClick={() => alert("These details appear on the EOR contract.")}
+    >
+      <TextInput label="First name" required placeholder="Alex" />
+      <TextInput label="Last name"  required placeholder="Johnson" />
+      <TextInput label="Work email" placeholder="alex@company.com" />
+    </SectionCard>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 520 }}>
+          <SectionCard
+            title="Employee personal details"
+            onInfoClick={() => alert("These details appear on the EOR contract.")}
+          >
+            <TextInput label="First name" required placeholder="Alex" />
+            <TextInput label="Last name"  required placeholder="Johnson" />
+            <TextInput label="Work email" placeholder="alex@company.com" />
+          </SectionCard>
+        </div>
+      ),
+    },
+    {
+      id: "action-button", title: "With description & action",
+      description: "description adds muted helper text below the title; action slots any button into the top-right corner.",
+      code: `import { SectionCard, Button, EmptyStateRow } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 520 }}>
+      <SectionCard
+        title="Fixed allowances"
+        description="Allowances written into the EOR contract, granted on a one-time or recurring basis."
+        action={<Button variant="secondary" size="sm" label="Add" onClick={onAdd} />}
+      >
+        <EmptyStateRow label="No fixed allowances yet" />
+      </SectionCard>
+      <SectionCard
+        title="Pay schedule"
+        description="Defines when and how often the employee is paid."
+        action={<Button variant="text" label="Create new schedule ↗" onClick={onOpen} />}
+      >
+        <EmptyStateRow label="No pay schedule assigned" />
+      </SectionCard>
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 520, display: "flex", flexDirection: "column", gap: 16 }}>
+          <SectionCard
+            title="Fixed allowances"
+            description="Allowances written into the EOR contract, granted on a one-time or recurring basis."
+            action={<Button variant="secondary" size="sm" label="Add" onClick={() => alert("Add allowance")} />}
+          >
+            <EmptyStateRow label="No fixed allowances yet" />
+          </SectionCard>
+          <SectionCard
+            title="Pay schedule"
+            description="Defines when and how often the employee is paid."
+            action={<Button variant="text" label="Create new schedule ↗" onClick={() => alert("Open schedule")} />}
+          >
+            <EmptyStateRow label="No pay schedule assigned" />
+          </SectionCard>
+        </div>
+      ),
+    },
+    {
+      id: "icon-badge", title: "With icon & badge",
+      description: "Use icon + iconSize to add a leading illustration, and badges to place status labels inline after the title. Typical use: benefits cards.",
+      code: `import { SectionCard, Icon, StatusBadge, Button, ContextBanner } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <SectionCard
+      title="Pension"
+      icon={<Icon name="award" size={32} />}
+      iconSize={32}
+      badges={<StatusBadge variant="mandatory" />}
+      description="Comprehensive savings and pension plan for working employees to fund their retirement in the future."
+      action={<Button variant="primary" size="sm" label="Add Pension" onClick={onAdd} />}
+    >
+      <ContextBanner
+        variant="warning"
+        body="Pension is a mandatory benefit for United States."
+      />
+    </SectionCard>
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 520 }}>
+          <SectionCard
+            title="Pension"
+            icon={<Icon name="award" size={32} />}
+            iconSize={32}
+            badges={<StatusBadge variant="mandatory" />}
+            description="Comprehensive savings and pension plan for working employees to fund their retirement in the future."
+            action={<Button variant="primary" size="sm" label="Add Pension" onClick={() => alert("Add Pension")} />}
+          >
+            <ContextBanner
+              variant="warning"
+              body="Pension is a mandatory benefit for United States."
+            />
+          </SectionCard>
         </div>
       ),
     },
@@ -2076,6 +2615,85 @@ export function Demo() {
     },
   ],
 
+  Icon: [
+    {
+      id: "benefit-icons", title: "Benefit icons",
+      description: "Seven icons for the benefit card domain — healthcare, pension, life insurance, travel, coworking, equity, and background check.",
+      code: `import { Icon } from "./ComponentLibrary"
+
+export function Demo() {
+  const benefits = ["shield-plus","award","file-text","plane","building","pie-chart","fingerprint"]
+  return (
+    <div style={{ display: "flex", gap: 12 }}>
+      {benefits.map(name => (
+        <div key={name} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 10, border: "1px solid #E4E4E7" }}>
+          <Icon name={name} size={20} />
+        </div>
+      ))}
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display:"flex", gap:12 }}>
+          {["shield-plus","award","file-text","plane","building","pie-chart","fingerprint"].map(name => (
+            <div key={name} style={{ display:"flex", alignItems:"center", justifyContent:"center", width:40, height:40, borderRadius:10, border:"1px solid #E4E4E7" }}>
+              <Icon name={name} size={20} />
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: "color", title: "Color & size",
+      description: "Pass color for an explicit stroke color, or let it inherit via currentColor from a parent.",
+      code: `import { Icon } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+      <Icon name="shield-plus" size={32} color="#EA580C" />
+      <Icon name="fingerprint" size={24} color="#7C3AED" />
+      <Icon name="plane"       size={20} color="#2563EB" />
+      <Icon name="info"        size={16} />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display:"flex", gap:16, alignItems:"center" }}>
+          <Icon name="shield-plus" size={32} color="#EA580C" />
+          <Icon name="fingerprint" size={24} color="#7C3AED" />
+          <Icon name="plane"       size={20} color="#2563EB" />
+          <Icon name="info"        size={16} />
+        </div>
+      ),
+    },
+  ],
+
+  EmptyStateRow: [
+    {
+      id: "usage", title: "In context",
+      description: "Dropped directly into a list container to communicate the absence of items. Each section uses its own label.",
+      code: `import { EmptyStateRow } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 460 }}>
+      <EmptyStateRow label="No bonus added yet" />
+      <EmptyStateRow label="No fixed allowances yet" />
+      <EmptyStateRow label="No variable compensation yet" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 460 }}>
+          <EmptyStateRow label="No bonus added yet" />
+          <EmptyStateRow label="No fixed allowances yet" />
+          <EmptyStateRow label="No variable compensation yet" />
+        </div>
+      ),
+    },
+  ],
+
   AutosaveWidget: [
     {
       id: "saved", title: "Saved state",
@@ -2253,6 +2871,73 @@ export function Demo() {
     },
   ],
 
+  CountryPolicyCard: [
+    {
+      id: "single-row", title: "Single-row policy",
+      description: "One key–value row below the divider — typical for work hours or sick leave.",
+      code: `import { CountryPolicyCard } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <CountryPolicyCard
+      flag="🇺🇸"
+      title="Standard full time work hour per week in United States"
+      rows={[{ label: "Work hours per week", value: "30.00 – 40.00" }]}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 480 }}>
+          <CountryPolicyCard flag="🇺🇸" title="Standard full time work hour per week in United States" rows={[{ label: "Work hours per week", value: "30.00 – 40.00" }]} />
+        </div>
+      ),
+    },
+    {
+      id: "multi-row", title: "Multiple rows",
+      description: "Each additional row is separated by a hairline divider — used for notice periods with sub-rules.",
+      code: `import { CountryPolicyCard } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <CountryPolicyCard
+      flag="🇺🇸"
+      title="Standard notice period in United States"
+      rows={[
+        { label: "During probation", value: "No notice period" },
+        { label: "After probation",  value: "No notice period" },
+      ]}
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 480 }}>
+          <CountryPolicyCard flag="🇺🇸" title="Standard notice period in United States" rows={[{ label: "During probation", value: "No notice period" }, { label: "After probation", value: "No notice period" }]} />
+        </div>
+      ),
+    },
+    {
+      id: "dimmed", title: "Dimmed / not applicable",
+      description: "The dimmed prop mutes the header flag and title to indicate an inactive or not-applicable policy.",
+      code: `import { CountryPolicyCard } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <CountryPolicyCard
+      flag="🇺🇸"
+      title="Standard sick leave in United States"
+      rows={[{ label: "Sick leave days", value: "Not applicable" }]}
+      dimmed
+    />
+  )
+}`,
+      render: () => (
+        <div style={{ maxWidth: 480 }}>
+          <CountryPolicyCard flag="🇺🇸" title="Standard sick leave in United States" rows={[{ label: "Sick leave days", value: "Not applicable" }]} dimmed />
+        </div>
+      ),
+    },
+  ],
+
   ComplianceCheckCard: [
     {
       id: "all-states", title: "All states",
@@ -2368,127 +3053,6 @@ export function Demo() {
     },
   ],
 
-  AddPersonBlock: [
-    {
-      id: "default", title: "Default",
-      description: "Add-person step block: team info, personal details, workplace, org structure, and hiring objective.",
-      code: `import { AddPersonBlock } from "./ComponentLibrary"
-
-export function Demo() {
-  return (
-    <AddPersonBlock
-      onSave={(state) => console.log(state)}
-    />
-  )
-}`,
-      render: () => <AddPersonBlock />,
-    },
-  ],
-
-  JobDescriptionBlock: [
-    {
-      id: "default", title: "Default",
-      description: "Pre-fill the block with defaultTitle, defaultSeniority, and defaultScope.",
-      code: `import { JobDescriptionBlock } from "./ComponentLibrary"
-
-export function Demo() {
-  return (
-    <JobDescriptionBlock
-      defaultTitle="Executive Assistant"
-      defaultSeniority="mid"
-      onSave={(state) => console.log(state)}
-    />
-  )
-}`,
-      render: () => <JobDescriptionBlock defaultTitle="Executive Assistant" defaultSeniority="mid" />,
-    },
-  ],
-
-  CompensationBlock: [
-    {
-      id: "default", title: "Default",
-      description: "Full compensation section with employment type toggle, salary input, and market rate chart.",
-      code: `import { CompensationBlock } from "./ComponentLibrary"
-
-export function Demo() {
-  return (
-    <CompensationBlock
-      defaultSalary={77293}
-      defaultEmploymentType="full"
-      country="United States"
-    />
-  )
-}`,
-      render: () => <CompensationBlock defaultSalary={77293} defaultEmploymentType="full" country="United States" />,
-    },
-    {
-      id: "no-chart", title: "Without market insights",
-      description: "Pass showMarketInsights={false} to hide the salary benchmarking chart.",
-      code: `import { CompensationBlock } from "./ComponentLibrary"
-
-export function Demo() {
-  return (
-    <CompensationBlock
-      defaultSalary={60000}
-      showMarketInsights={false}
-      country="Germany"
-    />
-  )
-}`,
-      render: () => <CompensationBlock defaultSalary={60000} showMarketInsights={false} country="Germany" />,
-    },
-  ],
-
-  BenefitsBlock: [
-    {
-      id: "us", title: "United States",
-      description: "Mandatory Healthcare, Pension, and Life Insurance for US workers shown as warnings until added.",
-      code: `import { BenefitsBlock } from "./ComponentLibrary"
-
-export function Demo() {
-  return <BenefitsBlock country="United States" />
-}`,
-      render: () => <BenefitsBlock country="United States" />,
-    },
-    {
-      id: "germany", title: "Germany",
-      description: "Country-specific mandatory benefit set differs from US defaults.",
-      code: `import { BenefitsBlock } from "./ComponentLibrary"
-
-export function Demo() {
-  return <BenefitsBlock country="Germany" />
-}`,
-      render: () => <BenefitsBlock country="Germany" />,
-    },
-  ],
-
-  EORContractCreationFlow: [
-    {
-      id: "full", title: "Full flow",
-      description: "4-step EOR contract creation — Personal details, Job, Compensation, and Benefits.",
-      code: `import { EORContractCreationFlow } from "./ComponentLibrary"
-
-export function Demo() {
-  return (
-    <EORContractCreationFlow
-      country="United States"
-      showHeader={true}
-      headerTitle="Create new EOR contract"
-      headerSubtitle="Full-time · United States"
-      onComplete={(data) => console.log(data)}
-    />
-  )
-}`,
-      render: () => (
-        <EORContractCreationFlow
-          country="United States"
-          showHeader
-          headerTitle="Create new EOR contract"
-          headerSubtitle="Full-time · United States"
-        />
-      ),
-    },
-  ],
 };
 
 // ─────────────────────────────────────────────────────────────────
