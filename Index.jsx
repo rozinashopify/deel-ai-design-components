@@ -8,8 +8,8 @@ import {
   APPEARANCE_DEFAULTS,
   applyAppearance,
   // ── Atoms
-  TextInput, DateInput, DropdownSelect, RadioOption, ToggleRow, SectionCard, SegmentedControl,
-  EmptyStateRow, Icon,
+  TextInput, DateInput, DropdownSelect, RadioOption, ToggleRow, InfoRow, SectionCard, SegmentedControl,
+  Icon,
   // ── Molecules
   FormFieldGroup, StatusBadge, PrimaryButton, SecondaryButton, TextButton, Button,
   AutosaveWidget, ContextBanner, HiringGuideBanner,
@@ -486,9 +486,9 @@ const WAVES = [
       { icon: "◯",  name: "RadioOption",    desc: "Full-width tappable row with optional sublabel" },
       { icon: "▣",  name: "Buttons",        desc: "Primary / Secondary / Text — 3 sizes, loading, icons" },
       { icon: "◑",  name: "ToggleRow",         desc: "Bordered row with iOS-style toggle for binary settings" },
+      { icon: "▤",  name: "InfoRow",            desc: "Read-only bordered row — label left, bold value + optional flag/avatar right" },
       { icon: "▭",  name: "SectionCard",        desc: "White rounded card with bold title + optional ⓘ button for form sections" },
       { icon: "⊟",  name: "SegmentedControl",   desc: "Adjacent pill-buttons for Annual/Hourly, Annual/Monthly and other small exclusive selections" },
-      { icon: "○",  name: "EmptyStateRow",       desc: "Muted bordered row with ⓘ icon for empty list containers" },
       { icon: "◈",  name: "Icon",                desc: "SVG icon atom — 19 named icons, configurable size and color" },
     ],
   },
@@ -647,19 +647,6 @@ function MiniStatusBadge({ t }) {
   );
 }
 
-function MiniEmptyStateRow({ t }) {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"11px 14px", background:t.surfaceHover, border:`1px solid ${t.border}`, borderRadius:10, width:"100%" }}>
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={t.textDisabled} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink:0 }}>
-        <circle cx="7" cy="7" r="5.5" />
-        <line x1="7" y1="6.5" x2="7" y2="10" />
-        <circle cx="7" cy="4.5" r=".8" fill={t.textDisabled} stroke="none" />
-      </svg>
-      <span style={{ fontFamily:"Inter,sans-serif", fontSize:12.5, color:t.textMuted }}>No fixed allowances yet</span>
-    </div>
-  );
-}
-
 function MiniIcon({ t }) {
   const icons = ["shield-plus","award","file-text","plane","building","pie-chart","fingerprint","info","warning","plus","x","external-link","calendar"];
   return (
@@ -721,6 +708,21 @@ function MiniToggleRow({ t }) {
       </div>
       <div style={{ width:32, height:18, borderRadius:999, background: on ? t.primary : t.border, position:"relative", flexShrink:0, transition:"background .18s" }}>
         <div style={{ position:"absolute", top:2, left: on ? 14 : 2, width:14, height:14, borderRadius:"50%", background:"#fff", boxShadow:"0 1px 3px rgba(0,0,0,0.25)", transition:"left .18s" }} />
+      </div>
+    </div>
+  );
+}
+
+function MiniInfoRow({ t }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:6, width:"100%" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"10px 12px", border:`1px solid ${t.border}`, borderRadius:8, background:t.surfaceHover }}>
+        <span style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, color:t.textMuted }}>Employee&rsquo;s citizenship</span>
+        <span style={{ display:"flex", alignItems:"center", gap:5, fontFamily:"Inter,sans-serif", fontSize:12, fontWeight:600, color:t.textMain }}>United States <span style={{ fontSize:15, lineHeight:1 }}>🇺🇸</span></span>
+      </div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"10px 12px", border:`1px solid ${t.border}`, borderRadius:8, background:t.surfaceHover }}>
+        <span style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, color:t.textMuted }}>Contract country</span>
+        <span style={{ display:"flex", alignItems:"center", gap:5, fontFamily:"Inter,sans-serif", fontSize:12, fontWeight:600, color:t.textMain }}>Canada <span style={{ fontSize:15, lineHeight:1 }}>🇨🇦</span></span>
       </div>
     </div>
   );
@@ -1167,11 +1169,11 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"DateInput",               wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniDateInput t={t} /> },
   { name:"DropdownSelect",         wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniDropdown t={t} /> },
   { name:"StatusBadge",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniStatusBadge t={t} /> },
-  { name:"EmptyStateRow",          wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniEmptyStateRow t={t} /> },
   { name:"Icon",                   wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniIcon t={t} /> },
   { name:"RadioOption",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniRadioOption t={t} /> },
   { name:"Buttons",                wave:"Wave 1", waveKey:"atoms",  composed:"Primary · Secondary · Text",                      preview:<MiniButtons t={t} /> },
   { name:"ToggleRow",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniToggleRow t={t} /> },
+  { name:"InfoRow",                wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniInfoRow t={t} /> },
   { name:"SectionCard",            wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniSectionCard t={t} /> },
   { name:"SegmentedControl",       wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniSegmentedControl t={t} /> },
   { name:"FormFieldGroup",         wave:"Wave 2", waveKey:"mol",    composed:"TextInput × n + DropdownSelect × n",              preview:<MiniFormFieldGroup t={t} /> },
@@ -1366,6 +1368,15 @@ const COMPONENT_DEMOS = {
       />
     </div>
   ),
+  InfoRow: (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 480 }}>
+      <InfoRow label="Employee's citizenship"  value="United States" avatar={<span style={{ fontSize:20, lineHeight:1 }}>🇺🇸</span>} />
+      <InfoRow label="Contract country"        value="Canada"        avatar={<span style={{ fontSize:20, lineHeight:1 }}>🇨🇦</span>} />
+      <InfoRow label="Employment start date"   value="1 Sep 2025" sublabel="Subject to contract approval" />
+      <InfoRow label="No bonus added yet" />
+      <InfoRow label="No fixed allowances yet" />
+    </div>
+  ),
   SectionCard: (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 520 }}>
       <SectionCard title="Team information">
@@ -1485,13 +1496,6 @@ const COMPONENT_DEMOS = {
       <StatusBadge variant="mandatory" label="Required by law" />
       <StatusBadge variant="completed" label="Job details" />
       <StatusBadge variant="new" dot={false} label="Feature preview" />
-    </div>
-  ),
-  EmptyStateRow: (
-    <div style={{ maxWidth: 500, display: "flex", flexDirection: "column", gap: 10 }}>
-      <EmptyStateRow label="No bonus added yet" />
-      <EmptyStateRow label="No fixed allowances yet" />
-      <EmptyStateRow label="No variable compensation yet" />
     </div>
   ),
   Icon: (() => {
@@ -1807,6 +1811,23 @@ const COMPONENT_PLAYGROUND_CONFIG = {
     },
     render: (p) => <div style={{ maxWidth: 520 }}><ToggleRow {...p} /></div>,
   },
+  InfoRow: {
+    defaults: {
+      label:    "Employee's citizenship",
+      value:    "United States",
+      sublabel: "",
+    },
+    render: (p) => (
+      <div style={{ maxWidth: 520 }}>
+        <InfoRow
+          label={p.label}
+          value={p.value}
+          sublabel={p.sublabel || undefined}
+          avatar={<span style={{ fontSize: 20, lineHeight: 1 }}>🇺🇸</span>}
+        />
+      </div>
+    ),
+  },
   SectionCard: {
     defaults: {
       title:          "Fixed allowances",
@@ -2007,10 +2028,6 @@ const COMPONENT_PLAYGROUND_CONFIG = {
   StatusBadge: {
     defaults: { variant: "completed", label: "Step complete", dot: true },
     render: (p) => <StatusBadge {...p} />,
-  },
-  EmptyStateRow: {
-    defaults: { label: "No fixed allowances yet" },
-    render: (p) => <div style={{ maxWidth: 460 }}><EmptyStateRow {...p} /></div>,
   },
   Icon: {
     defaults: { name: "plane", size: 24 },
@@ -2544,7 +2561,7 @@ export function Demo() {
     {
       id: "action-button", title: "With description & action",
       description: "description adds muted helper text below the title; action slots any button into the top-right corner.",
-      code: `import { SectionCard, Button, EmptyStateRow } from "./ComponentLibrary"
+      code: `import { SectionCard, Button, InfoRow } from "./ComponentLibrary"
 
 export function Demo() {
   return (
@@ -2554,14 +2571,14 @@ export function Demo() {
         description="Allowances written into the EOR contract, granted on a one-time or recurring basis."
         action={<Button variant="secondary" size="sm" label="Add" onClick={onAdd} />}
       >
-        <EmptyStateRow label="No fixed allowances yet" />
+        <InfoRow label="No fixed allowances yet" />
       </SectionCard>
       <SectionCard
         title="Pay schedule"
         description="Defines when and how often the employee is paid."
         action={<Button variant="text" label="Create new schedule ↗" onClick={onOpen} />}
       >
-        <EmptyStateRow label="No pay schedule assigned" />
+        <InfoRow label="No pay schedule assigned" />
       </SectionCard>
     </div>
   )
@@ -2573,14 +2590,14 @@ export function Demo() {
             description="Allowances written into the EOR contract, granted on a one-time or recurring basis."
             action={<Button variant="secondary" size="sm" label="Add" onClick={() => alert("Add allowance")} />}
           >
-            <EmptyStateRow label="No fixed allowances yet" />
+            <InfoRow label="No fixed allowances yet" />
           </SectionCard>
           <SectionCard
             title="Pay schedule"
             description="Defines when and how often the employee is paid."
             action={<Button variant="text" label="Create new schedule ↗" onClick={() => alert("Open schedule")} />}
           >
-            <EmptyStateRow label="No pay schedule assigned" />
+            <InfoRow label="No pay schedule assigned" />
           </SectionCard>
         </div>
       ),
@@ -2926,26 +2943,48 @@ export function Demo() {
     },
   ],
 
-  EmptyStateRow: [
+  InfoRow: [
     {
-      id: "usage", title: "In context",
-      description: "Dropped directly into a list container to communicate the absence of items. Each section uses its own label.",
-      code: `import { EmptyStateRow } from "./ComponentLibrary"
+      id: "display", title: "Display mode",
+      description: "With a value prop: label on the left, bold value + optional avatar/flag on the right. Use for read-only summary fields like citizenship or contract country.",
+      code: `import { InfoRow } from "./ComponentLibrary"
 
 export function Demo() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 460 }}>
-      <EmptyStateRow label="No bonus added yet" />
-      <EmptyStateRow label="No fixed allowances yet" />
-      <EmptyStateRow label="No variable compensation yet" />
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 480 }}>
+      <InfoRow label="Employee's citizenship" value="United States" avatar={<span>🇺🇸</span>} />
+      <InfoRow label="Contract country"       value="Canada"        avatar={<span>🇨🇦</span>} />
+      <InfoRow label="Employment start date"  value="1 Sep 2025" sublabel="Subject to contract approval" />
     </div>
   )
 }`,
       render: () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 460 }}>
-          <EmptyStateRow label="No bonus added yet" />
-          <EmptyStateRow label="No fixed allowances yet" />
-          <EmptyStateRow label="No variable compensation yet" />
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 480 }}>
+          <InfoRow label="Employee's citizenship" value="United States" avatar={<span style={{ fontSize:20, lineHeight:1 }}>🇺🇸</span>} />
+          <InfoRow label="Contract country"       value="Canada"        avatar={<span style={{ fontSize:20, lineHeight:1 }}>🇨🇦</span>} />
+          <InfoRow label="Employment start date"  value="1 Sep 2025" sublabel="Subject to contract approval" />
+        </div>
+      ),
+    },
+    {
+      id: "empty-state", title: "Empty state mode",
+      description: "Without a value prop: ⓘ icon + muted label, left-aligned. Drop inside any list container to signal the absence of items.",
+      code: `import { InfoRow } from "./ComponentLibrary"
+
+export function Demo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 460 }}>
+      <InfoRow label="No bonus added yet" />
+      <InfoRow label="No fixed allowances yet" />
+      <InfoRow label="No variable compensation yet" />
+    </div>
+  )
+}`,
+      render: () => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 460 }}>
+          <InfoRow label="No bonus added yet" />
+          <InfoRow label="No fixed allowances yet" />
+          <InfoRow label="No variable compensation yet" />
         </div>
       ),
     },

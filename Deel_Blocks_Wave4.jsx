@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ─────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -109,6 +109,28 @@ const makeCSS = (t, isDark) => `
   .selw select:focus { border-color:${t.borderFocus}; box-shadow:0 0 0 3px ${t.ring}; }
   .selw select:disabled { background:${t.surfaceHover}; color:${t.textDisabled}; cursor:not-allowed; }
   .chev { position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; color:${t.textMuted}; }
+
+  /* ── SelectList ── */
+  .sl { padding:6px; min-width:280px; scrollbar-width:none; -ms-overflow-style:none; }
+  .sl::-webkit-scrollbar { display:none; }
+  .sl-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:5px; cursor:pointer; border:none; background:transparent; width:100%; text-align:left; font-family:'Inter',sans-serif; transition:background .1s; }
+  .sl-item:hover:not(.sl-gh) { background:${t.surfaceHover}; }
+  .sl-item.sl-sel { background:${t.surfaceHover}; }
+  .sl-item.sl-gh { cursor:default; padding:6px 12px 4px; margin-top:4px; }
+  .sl-item.sl-gh:first-child { margin-top:0; }
+  .sl-info { flex:1; min-width:0; }
+  .sl-lbl { font-size:13.5px; font-weight:500; color:${t.textMain}; line-height:1.35; }
+  .sl-sub { font-size:12px; color:${t.textMuted}; margin-top:2px; line-height:1.3; }
+  .sl-check { margin-left:auto; flex-shrink:0; width:22px; height:22px; border-radius:50%; background:${t.textMain}; color:${t.surface}; display:flex; align-items:center; justify-content:center; }
+  .sl-check-sp { margin-left:auto; flex-shrink:0; width:22px; }
+
+  /* ── RichDropdownSelect ── */
+  .rds { position:relative; }
+  .rds-trigger { height:36px; width:100%; padding:0 34px 0 11px; font-family:'Inter',sans-serif; font-size:13.5px; background:${t.inputBg}; border:1px solid ${t.border}; border-radius:6px; outline:none; appearance:none; cursor:pointer; color:${t.textMain}; transition:border-color .12s,box-shadow .12s; display:flex; align-items:center; text-align:left; white-space:nowrap; overflow:hidden; }
+  .rds-trigger.ph { color:${t.textDisabled}; }
+  .rds-trigger:focus, .rds-trigger.open { border-color:${t.borderFocus}; box-shadow:0 0 0 3px ${t.ring}; }
+  .rds-trigger:disabled { background:${t.surfaceHover}; color:${t.textDisabled}; cursor:not-allowed; }
+  .rds-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:999; width:max-content; min-width:100%; background:${t.surface}; border:1px solid ${t.border}; border-radius:8px; box-shadow:${t.shadowMd}; max-height:300px; overflow-y:auto; }
   .badge { display:inline-flex; align-items:center; gap:5px; padding:2.5px 8px; border-radius:5px; font-size:11.5px; font-weight:500; }
   .bdot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
   .badge.mandatory { background:${t.mandatoryBg}; color:${t.mandatory}; }
@@ -289,6 +311,11 @@ const makeCSS = (t, isDark) => `
   .trow-track.on .trow-thumb { left:18px; }
   .trow-track.off .trow-thumb { left:2px; }
 
+  /* ── InfoRow ── */
+  .irow { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid ${t.border}; border-radius:10px; background:${t.surfaceHover}; }
+  .irow-label { font-size:13px; color:${t.textMuted}; }
+  .irow-value { display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; color:${t.textMain}; }
+
   /* ═══════════════════════════════════════════
      MOLECULE: ContextBanner
   ═══════════════════════════════════════════ */
@@ -319,6 +346,8 @@ const makeCSS = (t, isDark) => `
      BLOCK 4 — AddPersonBlock
   ═══════════════════════════════════════════ */
   .apb-field-hint { font-size:11.5px; color:${t.textMuted}; margin-top:4px; line-height:1.45; }
+  .wac-radio-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .wac-question { font-size:13.5px; font-weight:600; color:${t.textMain}; }
 
   /* footer */
   .foot { display:flex; justify-content:space-between; align-items:center; padding-top:20px; border-top:1px solid ${t.border}; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:${t.textMuted}; }
@@ -366,6 +395,80 @@ function Select({ label, placeholder, options = [], value, disabled, optional, r
           {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <span className="chev"><Chevron /></span>
+      </div>
+      {helperText && <span className="fhint">{helperText}</span>}
+    </div>
+  );
+}
+function SelectList({ items = [], value, onSelect, maxHeight = 300 }) {
+  return (
+    <div className="sl" style={{ maxHeight, overflowY: "auto" }}>
+      {items.map((item, i) => {
+        if (item.isGroupHeader) {
+          return (
+            <div key={item.value ?? `gh-${i}`} className="sl-item sl-gh" role="presentation">
+              <div className="sl-info"><div className="sl-lbl">{item.label}</div></div>
+            </div>
+          );
+        }
+        const isSelected = value === item.value;
+        return (
+          <button key={item.value} type="button"
+            className={`sl-item${isSelected ? " sl-sel" : ""}`}
+            style={item.indent ? { paddingLeft: 12 + item.indent * 16 } : undefined}
+            onClick={() => onSelect?.(item.value)}
+          >
+            <div className="sl-info">
+              <div className="sl-lbl">{item.label}</div>
+              {item.sublabel && <div className="sl-sub">{item.sublabel}</div>}
+            </div>
+            {isSelected
+              ? <div className="sl-check"><Check /></div>
+              : <div className="sl-check-sp" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+function RichDropdownSelect({ label, placeholder = "Select…", options = [], value, optional, required, disabled, helperText, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [v, setV]       = useState(value ?? "");
+  const wrapRef         = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = e => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const selected    = options.find(o => o.value === v && !o.isGroupHeader);
+  const handleSelect = val => { setV(val); onChange?.(val); setOpen(false); };
+
+  return (
+    <div className="fi">
+      {label && (
+        <label className="fl">
+          {label}
+          {required && <span className="req">*</span>}
+          {optional && <span style={{ fontWeight: 400, opacity: .65 }}> (optional)</span>}
+        </label>
+      )}
+      <div className="rds" ref={wrapRef}>
+        <button type="button"
+          className={`rds-trigger${!v ? " ph" : ""}${open ? " open" : ""}`}
+          disabled={disabled}
+          onClick={() => !disabled && setOpen(o => !o)}
+        >
+          {selected ? selected.label : placeholder}
+        </button>
+        <span className={open ? "chev up" : "chev"}><Chevron /></span>
+        {open && (
+          <div className="rds-panel">
+            <SelectList items={options} value={v} onSelect={handleSelect} maxHeight={280} />
+          </div>
+        )}
       </div>
       {helperText && <span className="fhint">{helperText}</span>}
     </div>
@@ -428,6 +531,26 @@ function ToggleRow({ label, description, checked: controlledChecked, onChange })
       <div className={`trow-track ${isOn ? "on" : "off"}`}>
         <div className="trow-thumb" />
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INFO ROW  (atom — readonly counterpart of ToggleRow)
+// ─────────────────────────────────────────────────────────────────
+function InfoRow({ label, value, avatar, sublabel }) {
+  return (
+    <div className="irow">
+      <span className="irow-label">{label}</span>
+      <span className="irow-value">
+        {sublabel ? (
+          <span style={{ textAlign:"right" }}>
+            <span style={{ display:"block" }}>{value}</span>
+            <span style={{ display:"block", fontSize:11.5, fontWeight:400, opacity:.7 }}>{sublabel}</span>
+          </span>
+        ) : value}
+        {avatar}
+      </span>
     </div>
   );
 }
@@ -972,53 +1095,210 @@ export function BenefitsBlock({ country = "United States" }) {
 // BLOCK 4 — AddPersonBlock
 // ─────────────────────────────────────────────────────────────────
 const ENTITY_OPTS = [
-  { value:"au_payroll", label:"AU entity - Payroll Connect" },
-  { value:"us_payroll", label:"US entity - Payroll Connect" },
-  { value:"de_payroll", label:"DE entity - Payroll Connect" },
+  { value:"au",       label:"AU entity - Payroll Connect",               sublabel:"Australia" },
+  { value:"ca",       label:"CA entity",                                  sublabel:"Canada" },
+  { value:"de",       label:"DE entity",                                  sublabel:"Germany" },
+  { value:"es",       label:"ES entity",                                  sublabel:"Spain" },
+  { value:"gb",       label:"GB entity",                                  sublabel:"United Kingdom" },
+  { value:"jp",       label:"JP entity",                                  sublabel:"Japan" },
+  { value:"se",       label:"SE entity - Payroll Connect (Pay by Deel)",  sublabel:"Sweden" },
+  { value:"us",       label:"US entity",                                  sublabel:"United States" },
+  { value:"we_eor",   label:"Wayne Enterprise EOR",    sublabel:"United States" },
+  { value:"we_global",label:"Wayne Enterprise Global", sublabel:"United States" },
+  { value:"we_peo",   label:"Wayne Enterprise PEO",    sublabel:"United States" },
+  { value:"we_uk",    label:"Wayne Enterprise UK",     sublabel:"United Kingdom" },
 ];
 const GROUP_OPTS = [
   { value:"au_group", label:"AU - Payroll Connect - group" },
-  { value:"us_group", label:"US - Payroll Connect - group" },
-  { value:"de_group", label:"DE - Payroll Connect - group" },
+  { value:"ca_group", label:"CA - group" },
+  { value:"de_group", label:"DE - group" },
+  { value:"es_group", label:"ES - group" },
+  { value:"gb_group", label:"GB - group" },
+  { value:"jp_group", label:"JP - group" },
+  { value:"se_group", label:"SE - Payroll Connect (Pay by Deel) - group" },
+  { value:"us_group", label:"US - group" },
+  { value:"we_eor",   label:"Wayne Enterprise EOR" },
+  { value:"we_global",label:"Wayne Enterprise Global" },
+  { value:"we_peo",   label:"Wayne Enterprise Team PEO" },
 ];
+const flagAvatar = f => <span style={{ fontSize:20, lineHeight:1 }}>{f}</span>;
 const COUNTRY_OPTS = [
-  { value:"us", label:"🇺🇸  United States" },
-  { value:"de", label:"🇩🇪  Germany" },
-  { value:"gb", label:"🇬🇧  United Kingdom" },
-  { value:"au", label:"🇦🇺  Australia" },
-  { value:"ca", label:"🇨🇦  Canada" },
-  { value:"fr", label:"🇫🇷  France" },
+  { value:"ar", label:"Argentina",     avatar:flagAvatar("🇦🇷") },
+  { value:"bd", label:"Bangladesh",    avatar:flagAvatar("🇧🇩") },
+  { value:"br", label:"Brazil",        avatar:flagAvatar("🇧🇷") },
+  { value:"cn", label:"China",         avatar:flagAvatar("🇨🇳") },
+  { value:"co", label:"Colombia",      avatar:flagAvatar("🇨🇴") },
+  { value:"cd", label:"DR Congo",      avatar:flagAvatar("🇨🇩") },
+  { value:"eg", label:"Egypt",         avatar:flagAvatar("🇪🇬") },
+  { value:"et", label:"Ethiopia",      avatar:flagAvatar("🇪🇹") },
+  { value:"fr", label:"France",        avatar:flagAvatar("🇫🇷") },
+  { value:"de", label:"Germany",       avatar:flagAvatar("🇩🇪") },
+  { value:"in", label:"India",         avatar:flagAvatar("🇮🇳") },
+  { value:"id", label:"Indonesia",     avatar:flagAvatar("🇮🇩") },
+  { value:"ir", label:"Iran",          avatar:flagAvatar("🇮🇷") },
+  { value:"jp", label:"Japan",         avatar:flagAvatar("🇯🇵") },
+  { value:"ke", label:"Kenya",         avatar:flagAvatar("🇰🇪") },
+  { value:"mx", label:"Mexico",        avatar:flagAvatar("🇲🇽") },
+  { value:"mm", label:"Myanmar",       avatar:flagAvatar("🇲🇲") },
+  { value:"ng", label:"Nigeria",       avatar:flagAvatar("🇳🇬") },
+  { value:"pk", label:"Pakistan",      avatar:flagAvatar("🇵🇰") },
+  { value:"ph", label:"Philippines",   avatar:flagAvatar("🇵🇭") },
+  { value:"ru", label:"Russia",        avatar:flagAvatar("🇷🇺") },
+  { value:"za", label:"South Africa",  avatar:flagAvatar("🇿🇦") },
+  { value:"es", label:"Spain",         avatar:flagAvatar("🇪🇸") },
+  { value:"tz", label:"Tanzania",      avatar:flagAvatar("🇹🇿") },
+  { value:"th", label:"Thailand",      avatar:flagAvatar("🇹🇭") },
+  { value:"tr", label:"Türkiye",       avatar:flagAvatar("🇹🇷") },
+  { value:"ua", label:"Ukraine",       avatar:flagAvatar("🇺🇦") },
+  { value:"gb", label:"United Kingdom",avatar:flagAvatar("🇬🇧") },
+  { value:"us", label:"United States", avatar:flagAvatar("🇺🇸") },
+  { value:"vn", label:"Vietnam",       avatar:flagAvatar("🇻🇳") },
 ];
 const US_STATE_OPTS = [
-  { value:"al", label:"Alabama" }, { value:"ak", label:"Alaska" },
-  { value:"az", label:"Arizona" }, { value:"ca", label:"California" },
-  { value:"co", label:"Colorado" }, { value:"fl", label:"Florida" },
-  { value:"il", label:"Illinois" }, { value:"mo", label:"Missouri" },
-  { value:"ny", label:"New York" }, { value:"tx", label:"Texas" },
+  { value:"al", label:"Alabama" },        { value:"ak", label:"Alaska" },
+  { value:"az", label:"Arizona" },        { value:"ar", label:"Arkansas" },
+  { value:"ca", label:"California" },     { value:"co", label:"Colorado" },
+  { value:"ct", label:"Connecticut" },    { value:"de", label:"Delaware" },
+  { value:"fl", label:"Florida" },        { value:"ga", label:"Georgia" },
+  { value:"hi", label:"Hawaii" },         { value:"id", label:"Idaho" },
+  { value:"il", label:"Illinois" },       { value:"in", label:"Indiana" },
+  { value:"ia", label:"Iowa" },           { value:"ks", label:"Kansas" },
+  { value:"ky", label:"Kentucky" },       { value:"la", label:"Louisiana" },
+  { value:"me", label:"Maine" },          { value:"md", label:"Maryland" },
+  { value:"ma", label:"Massachusetts" },  { value:"mi", label:"Michigan" },
+  { value:"mn", label:"Minnesota" },      { value:"ms", label:"Mississippi" },
+  { value:"mo", label:"Missouri" },       { value:"mt", label:"Montana" },
+  { value:"ne", label:"Nebraska" },       { value:"nv", label:"Nevada" },
+  { value:"nh", label:"New Hampshire" },  { value:"nj", label:"New Jersey" },
+  { value:"nm", label:"New Mexico" },     { value:"ny", label:"New York" },
+  { value:"nc", label:"North Carolina" }, { value:"nd", label:"North Dakota" },
+  { value:"oh", label:"Ohio" },           { value:"ok", label:"Oklahoma" },
+  { value:"or", label:"Oregon" },         { value:"pa", label:"Pennsylvania" },
+  { value:"ri", label:"Rhode Island" },   { value:"sc", label:"South Carolina" },
+  { value:"sd", label:"South Dakota" },   { value:"tn", label:"Tennessee" },
+  { value:"tx", label:"Texas" },          { value:"ut", label:"Utah" },
+  { value:"vt", label:"Vermont" },        { value:"va", label:"Virginia" },
+  { value:"wa", label:"Washington" },     { value:"wv", label:"West Virginia" },
+  { value:"wi", label:"Wisconsin" },      { value:"wy", label:"Wyoming" },
 ];
 const JOB_POS_OPTS = [
-  { value:"pm",  label:"Product Manager" },
-  { value:"eng", label:"Software Engineer" },
-  { value:"ea",  label:"Executive Assistant" },
-  { value:"des", label:"UX Designer" },
+  { value:"cie_30", label:"Cloud Infrastructure Engineer", sublabel:"CIE-30" },
+  { value:"cie_32", label:"Cloud Infrastructure Engineer", sublabel:"CIE-32" },
+  { value:"cm_28",  label:"Content Marketing",             sublabel:"CM-28" },
+  { value:"cm_30",  label:"Content Marketing",             sublabel:"CM-30" },
+  { value:"d_30",   label:"Designer",                      sublabel:"D-30" },
+  { value:"d_32",   label:"Designer",                      sublabel:"D-32" },
+  { value:"dms_30", label:"Digital Marketing Strategist",  sublabel:"DMS-30" },
+  { value:"dms_32", label:"Digital Marketing Strategist",  sublabel:"DMS-32" },
+  { value:"gl_30",  label:"Group Lead",                    sublabel:"GL-30" },
+  { value:"gl_32",  label:"Group Lead",                    sublabel:"GL-32" },
+  { value:"ml_22",  label:"Marketing Lead",                sublabel:"ML-22" },
+  { value:"ml_24",  label:"Marketing Lead",                sublabel:"ML-24" },
+  { value:"ms_26",  label:"Marketing Strategy",            sublabel:"MS-26" },
+  { value:"ms_28",  label:"Marketing Strategy",            sublabel:"MS-28" },
+  { value:"pm_62",  label:"Product Management",            sublabel:"PM-62" },
+  { value:"pm_64",  label:"Product Management",            sublabel:"PM-64" },
+  { value:"pm_58",  label:"Product Manager",               sublabel:"PM-58" },
+  { value:"pm_60",  label:"Product Manager",               sublabel:"PM-60" },
+  { value:"qt_30",  label:"QA Tester",                     sublabel:"QT-30" },
+  { value:"qt_32",  label:"QA Tester",                     sublabel:"QT-32" },
+  { value:"ss_26",  label:"SEO Specialist",                sublabel:"SS-26" },
+  { value:"ss_28",  label:"SEO Specialist",                sublabel:"SS-28" },
+  { value:"se_30",  label:"Software Engineer",             sublabel:"SE-30" },
+  { value:"se_32",  label:"Software Engineer",             sublabel:"SE-32" },
+  { value:"sca_30", label:"Supply Chain Analyst",          sublabel:"SCA-30" },
+  { value:"sca_32", label:"Supply Chain Analyst",          sublabel:"SCA-32" },
+  { value:"sc_30",  label:"Sustainability Consultant",     sublabel:"SC-30" },
+  { value:"sc_32",  label:"Sustainability Consultant",     sublabel:"SC-32" },
+  { value:"tl_30",  label:"Team Lead",                     sublabel:"TL-30" },
+  { value:"tl_32",  label:"Team Lead",                     sublabel:"TL-32" },
+  { value:"uer_30", label:"User Experience Researcher",    sublabel:"UER-30" },
+  { value:"uer_32", label:"User Experience Researcher",    sublabel:"UER-32" },
 ];
+const AV_COLORS = ["#0D9488","#7C3AED","#0284C7","#DB2777","#EA580C","#65A30D","#CA8A04","#DC2626"];
+function AvatarDot({ name }) {
+  const bg = AV_COLORS[name.charCodeAt(0) % AV_COLORS.length];
+  const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  return <div style={{ width:"100%", height:"100%", background:bg, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:12, fontWeight:600 }}>{initials}</div>;
+}
+const av = name => <AvatarDot name={name} />;
 const PEOPLE_OPTS = [
-  { value:"alex",  label:"Alex Johnson" },
-  { value:"sam",   label:"Sam Lee" },
-  { value:"priya", label:"Priya Patel" },
-  { value:"marco", label:"Marco Rossi" },
+  { value:"adriana",  label:"Adriana Costa",        sublabel:"Human Applications Representative", avatar:av("Adriana Costa") },
+  { value:"andre",    label:"André Fabron",          sublabel:"Team Lead",                         avatar:av("André Fabron") },
+  { value:"breanna",  label:"Breanna Schmeler",      sublabel:"Global Data Manager",               avatar:av("Breanna Schmeler") },
+  { value:"brenna",   label:"Brenna Fadel",          sublabel:"Sustainability Consultant",         avatar:av("Brenna Fadel") },
+  { value:"brigg",    label:"Brigg Kirkwood",        sublabel:"Software Engineer",                 avatar:av("Brigg Kirkwood") },
+  { value:"brit",     label:"Brit Tackes",           sublabel:"Software Engineer",                 avatar:av("Brit Tackes") },
+  { value:"brittni",  label:"Brittni Van Merwe",     sublabel:"Team Lead",                         avatar:av("Brittni Van Merwe") },
+  { value:"brock",    label:"Brock Hilll",           sublabel:"Senior Accountability Designer",    avatar:av("Brock Hilll") },
+  { value:"caleb",    label:"Caleb Funk",            sublabel:"CFO",                               avatar:av("Caleb Funk") },
+  { value:"calista",  label:"Calista Schowalter",    sublabel:"Digital Marketing Strategist",      avatar:av("Calista Schowalter") },
+  { value:"caressa",  label:"Caressa Standall",      sublabel:"Product Manager",                   avatar:av("Caressa Standall") },
+  { value:"carl",     label:"Carl Williams",         sublabel:"Software Engineer",                 avatar:av("Carl Williams") },
+  { value:"carlos",   label:"Carlos Barbosa",        sublabel:"Digital Marketing Strategist",      avatar:av("Carlos Barbosa") },
+  { value:"carmela",  label:"Carmela Grimley",       sublabel:"QA Tester",                         avatar:av("Carmela Grimley") },
+  { value:"carole",   label:"Carole Beer",           sublabel:"CTO",                               avatar:av("Carole Beer") },
+  { value:"caroline", label:"Caroline Grammer",      sublabel:"Software Engineer",                 avatar:av("Caroline Grammer") },
+  { value:"carolyn",  label:"Carolyn Keeling",       sublabel:"National Optimization Executive",   avatar:av("Carolyn Keeling") },
+  { value:"cathrine", label:"Cathrine Grady",        sublabel:"User Experience Researcher",        avatar:av("Cathrine Grady") },
 ];
 const DEPT_OPTS = [
-  { value:"eng",     label:"Engineering" },
-  { value:"design",  label:"Design" },
-  { value:"product", label:"Product" },
-  { value:"hr",      label:"Human Resources" },
+  // Flat departments
+  { value:"board",           label:"Board" },
+  { value:"cust_success",    label:"Customer Success" },
+  { value:"cust_support",    label:"Customer Support" },
+  { value:"engineering",     label:"Engineering" },
+  { value:"hr",              label:"HR" },
+  { value:"payroll",         label:"Payroll" },
+  { value:"prod_design",     label:"Product Design" },
+  { value:"sales",           label:"Sales" },
+  // Administration
+  { value:"admin",           label:"Administration" },
+  { value:"admin_fin",       label:"Finance",              indent:1 },
+  { value:"admin_hr",        label:"HR",                   indent:1 },
+  { value:"admin_hr_ppl",    label:"People",               indent:2 },
+  { value:"admin_hr_cult",   label:"Culture",              indent:3 },
+  { value:"admin_hr_recr",   label:"Recruitment",          indent:3 },
+  { value:"admin_legal",     label:"Legal",                indent:1 },
+  { value:"admin_legal_gc",  label:"Gen Counsel",          indent:2 },
+  { value:"admin_legal_int", label:"Internal",             indent:2 },
+  { value:"admin_legal_pp",  label:"Public Policy",        indent:2 },
+  // Marketing
+  { value:"marketing",       label:"Marketing" },
+  { value:"mktg_strat",      label:"Marketing Strategies", indent:1 },
+  { value:"mktg_b2b",        label:"B2B",                  indent:2 },
+  { value:"mktg_b2c",        label:"B2C",                  indent:2 },
+  { value:"mktg_pr",         label:"Public Relations",     indent:1 },
+  // Operations
+  { value:"operations",      label:"Operations" },
+  { value:"ops_branding",    label:"Branding",             indent:1 },
+  { value:"ops_partner",     label:"Partnerships",         indent:1 },
+  { value:"ops_reporting",   label:"Reporting",            indent:1 },
+  { value:"ops_sales",       label:"Sales",                indent:1 },
+  // Technology
+  { value:"technology",      label:"Technology" },
+  { value:"tech_rd",         label:"R&D",                  indent:1 },
+  { value:"tech_devops",     label:"Devops",               indent:1 },
+  { value:"tech_eng",        label:"Engineering",          indent:1 },
+  { value:"tech_qa",         label:"Q&A",                  indent:1 },
+  { value:"tech_support",    label:"Support",              indent:1 },
 ];
 const TEAM_OPTS = [
-  { value:"platform", label:"Platform" },
-  { value:"growth",   label:"Growth" },
-  { value:"infra",    label:"Infrastructure" },
-  { value:"cx",       label:"Customer Experience" },
+  { value:"engineers",        label:"Engineers",   indent:0 },
+  { value:"engineers_devops", label:"Devops",      indent:1 },
+  { value:"engineers_web",    label:"Web",         indent:1 },
+  { value:"engineers_be",     label:"Back end",    indent:2 },
+  { value:"engineers_fe",     label:"Front end",   indent:2 },
+  { value:"marketing",        label:"Marketing",   indent:0 },
+  { value:"product",          label:"Product",     indent:0 },
+  { value:"product_design",   label:"Design",      indent:1 },
+  { value:"product_mgmt",     label:"Management",  indent:1 },
+  { value:"product_ops",      label:"Operations",  indent:1 },
+  { value:"sales",            label:"Sales",       indent:0 },
+  { value:"support",          label:"Support",     indent:0 },
+  { value:"support_n1",       label:"N1",          indent:1 },
+  { value:"support_n2",       label:"N2",          indent:1 },
+  { value:"support_n3",       label:"N3",          indent:1 },
 ];
 const OBJECTIVE_OPTS = [
   { value:"temp_eor", label:"Temporary EOR while we set up an entity" },
@@ -1029,17 +1309,23 @@ const OBJECTIVE_OPTS = [
 ];
 
 export function AddPersonBlock({
-  defaultEntity  = "au_payroll",
+  defaultEntity  = "au",
   defaultGroup   = "au_group",
   defaultCountry = "us",
   defaultState   = "",
   workerIdValue  = "260",
   onSave,
 }) {
-  const [skipDetails,       setSkipDetails]       = useState(false);
-  const [employmentCountry, setEmploymentCountry] = useState(defaultCountry);
-  const [hiringObjective,   setHiringObjective]   = useState("temp_eor");
-  const showState = employmentCountry === "us";
+  const [skipDetails,        setSkipDetails]        = useState(false);
+  const [citizenshipCountry, setCitizenshipCountry] = useState(defaultCountry);
+  const [employmentCountry,  setEmploymentCountry]  = useState(defaultCountry);
+  const [firstName,          setFirstName]          = useState("");
+  const [workAuthAnswer,     setWorkAuthAnswer]      = useState(null);
+  const [hiringObjective,    setHiringObjective]     = useState("temp_eor");
+  const showState     = employmentCountry === "us";
+  const showWorkAuth  = !skipDetails && citizenshipCountry && employmentCountry && citizenshipCountry !== employmentCountry;
+  const citizenshipOpt = COUNTRY_OPTS.find(o => o.value === citizenshipCountry);
+  const employmentOpt  = COUNTRY_OPTS.find(o => o.value === employmentCountry);
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
@@ -1051,8 +1337,8 @@ export function AddPersonBlock({
 
       {/* ── 1. Team information ── */}
       <SectionCard title="Team information" showInfoButton>
-        <Select label="Entity" required options={ENTITY_OPTS} value={defaultEntity} />
-        <Select label="Group" required options={GROUP_OPTS} value={defaultGroup} />
+        <RichDropdownSelect label="Entity" required options={ENTITY_OPTS} value={defaultEntity} />
+        <RichDropdownSelect label="Group" required options={GROUP_OPTS} value={defaultGroup} />
       </SectionCard>
 
       {/* ── 2. Employee personal details ── */}
@@ -1070,10 +1356,14 @@ export function AddPersonBlock({
               <input placeholder="devon.parisian@letsdeel.co" />
               <span className="fhint">We will use this email address for inviting your worker to complete their onboarding.</span>
             </div>
-            <Field label="Legal first name" placeholder="Devon" required />
+            <div className="fi">
+              <label className="fl">Legal first name<span className="req">*</span></label>
+              <input placeholder="Devon" value={firstName} onChange={e => setFirstName(e.target.value)} />
+            </div>
             <Field label="Legal last name" placeholder="Parisian" required />
-            <Select label="Employee's citizenship" required options={COUNTRY_OPTS} value={defaultCountry} />
-            <Select label="Employment country" required options={COUNTRY_OPTS} value={employmentCountry}
+            <RichDropdownSelect label="Employee's citizenship" required searchable options={COUNTRY_OPTS} value={citizenshipCountry}
+              onChange={setCitizenshipCountry} />
+            <RichDropdownSelect label="Employment country" required searchable options={COUNTRY_OPTS} value={employmentCountry}
               onChange={setEmploymentCountry} />
             <ContextBanner
               variant="insight"
@@ -1081,25 +1371,50 @@ export function AddPersonBlock({
               ctaLabel="Learn more"
             />
             {showState && (
-              <Select label="Select state" required placeholder="Select state…"
+              <RichDropdownSelect label="Select state" required searchable placeholder="Select state…"
                 options={US_STATE_OPTS} value={defaultState} />
             )}
           </>
         )}
       </SectionCard>
 
+      {/* ── Work authorization check (shown when citizenship ≠ employment country) ── */}
+      {showWorkAuth && (
+        <SectionCard title="Work authorization check">
+          <InfoRow
+            label={firstName ? `${firstName}'s citizenship` : "Employee's citizenship"}
+            value={citizenshipOpt?.label}
+            avatar={citizenshipOpt?.avatar}
+          />
+          <InfoRow
+            label={firstName ? `${firstName}'s contract country` : "Contract country"}
+            value={employmentOpt?.label}
+            avatar={employmentOpt?.avatar}
+          />
+          <div>
+            <div className="wac-question" style={{ marginBottom:10 }}>
+              Right to work in {employmentOpt?.label ?? "this country"} <span className="req">*</span>
+            </div>
+            <div className="wac-radio-grid">
+              <Radio label="Yes, they have right to work"  selected={workAuthAnswer === "yes"} onClick={() => setWorkAuthAnswer("yes")} />
+              <Radio label="No, they need a work permit"   selected={workAuthAnswer === "no"}  onClick={() => setWorkAuthAnswer("no")} />
+            </div>
+          </div>
+        </SectionCard>
+      )}
+
       {/* ── 3. Workplace information ── */}
       <SectionCard title="Workplace information">
         <div>
-          <Select label="Job Position" optional placeholder="Job Position (optional)" options={JOB_POS_OPTS} />
+          <RichDropdownSelect label="Job Position" optional searchable placeholder="Job Position (optional)" options={JOB_POS_OPTS} />
           <div className="apb-field-hint">Assign a vacant job position to this worker</div>
         </div>
         <div>
-          <Select label="Manager" optional placeholder="Manager (optional)" options={PEOPLE_OPTS} />
+          <RichDropdownSelect label="Manager" optional searchable placeholder="Manager (optional)" options={PEOPLE_OPTS} />
           <div className="apb-field-hint">You can search by name or email</div>
         </div>
         <div>
-          <Select label="Report" optional placeholder="Report (optional)" options={PEOPLE_OPTS} />
+          <RichDropdownSelect label="Report" optional searchable placeholder="Report (optional)" options={PEOPLE_OPTS} />
           <div className="apb-field-hint">You can search by name or email</div>
         </div>
         <Field label="Worker ID" required value={workerIdValue} disabled />
@@ -1108,8 +1423,8 @@ export function AddPersonBlock({
 
       {/* ── 4. Organizational structure ── */}
       <SectionCard title="Organizational structure">
-        <Select label="Department" optional placeholder="Department (optional)" options={DEPT_OPTS} />
-        <Select label="Teams" optional placeholder="Teams (optional)" options={TEAM_OPTS} />
+        <RichDropdownSelect label="Department" optional searchable placeholder="Department (optional)" options={DEPT_OPTS} />
+        <RichDropdownSelect label="Teams" optional searchable placeholder="Teams (optional)" options={TEAM_OPTS} />
       </SectionCard>
 
       {/* ── 5. Hiring objective ── */}

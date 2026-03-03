@@ -231,6 +231,21 @@ export const COMPONENT_MANIFEST = [
 />`,
   },
   {
+    name: "InfoRow",
+    domain: "Forms",
+    tier: "atom",
+    description:
+      "Dual-purpose bordered row. With a value prop: muted label on the left, bold value + optional avatar/flag on the right — for read-only summary fields (citizenship, contract country, etc.). Without a value prop: ⓘ icon + muted label, left-aligned — for empty list containers ('No bonus added yet'). Replaces the former EmptyStateRow.",
+    composedOf: [],
+    props: [
+      { name: "label",    type: "string",    required: true,  description: "Label text. In display mode: shown on the left. In empty state mode: the full message." },
+      { name: "value",    type: "string",    required: false, description: "Bold value on the right. Omit to render the empty state variant." },
+      { name: "avatar",   type: "ReactNode", required: false, description: "Optional icon or flag rendered next to the value (display mode only)." },
+      { name: "sublabel", type: "string",    required: false, description: "Optional secondary line below the value (display mode only)." },
+    ],
+    usage: `// Display mode\n<InfoRow label="Citizenship" value="United States" avatar={<span>🇺🇸</span>} />\n\n// Empty state mode\n<InfoRow label="No bonus added yet" />`,
+  },
+  {
     name: "SectionCard",
     domain: "Forms",
     tier: "molecule",
@@ -383,18 +398,6 @@ export const COMPONENT_MANIFEST = [
       { name: "dot",     type: "boolean", required: false, description: "Show colour dot (default: true)." },
     ],
     usage: '<StatusBadge variant="mandatory" />\n<StatusBadge variant="completed" label="Job details" />',
-  },
-  {
-    name: "EmptyStateRow",
-    domain: "Status & Feedback",
-    tier: "atom",
-    description:
-      "Muted bordered row used inside list containers to signal the absence of items — e.g. 'No bonus added yet', 'No fixed allowances yet', 'No variable compensation yet'. Pairs a ⓘ info icon with a configurable label in a low-hierarchy, non-intrusive style.",
-    composedOf: [],
-    props: [
-      { name: "label", type: "string", required: false, description: "Empty state message (default: 'No items yet')." },
-    ],
-    usage: '<EmptyStateRow label="No fixed allowances yet" />',
   },
   {
     name: "AutosaveWidget",
@@ -1127,6 +1130,16 @@ export const makeLibraryCSS = (t, isDark) => {
   .trow-track.on  .trow-thumb { left: 18px; }
   .trow-track.off .trow-thumb { left: 2px; }
 
+  /* ── InfoRow ── */
+  .irow {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border: 1px solid ${t.border}; border-radius: ${br + 2}px;
+    background: ${t.surfaceHover};
+  }
+  .irow-label { font-size: 13px; color: ${t.textMuted}; }
+  .irow-icon  { color: ${t.textDisabled}; flex-shrink: 0; display: flex; }
+  .irow-value { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: ${t.textMain}; margin-left: auto; }
+
   /* ── SegmentedControl ── */
   .seg {
     display: inline-flex; align-items: center; position: relative;
@@ -1447,13 +1460,10 @@ export const makeLibraryCSS = (t, isDark) => {
   .shimmer { height: 44px; border-radius: 8px; background: linear-gradient(90deg,${t.surfaceHover} 25%,${t.border} 50%,${t.surfaceHover} 75%); background-size: 200% 100%; animation: shim 1.4s infinite; }
   @keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-  /* ── EmptyStateRow ── */
-  .esr { display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: ${t.surfaceHover}; border: 1px solid ${t.border}; border-radius: ${br + 2}px; }
-  .esr-icon { color: ${t.textDisabled}; flex-shrink: 0; display: flex; }
-  .esr-text { font-size: 13px; color: ${t.textMuted}; }
-
   /* ── Block outer shells (shared layout) ── */
   .add-person-shell    { display: flex; flex-direction: column; gap: 16px; }
+  .wac-radio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .wac-question { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; }
   .compensation-shell  { display: flex; flex-direction: column; gap: 16px; }
   .mri-label { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; }
   .mri-desc  { font-size: 12px; color: ${t.textMuted}; margin-bottom: 12px; }
@@ -1850,6 +1860,47 @@ export function ToggleRow({ label, description, checked, disabled, onChange }) {
 }
 
 /**
+ * Dual-purpose bordered row with a surfaceHover background.
+ *
+ * **Display mode** (`value` provided) — muted label on the left, bold value
+ * with an optional avatar/flag on the right. Use for read-only summary fields
+ * (e.g. citizenship, contract country).
+ *
+ * **Empty state mode** (no `value`) — ⓘ icon + muted label, left-aligned.
+ * Replaces the former EmptyStateRow. Use inside list containers to signal
+ * the absence of items (e.g. "No bonus added yet").
+ *
+ * @param {string}    label      - Label text (left side in display mode; the full message in empty state mode).
+ * @param {string}    [value]    - Bold value shown on the right. Omit to render the empty state variant.
+ * @param {ReactNode} [avatar]   - Optional icon/flag rendered next to the value (display mode only).
+ * @param {string}    [sublabel] - Optional secondary line below the value (display mode only).
+ */
+export function InfoRow({ label, value, avatar, sublabel }) {
+  if (!value) {
+    return (
+      <div className="irow">
+        <span className="irow-icon"><Info /></span>
+        <span className="irow-label">{label}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="irow" style={{ justifyContent: "space-between" }}>
+      <span className="irow-label">{label}</span>
+      <span className="irow-value">
+        {sublabel ? (
+          <span style={{ textAlign: "right" }}>
+            <span style={{ display: "block" }}>{value}</span>
+            <span style={{ display: "block", fontSize: 11.5, fontWeight: 400, opacity: .7 }}>{sublabel}</span>
+          </span>
+        ) : value}
+        {avatar}
+      </span>
+    </div>
+  );
+}
+
+/**
  * White rounded card wrapping a group of related form fields.
  *
  * @param {string}      title           - Bold section heading at the top of the card.
@@ -2100,20 +2151,8 @@ export function StatusBadge({ variant = "mandatory", label, dot = true }) {
   );
 }
 
-/**
- * Muted bordered empty state row for use inside list containers.
- * Shows a ⓘ info icon alongside a label when a list has no items.
- *
- * @param {string} [label] - Empty state message (default: 'No items yet').
- */
-export function EmptyStateRow({ label = "No items yet" }) {
-  return (
-    <div className="esr">
-      <span className="esr-icon"><Info /></span>
-      <span className="esr-text">{label}</span>
-    </div>
-  );
-}
+/** @deprecated Use `<InfoRow label="…" />` (no value prop) instead. */
+export const EmptyStateRow = ({ label = "No items yet" }) => <InfoRow label={label} />;
 
 /**
  * Right-rail autosave status card.
@@ -2812,7 +2851,7 @@ export function CompensationBlock({
           </div>
           <SecondaryButton size="sm" label="Add" />
         </div>
-        <EmptyStateRow label="No bonus added yet" />
+        <InfoRow label="No bonus added yet" />
       </SectionCard>
 
       {/* 3 · Work schedule */}
@@ -2845,7 +2884,7 @@ export function CompensationBlock({
         description="Allowances that are written into the EOR contract that may be granted on a one-time or monthly recurring basis (E.g. Moving allowance, wellness allowance etc)"
         action={<SecondaryButton size="sm" label="Add" />}
       >
-        <EmptyStateRow label="No fixed allowances yet" />
+        <InfoRow label="No fixed allowances yet" />
       </SectionCard>
 
       {/* 5 · Variable compensation */}
@@ -2854,7 +2893,7 @@ export function CompensationBlock({
         description="Add additional compensation that will be included within the EOR contract."
         action={<SecondaryButton size="sm" label="Add" />}
       >
-        <EmptyStateRow label="No variable compensation yet" />
+        <InfoRow label="No variable compensation yet" />
       </SectionCard>
 
       {/* 6 · Employment terms */}
@@ -3015,63 +3054,211 @@ export function BenefitsBlock({ country = "United States", benefits, onAddBenefi
 // ──────────────────────────────────────────────────────────────────
 
 const ENTITY_OPTIONS = [
-  { value: "au_payroll",  label: "AU entity - Payroll Connect" },
-  { value: "us_payroll",  label: "US entity - Payroll Connect" },
-  { value: "de_payroll",  label: "DE entity - Payroll Connect" },
+  { value: "au",  label: "AU entity - Payroll Connect",            sublabel: "Australia" },
+  { value: "ca",  label: "CA entity",                              sublabel: "Canada" },
+  { value: "de",  label: "DE entity",                              sublabel: "Germany" },
+  { value: "es",  label: "ES entity",                              sublabel: "Spain" },
+  { value: "gb",  label: "GB entity",                              sublabel: "United Kingdom" },
+  { value: "jp",  label: "JP entity",                              sublabel: "Japan" },
+  { value: "se",  label: "SE entity - Payroll Connect (Pay by Deel)", sublabel: "Sweden" },
+  { value: "us",  label: "US entity",                              sublabel: "United States" },
+  { value: "we_eor",    label: "Wayne Enterprise EOR",    sublabel: "United States" },
+  { value: "we_global", label: "Wayne Enterprise Global", sublabel: "United States" },
+  { value: "we_peo",    label: "Wayne Enterprise PEO",    sublabel: "United States" },
+  { value: "we_uk",     label: "Wayne Enterprise UK",     sublabel: "United Kingdom" },
 ];
 const GROUP_OPTIONS = [
   { value: "au_group", label: "AU - Payroll Connect - group" },
-  { value: "us_group", label: "US - Payroll Connect - group" },
-  { value: "de_group", label: "DE - Payroll Connect - group" },
+  { value: "ca_group", label: "CA - group" },
+  { value: "de_group", label: "DE - group" },
+  { value: "es_group", label: "ES - group" },
+  { value: "gb_group", label: "GB - group" },
+  { value: "jp_group", label: "JP - group" },
+  { value: "se_group", label: "SE - Payroll Connect (Pay by Deel) - group" },
+  { value: "us_group", label: "US - group" },
+  { value: "we_eor",   label: "Wayne Enterprise EOR" },
+  { value: "we_global",label: "Wayne Enterprise Global" },
+  { value: "we_peo",   label: "Wayne Enterprise Team PEO" },
 ];
+const flagAvatar = f => <span style={{ fontSize: 20, lineHeight: 1 }}>{f}</span>;
 const COUNTRY_OPTIONS = [
-  { value: "us", label: "🇺🇸  United States" },
-  { value: "de", label: "🇩🇪  Germany" },
-  { value: "gb", label: "🇬🇧  United Kingdom" },
-  { value: "au", label: "🇦🇺  Australia" },
-  { value: "ca", label: "🇨🇦  Canada" },
-  { value: "fr", label: "🇫🇷  France" },
+  { value: "ar", label: "Argentina",    avatar: flagAvatar("🇦🇷") },
+  { value: "bd", label: "Bangladesh",   avatar: flagAvatar("🇧🇩") },
+  { value: "br", label: "Brazil",       avatar: flagAvatar("🇧🇷") },
+  { value: "ca", label: "Canada",       avatar: flagAvatar("🇨🇦") },
+  { value: "cn", label: "China",        avatar: flagAvatar("🇨🇳") },
+  { value: "co", label: "Colombia",     avatar: flagAvatar("🇨🇴") },
+  { value: "cd", label: "DR Congo",     avatar: flagAvatar("🇨🇩") },
+  { value: "eg", label: "Egypt",        avatar: flagAvatar("🇪🇬") },
+  { value: "et", label: "Ethiopia",     avatar: flagAvatar("🇪🇹") },
+  { value: "fr", label: "France",       avatar: flagAvatar("🇫🇷") },
+  { value: "de", label: "Germany",      avatar: flagAvatar("🇩🇪") },
+  { value: "in", label: "India",        avatar: flagAvatar("🇮🇳") },
+  { value: "id", label: "Indonesia",    avatar: flagAvatar("🇮🇩") },
+  { value: "ir", label: "Iran",         avatar: flagAvatar("🇮🇷") },
+  { value: "jp", label: "Japan",        avatar: flagAvatar("🇯🇵") },
+  { value: "ke", label: "Kenya",        avatar: flagAvatar("🇰🇪") },
+  { value: "mx", label: "Mexico",       avatar: flagAvatar("🇲🇽") },
+  { value: "mm", label: "Myanmar",      avatar: flagAvatar("🇲🇲") },
+  { value: "ng", label: "Nigeria",      avatar: flagAvatar("🇳🇬") },
+  { value: "pk", label: "Pakistan",     avatar: flagAvatar("🇵🇰") },
+  { value: "ph", label: "Philippines",  avatar: flagAvatar("🇵🇭") },
+  { value: "ru", label: "Russia",       avatar: flagAvatar("🇷🇺") },
+  { value: "za", label: "South Africa", avatar: flagAvatar("🇿🇦") },
+  { value: "es", label: "Spain",        avatar: flagAvatar("🇪🇸") },
+  { value: "tz", label: "Tanzania",     avatar: flagAvatar("🇹🇿") },
+  { value: "th", label: "Thailand",     avatar: flagAvatar("🇹🇭") },
+  { value: "tr", label: "Türkiye",      avatar: flagAvatar("🇹🇷") },
+  { value: "ua", label: "Ukraine",      avatar: flagAvatar("🇺🇦") },
+  { value: "gb", label: "United Kingdom", avatar: flagAvatar("🇬🇧") },
+  { value: "us", label: "United States",  avatar: flagAvatar("🇺🇸") },
+  { value: "vn", label: "Vietnam",      avatar: flagAvatar("🇻🇳") },
 ];
 const US_STATE_OPTIONS = [
-  { value: "al", label: "Alabama" },
-  { value: "ak", label: "Alaska" },
-  { value: "az", label: "Arizona" },
-  { value: "ar", label: "Arkansas" },
-  { value: "ca", label: "California" },
-  { value: "co", label: "Colorado" },
-  { value: "fl", label: "Florida" },
-  { value: "ga", label: "Georgia" },
-  { value: "il", label: "Illinois" },
-  { value: "mo", label: "Missouri" },
-  { value: "ny", label: "New York" },
-  { value: "tx", label: "Texas" },
-  { value: "wa", label: "Washington" },
+  { value: "al", label: "Alabama" },        { value: "ak", label: "Alaska" },
+  { value: "az", label: "Arizona" },        { value: "ar", label: "Arkansas" },
+  { value: "ca", label: "California" },     { value: "co", label: "Colorado" },
+  { value: "ct", label: "Connecticut" },    { value: "de", label: "Delaware" },
+  { value: "fl", label: "Florida" },        { value: "ga", label: "Georgia" },
+  { value: "hi", label: "Hawaii" },         { value: "id", label: "Idaho" },
+  { value: "il", label: "Illinois" },       { value: "in", label: "Indiana" },
+  { value: "ia", label: "Iowa" },           { value: "ks", label: "Kansas" },
+  { value: "ky", label: "Kentucky" },       { value: "la", label: "Louisiana" },
+  { value: "me", label: "Maine" },          { value: "md", label: "Maryland" },
+  { value: "ma", label: "Massachusetts" },  { value: "mi", label: "Michigan" },
+  { value: "mn", label: "Minnesota" },      { value: "ms", label: "Mississippi" },
+  { value: "mo", label: "Missouri" },       { value: "mt", label: "Montana" },
+  { value: "ne", label: "Nebraska" },       { value: "nv", label: "Nevada" },
+  { value: "nh", label: "New Hampshire" },  { value: "nj", label: "New Jersey" },
+  { value: "nm", label: "New Mexico" },     { value: "ny", label: "New York" },
+  { value: "nc", label: "North Carolina" }, { value: "nd", label: "North Dakota" },
+  { value: "oh", label: "Ohio" },           { value: "ok", label: "Oklahoma" },
+  { value: "or", label: "Oregon" },         { value: "pa", label: "Pennsylvania" },
+  { value: "ri", label: "Rhode Island" },   { value: "sc", label: "South Carolina" },
+  { value: "sd", label: "South Dakota" },   { value: "tn", label: "Tennessee" },
+  { value: "tx", label: "Texas" },          { value: "ut", label: "Utah" },
+  { value: "vt", label: "Vermont" },        { value: "va", label: "Virginia" },
+  { value: "wa", label: "Washington" },     { value: "wv", label: "West Virginia" },
+  { value: "wi", label: "Wisconsin" },      { value: "wy", label: "Wyoming" },
 ];
 const JOB_POSITION_OPTIONS = [
-  { value: "pm",       label: "Product Manager" },
-  { value: "eng",      label: "Software Engineer" },
-  { value: "design",   label: "UX Designer" },
-  { value: "ea",       label: "Executive Assistant" },
-  { value: "analyst",  label: "Business Analyst" },
+  { value: "cie_30", label: "Cloud Infrastructure Engineer", sublabel: "CIE-30" },
+  { value: "cie_32", label: "Cloud Infrastructure Engineer", sublabel: "CIE-32" },
+  { value: "cm_28",  label: "Content Marketing",             sublabel: "CM-28" },
+  { value: "cm_30",  label: "Content Marketing",             sublabel: "CM-30" },
+  { value: "d_30",   label: "Designer",                      sublabel: "D-30" },
+  { value: "d_32",   label: "Designer",                      sublabel: "D-32" },
+  { value: "dms_30", label: "Digital Marketing Strategist",  sublabel: "DMS-30" },
+  { value: "dms_32", label: "Digital Marketing Strategist",  sublabel: "DMS-32" },
+  { value: "gl_30",  label: "Group Lead",                    sublabel: "GL-30" },
+  { value: "gl_32",  label: "Group Lead",                    sublabel: "GL-32" },
+  { value: "ml_22",  label: "Marketing Lead",                sublabel: "ML-22" },
+  { value: "ml_24",  label: "Marketing Lead",                sublabel: "ML-24" },
+  { value: "ms_26",  label: "Marketing Strategy",            sublabel: "MS-26" },
+  { value: "ms_28",  label: "Marketing Strategy",            sublabel: "MS-28" },
+  { value: "pm_62",  label: "Product Management",            sublabel: "PM-62" },
+  { value: "pm_64",  label: "Product Management",            sublabel: "PM-64" },
+  { value: "pm_58",  label: "Product Manager",               sublabel: "PM-58" },
+  { value: "pm_60",  label: "Product Manager",               sublabel: "PM-60" },
+  { value: "qt_30",  label: "QA Tester",                     sublabel: "QT-30" },
+  { value: "qt_32",  label: "QA Tester",                     sublabel: "QT-32" },
+  { value: "ss_26",  label: "SEO Specialist",                sublabel: "SS-26" },
+  { value: "ss_28",  label: "SEO Specialist",                sublabel: "SS-28" },
+  { value: "se_30",  label: "Software Engineer",             sublabel: "SE-30" },
+  { value: "se_32",  label: "Software Engineer",             sublabel: "SE-32" },
+  { value: "sca_30", label: "Supply Chain Analyst",          sublabel: "SCA-30" },
+  { value: "sca_32", label: "Supply Chain Analyst",          sublabel: "SCA-32" },
+  { value: "sc_30",  label: "Sustainability Consultant",     sublabel: "SC-30" },
+  { value: "sc_32",  label: "Sustainability Consultant",     sublabel: "SC-32" },
+  { value: "tl_30",  label: "Team Lead",                     sublabel: "TL-30" },
+  { value: "tl_32",  label: "Team Lead",                     sublabel: "TL-32" },
+  { value: "uer_30", label: "User Experience Researcher",    sublabel: "UER-30" },
+  { value: "uer_32", label: "User Experience Researcher",    sublabel: "UER-32" },
 ];
+const AV_COLORS = ["#0D9488","#7C3AED","#0284C7","#DB2777","#EA580C","#65A30D","#CA8A04","#DC2626"];
+function AvatarDot({ name }) {
+  const bg = AV_COLORS[name.charCodeAt(0) % AV_COLORS.length];
+  const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  return <div style={{ width:"100%", height:"100%", background:bg, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:12, fontWeight:600 }}>{initials}</div>;
+}
+const av = name => <AvatarDot name={name} />;
 const PEOPLE_OPTIONS = [
-  { value: "alex",  label: "Alex Johnson" },
-  { value: "sam",   label: "Sam Lee" },
-  { value: "priya", label: "Priya Patel" },
-  { value: "marco", label: "Marco Rossi" },
+  { value: "adriana",  label: "Adriana Costa",        sublabel: "Human Applications Representative", avatar: av("Adriana Costa") },
+  { value: "andre",    label: "André Fabron",          sublabel: "Team Lead",                         avatar: av("André Fabron") },
+  { value: "breanna",  label: "Breanna Schmeler",      sublabel: "Global Data Manager",               avatar: av("Breanna Schmeler") },
+  { value: "brenna",   label: "Brenna Fadel",          sublabel: "Sustainability Consultant",         avatar: av("Brenna Fadel") },
+  { value: "brigg",    label: "Brigg Kirkwood",        sublabel: "Software Engineer",                 avatar: av("Brigg Kirkwood") },
+  { value: "brit",     label: "Brit Tackes",           sublabel: "Software Engineer",                 avatar: av("Brit Tackes") },
+  { value: "brittni",  label: "Brittni Van Merwe",     sublabel: "Team Lead",                         avatar: av("Brittni Van Merwe") },
+  { value: "brock",    label: "Brock Hilll",           sublabel: "Senior Accountability Designer",    avatar: av("Brock Hilll") },
+  { value: "caleb",    label: "Caleb Funk",            sublabel: "CFO",                               avatar: av("Caleb Funk") },
+  { value: "calista",  label: "Calista Schowalter",    sublabel: "Digital Marketing Strategist",      avatar: av("Calista Schowalter") },
+  { value: "caressa",  label: "Caressa Standall",      sublabel: "Product Manager",                   avatar: av("Caressa Standall") },
+  { value: "carl",     label: "Carl Williams",         sublabel: "Software Engineer",                 avatar: av("Carl Williams") },
+  { value: "carlos",   label: "Carlos Barbosa",        sublabel: "Digital Marketing Strategist",      avatar: av("Carlos Barbosa") },
+  { value: "carmela",  label: "Carmela Grimley",       sublabel: "QA Tester",                         avatar: av("Carmela Grimley") },
+  { value: "carole",   label: "Carole Beer",           sublabel: "CTO",                               avatar: av("Carole Beer") },
+  { value: "caroline", label: "Caroline Grammer",      sublabel: "Software Engineer",                 avatar: av("Caroline Grammer") },
+  { value: "carolyn",  label: "Carolyn Keeling",       sublabel: "National Optimization Executive",   avatar: av("Carolyn Keeling") },
+  { value: "cathrine", label: "Cathrine Grady",        sublabel: "User Experience Researcher",        avatar: av("Cathrine Grady") },
 ];
 const DEPARTMENT_OPTIONS = [
-  { value: "eng",     label: "Engineering" },
-  { value: "design",  label: "Design" },
-  { value: "product", label: "Product" },
-  { value: "hr",      label: "Human Resources" },
-  { value: "finance", label: "Finance" },
+  // Flat departments
+  { value: "board",           label: "Board" },
+  { value: "cust_success",    label: "Customer Success" },
+  { value: "cust_support",    label: "Customer Support" },
+  { value: "engineering",     label: "Engineering" },
+  { value: "hr",              label: "HR" },
+  { value: "payroll",         label: "Payroll" },
+  { value: "prod_design",     label: "Product Design" },
+  { value: "sales",           label: "Sales" },
+  // Administration
+  { value: "admin",           label: "Administration" },
+  { value: "admin_fin",       label: "Finance",              indent: 1 },
+  { value: "admin_hr",        label: "HR",                   indent: 1 },
+  { value: "admin_hr_ppl",    label: "People",               indent: 2 },
+  { value: "admin_hr_cult",   label: "Culture",              indent: 3 },
+  { value: "admin_hr_recr",   label: "Recruitment",          indent: 3 },
+  { value: "admin_legal",     label: "Legal",                indent: 1 },
+  { value: "admin_legal_gc",  label: "Gen Counsel",          indent: 2 },
+  { value: "admin_legal_int", label: "Internal",             indent: 2 },
+  { value: "admin_legal_pp",  label: "Public Policy",        indent: 2 },
+  // Marketing
+  { value: "marketing",       label: "Marketing" },
+  { value: "mktg_strat",      label: "Marketing Strategies", indent: 1 },
+  { value: "mktg_b2b",        label: "B2B",                  indent: 2 },
+  { value: "mktg_b2c",        label: "B2C",                  indent: 2 },
+  { value: "mktg_pr",         label: "Public Relations",     indent: 1 },
+  // Operations
+  { value: "operations",      label: "Operations" },
+  { value: "ops_branding",    label: "Branding",             indent: 1 },
+  { value: "ops_partner",     label: "Partnerships",         indent: 1 },
+  { value: "ops_reporting",   label: "Reporting",            indent: 1 },
+  { value: "ops_sales",       label: "Sales",                indent: 1 },
+  // Technology
+  { value: "technology",      label: "Technology" },
+  { value: "tech_rd",         label: "R&D",                  indent: 1 },
+  { value: "tech_devops",     label: "Devops",               indent: 1 },
+  { value: "tech_eng",        label: "Engineering",          indent: 1 },
+  { value: "tech_qa",         label: "Q&A",                  indent: 1 },
+  { value: "tech_support",    label: "Support",              indent: 1 },
 ];
 const TEAM_OPTIONS = [
-  { value: "platform", label: "Platform" },
-  { value: "growth",   label: "Growth" },
-  { value: "infra",    label: "Infrastructure" },
-  { value: "cx",       label: "Customer Experience" },
+  { value: "engineers",        label: "Engineers",   indent: 0 },
+  { value: "engineers_devops", label: "Devops",      indent: 1 },
+  { value: "engineers_web",    label: "Web",         indent: 1 },
+  { value: "engineers_be",     label: "Back end",    indent: 2 },
+  { value: "engineers_fe",     label: "Front end",   indent: 2 },
+  { value: "marketing",        label: "Marketing",   indent: 0 },
+  { value: "product",          label: "Product",     indent: 0 },
+  { value: "product_design",   label: "Design",      indent: 1 },
+  { value: "product_mgmt",     label: "Management",  indent: 1 },
+  { value: "product_ops",      label: "Operations",  indent: 1 },
+  { value: "sales",            label: "Sales",       indent: 0 },
+  { value: "support",          label: "Support",     indent: 0 },
+  { value: "support_n1",       label: "N1",          indent: 1 },
+  { value: "support_n2",       label: "N2",          indent: 1 },
+  { value: "support_n3",       label: "N3",          indent: 1 },
 ];
 const HIRING_OBJECTIVE_OPTIONS = [
   { value: "temp_eor",  label: "Temporary EOR while we set up an entity" },
@@ -3100,17 +3287,23 @@ const HIRING_OBJECTIVE_OPTIONS = [
  * @param {function} [onSave]          - (formData: object) => void.
  */
 export function AddPersonBlock({
-  defaultEntity    = "au_payroll",
+  defaultEntity    = "au",
   defaultGroup     = "au_group",
   defaultCountry   = "us",
   defaultState     = "",
   workerIdValue    = "260",
   onSave,
 }) {
-  const [skipDetails,      setSkipDetails]      = useState(false);
-  const [hiringObjective,  setHiringObjective]  = useState("temp_eor");
-  const [employmentCountry, setEmploymentCountry] = useState(defaultCountry);
-  const showState = employmentCountry === "us";
+  const [skipDetails,        setSkipDetails]        = useState(false);
+  const [citizenshipCountry, setCitizenshipCountry] = useState(defaultCountry);
+  const [employmentCountry,  setEmploymentCountry]  = useState(defaultCountry);
+  const [firstName,          setFirstName]          = useState("");
+  const [workAuthAnswer,     setWorkAuthAnswer]      = useState(null);
+  const [hiringObjective,    setHiringObjective]     = useState("temp_eor");
+  const showState     = employmentCountry === "us";
+  const showWorkAuth  = !skipDetails && citizenshipCountry && employmentCountry && citizenshipCountry !== employmentCountry;
+  const citizenshipOpt = COUNTRY_OPTIONS.find(o => o.value === citizenshipCountry);
+  const employmentOpt  = COUNTRY_OPTIONS.find(o => o.value === employmentCountry);
 
   return (
     <div className="add-person-shell">
@@ -3122,9 +3315,9 @@ export function AddPersonBlock({
 
       {/* ── 1. Team information ── */}
       <SectionCard title="Team information" showInfoButton>
-        <DropdownSelect label="Entity" required
+        <RichDropdownSelect label="Entity" required
           options={ENTITY_OPTIONS} value={defaultEntity} />
-        <DropdownSelect label="Group" required
+        <RichDropdownSelect label="Group" required
           options={GROUP_OPTIONS} value={defaultGroup} />
       </SectionCard>
 
@@ -3143,22 +3336,21 @@ export function AddPersonBlock({
               placeholder="devon.parisian@letsdeel.co"
               helperText="We will use this email address for inviting your worker to complete their onboarding."
             />
-            <TextInput label="Legal first name" required placeholder="Devon" />
+            <TextInput label="Legal first name" required placeholder="Devon" onChange={setFirstName} />
             <TextInput label="Legal last name" required placeholder="Parisian" />
-            <DropdownSelect label="Employee's citizenship" required
-              options={COUNTRY_OPTIONS} value={defaultCountry} />
-            <div>
-              <DropdownSelect label="Employment country" required
-                options={COUNTRY_OPTIONS} value={employmentCountry}
-                onChange={setEmploymentCountry} />
-            </div>
+            <RichDropdownSelect label="Employee's citizenship" required searchable
+              options={COUNTRY_OPTIONS} value={citizenshipCountry}
+              onChange={setCitizenshipCountry} />
+            <RichDropdownSelect label="Employment country" required searchable
+              options={COUNTRY_OPTIONS} value={employmentCountry}
+              onChange={setEmploymentCountry} />
             <ContextBanner
               variant="insight"
               body="Severance in the United States can range from at least 2 to 4 weeks salary."
               ctaLabel="Learn more"
             />
             {showState && (
-              <DropdownSelect label="Select state" required
+              <RichDropdownSelect label="Select state" required searchable
                 placeholder="Select state…"
                 options={US_STATE_OPTIONS} value={defaultState} />
             )}
@@ -3166,20 +3358,45 @@ export function AddPersonBlock({
         )}
       </SectionCard>
 
+      {/* ── Work authorization check (shown when citizenship ≠ employment country) ── */}
+      {showWorkAuth && (
+        <SectionCard title="Work authorization check">
+          <InfoRow
+            label={firstName ? `${firstName}'s citizenship` : "Employee's citizenship"}
+            value={citizenshipOpt?.label}
+            avatar={citizenshipOpt?.avatar}
+          />
+          <InfoRow
+            label={firstName ? `${firstName}'s contract country` : "Contract country"}
+            value={employmentOpt?.label}
+            avatar={employmentOpt?.avatar}
+          />
+          <div>
+            <div className="wac-question" style={{ marginBottom: 10 }}>
+              Right to work in {employmentOpt?.label ?? "this country"} <span className="req">*</span>
+            </div>
+            <div className="wac-radio-grid">
+              <RadioOption label="Yes, they have right to work" selected={workAuthAnswer === "yes"} onClick={() => setWorkAuthAnswer("yes")} />
+              <RadioOption label="No, they need a work permit"  selected={workAuthAnswer === "no"}  onClick={() => setWorkAuthAnswer("no")} />
+            </div>
+          </div>
+        </SectionCard>
+      )}
+
       {/* ── 3. Workplace information ── */}
       <SectionCard title="Workplace information">
         <div>
-          <DropdownSelect label="Job Position" optional placeholder="Job Position (optional)"
+          <RichDropdownSelect label="Job Position" optional searchable placeholder="Job Position (optional)"
             options={JOB_POSITION_OPTIONS} />
           <div className="fhint" style={{ marginTop: 4 }}>Assign a vacant job position to this worker</div>
         </div>
         <div>
-          <DropdownSelect label="Manager" optional placeholder="Manager (optional)"
+          <RichDropdownSelect label="Manager" optional searchable placeholder="Manager (optional)"
             options={PEOPLE_OPTIONS} />
           <div className="fhint" style={{ marginTop: 4 }}>You can search by name or email</div>
         </div>
         <div>
-          <DropdownSelect label="Report" optional placeholder="Report (optional)"
+          <RichDropdownSelect label="Report" optional searchable placeholder="Report (optional)"
             options={PEOPLE_OPTIONS} />
           <div className="fhint" style={{ marginTop: 4 }}>You can search by name or email</div>
         </div>
@@ -3189,9 +3406,9 @@ export function AddPersonBlock({
 
       {/* ── 4. Organizational structure ── */}
       <SectionCard title="Organizational structure">
-        <DropdownSelect label="Department" optional placeholder="Department (optional)"
+        <RichDropdownSelect label="Department" optional searchable placeholder="Department (optional)"
           options={DEPARTMENT_OPTIONS} />
-        <DropdownSelect label="Teams" optional placeholder="Teams (optional)"
+        <RichDropdownSelect label="Teams" optional searchable placeholder="Teams (optional)"
           options={TEAM_OPTIONS} />
       </SectionCard>
 
