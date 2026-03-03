@@ -1264,7 +1264,7 @@ function MiniCollapsibleItem({ t }) {
   );
 }
 
-const COMPONENT_PREVIEWS = (t, openDemo) => [
+export const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"TextInput",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniTextInput t={t} /> },
   { name:"DateInput",               wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniDateInput t={t} /> },
   { name:"DropdownSelect",         wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniDropdown t={t} /> },

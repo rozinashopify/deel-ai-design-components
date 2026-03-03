@@ -1,18 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   makeLibraryCSS,
   lightTokens as libLightTokens,
   darkTokens as libDarkTokens,
-  JobDescriptionBlock,
-  CompensationBlock,
-  BenefitsBlock,
-  MarketRateChart,
-  ComplianceCheckPanel,
-  StepperRail,
-  ContextBanner,
-  TextInput,
-  DropdownSelect,
 } from "./ComponentLibrary.jsx";
+import { COMPONENT_PREVIEWS } from "./Index.jsx";
 
 // ─────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -386,7 +378,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: 
 
 /* ── Section commons ── */
 .lp-section {
-  padding: 100px 40px;
+  padding: 160px 40px;
   position: relative;
 }
 .lp-section-label {
@@ -570,49 +562,86 @@ body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: 
 }
 
 /* ── Get Started ── */
-.lp-gs {
-  background: ${isDark ? "#0D0D10" : "#F8FAFC"};
+.lp-gs { background: ${isDark ? "#0D0D10" : "#F8FAFC"}; }
+.lp-gs-header { max-width: 700px; margin: 0 auto 72px; text-align: center; }
+.lp-gs-split {
+  display: grid; grid-template-columns: 360px 1fr;
+  gap: 80px; align-items: start;
 }
-.lp-gs-header { max-width: 700px; margin-bottom: 56px; }
-.lp-gs-category { margin-bottom: 40px; }
-.lp-gs-cat-label {
-  font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
-  color: ${t.textMuted}; margin-bottom: 16px;
+.lp-gs-nav {
+  display: flex; flex-direction: column;
+  position: sticky; top: 96px;
+  padding-top: 36px;
 }
-.lp-gs-row {
-  display: flex; gap: 12px; padding-bottom: 8px;
-  scrollbar-width: none;
+.lp-gs-nav-btn {
+  display: flex; align-items: baseline; gap: 5px;
+  background: none; border: none; cursor: pointer; text-align: left;
+  padding: 2px 0; transition: opacity 0.2s;
 }
-.lp-gs-row::-webkit-scrollbar { display: none; }
+.lp-gs-nav-name {
+  font-family: 'BagossCondensed', 'Inter', sans-serif;
+  font-size: 54px; font-weight: 500; line-height: 1.1; letter-spacing: -0.02em;
+  transition: color 0.2s, opacity 0.2s;
+}
+.lp-gs-nav-btn.active .lp-gs-nav-name { color: ${t.textMain}; opacity: 1; }
+.lp-gs-nav-btn:not(.active) .lp-gs-nav-name { color: ${t.textMain}; opacity: 0.2; }
+.lp-gs-nav-btn:not(.active):hover .lp-gs-nav-name { opacity: 0.45; }
+.lp-gs-nav-count {
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400;
+  vertical-align: super; line-height: 1; transition: opacity 0.2s;
+}
+.lp-gs-nav-btn.active .lp-gs-nav-count { color: ${t.textMuted}; opacity: 1; }
+.lp-gs-nav-btn:not(.active) .lp-gs-nav-count { color: ${t.textSubtle}; opacity: 0.4; }
+.lp-gs-panel {}
+.lp-gs-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
 .lp-gs-card {
-  flex-shrink: 0; border-radius: 12px; overflow: hidden;
-  border: 1px solid ${t.border}; background: ${t.cardSurface};
-  width: 200px; height: 128px;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  cursor: pointer;
-  position: relative;
+  border-radius: 12px; border: 1px solid ${t.border};
+  background: ${t.cardSurface}; overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
 }
-.lp-gs-card:hover {
+.lp-gs-card-live { cursor: pointer; }
+.lp-gs-card-live:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 28px ${t.purpleGlow};
+  box-shadow: 0 8px 24px ${t.purpleGlow};
   border-color: ${t.purpleBorder};
 }
-.lp-gs-card-inner {
-  width: 100%; height: 100%;
-  display: flex; flex-direction: column;
-  padding: 14px;
+.lp-gs-card-soon { opacity: 0.5; cursor: default; }
+.lp-gs-viewport {
+  padding: 18px 14px;
+  background: ${isDark ? t.surface : "#FAFAFA"};
+  border-bottom: 1px solid ${t.border};
+  display: flex; align-items: center; justify-content: center;
+  flex: 1; min-height: 148px; overflow: hidden;
 }
-.lp-gs-card-name {
-  font-size: 11px; font-weight: 600; letter-spacing: -0.01em;
-  color: ${t.textMuted}; margin-bottom: 8px;
-}
-.lp-gs-mock-bar {
-  height: 6px; border-radius: 3px; margin-bottom: 5px;
+.lp-gs-placeholder { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+.lp-gs-placeholder-bar {
+  height: 5px; border-radius: 3px;
   background: ${isDark ? "#3F3F46" : "#E4E4E7"};
 }
-.lp-gs-mock-bar-accent {
-  height: 6px; border-radius: 3px; margin-bottom: 5px;
-  background: ${t.purple}; opacity: 0.5;
+.lp-gs-card-footer {
+  padding: 10px 13px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.lp-gs-card-name {
+  font-size: 12px; font-weight: 700; letter-spacing: -0.01em;
+  color: ${t.textMain}; line-height: 1.3;
+}
+.lp-gs-tier {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; color: ${t.textSubtle};
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lp-gs-status {
+  font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500;
+  border-radius: 999px; padding: 2px 7px; flex-shrink: 0; white-space: nowrap;
+}
+.lp-gs-status-live {
+  color: ${t.successText}; background: ${t.successBg}; border: 1px solid ${t.successBorder};
+}
+.lp-gs-status-soon {
+  color: ${t.textMuted}; background: ${t.surface}; border: 1px solid ${t.border};
 }
 
 /* ── Testimonials ── */
@@ -782,172 +811,9 @@ function combineCSS(...parts) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// COMPONENT PREVIEW WRAPPER
-// ─────────────────────────────────────────────────────────────────
-const COMING_SOON_FLOWS = [
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    ),
-    name: "Contractor Agreement",
-    desc: "Self-service contractor onboarding with compliance checks, agreement generation, and payment setup.",
-    features: ["Contractor classification check", "Agreement generation", "Invoice management", "Payment scheduling"],
-    complexity: "Low", shipTime: "~1 day", countries: "150+",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-      </svg>
-    ),
-    name: "Global Payroll Setup",
-    desc: "Configure payroll schedules, currencies, and payment methods for employees across multiple countries.",
-    features: ["Multi-currency payroll", "Tax withholding automation", "Payslip generation", "Bank account management"],
-    complexity: "Medium", shipTime: "~5 days", countries: "90+",
-  },
-];
-
-function ComingSoonFlowCard({ t, flow }) {
-  return (
-    <div style={{
-      background: t.cardSurface, border: `1px solid ${t.border}`,
-      borderRadius: 12, overflow: "hidden",
-      display: "flex", flexDirection: "column",
-      width: 340, opacity: 0.72,
-    }}>
-      {/* Header */}
-      <div style={{ padding: "18px 18px 14px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: t.surface, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMuted, flexShrink: 0 }}>
-          {flow.icon}
-        </div>
-        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 500, color: t.textMuted, border: `1px solid ${t.border}`, borderRadius: 999, padding: "3px 10px", whiteSpace: "nowrap", marginTop: 6 }}>Coming soon</span>
-      </div>
-
-      {/* Body */}
-      <div style={{ padding: "0 18px 16px", flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-        <div>
-          <div style={{ fontFamily: "'Inter',sans-serif", fontSize: 14, fontWeight: 700, color: t.textMain, marginBottom: 6, letterSpacing: "-0.01em" }}>{flow.name}</div>
-          <div style={{ fontFamily: "'Inter',sans-serif", fontSize: 12, color: t.textMuted, lineHeight: 1.55 }}>{flow.desc}</div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {flow.features.map(f => (
-            <div key={f} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={t.textSubtle} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              <span style={{ fontFamily: "'Inter',sans-serif", fontSize: 11.5, color: t.textMuted }}>{f}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 20, marginTop: 4 }}>
-          {[["Complexity", flow.complexity], ["Ship time", flow.shipTime], ["Countries", flow.countries]].map(([label, value]) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ fontFamily: "'Inter',sans-serif", fontSize: 10, color: t.textSubtle }}>{label}</span>
-              <span style={{ fontFamily: "'Inter',sans-serif", fontSize: 12, fontWeight: 700, color: t.textMuted }}>{value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Footer button */}
-      <div style={{ padding: "0 18px 18px" }}>
-        <div style={{ width: "100%", padding: "9px 0", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", fontFamily: "'Inter',sans-serif", fontSize: 12, fontWeight: 500, color: t.textMuted, textAlign: "center", cursor: "default" }}>
-          Notify me when available
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MiniFlowCard({ t, libT, onOpen }) {
-  const steps = ["Personal", "Job details", "Compensation", "Benefits"];
-  return (
-    <div
-      style={{
-        background: t.cardSurface, border: `1px solid ${t.border}`,
-        borderRadius: 12, overflow: "hidden", boxShadow: t.shadow,
-        display: "flex", flexDirection: "column",
-        transition: "box-shadow .14s, transform .14s", cursor: "pointer",
-        width: 340,
-      }}
-      onClick={onOpen}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = t.shadowMd; e.currentTarget.style.transform = "translateY(-2px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = t.shadow; e.currentTarget.style.transform = "translateY(0)"; }}
-    >
-      {/* Visual preview area */}
-      <div style={{
-        padding: "22px 18px", background: t.surface,
-        borderBottom: `1px solid ${t.border}`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        minHeight: 160, overflow: "hidden",
-      }}>
-        <div style={{ background: libT.surface, border: `1px solid ${libT.border}`, borderRadius: 12, overflow: "hidden", width: "100%" }}>
-          <div style={{ background: libT.bg, padding: "8px 14px", borderBottom: `1px solid ${libT.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", gap: 5 }}>
-              {["#E4E4E7", "#E4E4E7", "#E4E4E7"].map((c, i) => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: c }} />)}
-            </div>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: libT.textMuted, letterSpacing: "0.06em" }}>EOR Contract Creation</span>
-            <span />
-          </div>
-          <div style={{ display: "flex" }}>
-            <div style={{ width: 114, borderRight: `1px solid ${libT.border}`, padding: "12px 10px", display: "flex", flexDirection: "column" }}>
-              {steps.map((s, i) => {
-                const done = i < 1, active = i === 1;
-                return (
-                  <div key={s} style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-                      <div style={{ width: 16, height: 16, borderRadius: "50%", border: `1.5px solid ${done ? libT.success : active ? libT.primary : libT.border}`, background: done ? libT.successBg : active ? libT.surface : libT.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: done ? libT.success : active ? libT.primary : libT.textDisabled }}>
-                        {done ? "✓" : i + 1}
-                      </div>
-                      {i < steps.length - 1 && <div style={{ width: 1, height: 14, background: done ? libT.success : libT.border }} />}
-                    </div>
-                    <div style={{ fontFamily: "Inter,sans-serif", fontSize: 10, fontWeight: active ? 600 : 400, color: active ? libT.textMain : libT.textMuted, paddingTop: 1 }}>{s}</div>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ flex: 1, padding: 14, display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 120 }}>
-              <div>
-                <div style={{ fontFamily: "Inter,sans-serif", fontSize: 12.5, fontWeight: 700, color: libT.textMain, marginBottom: 3 }}>Job details</div>
-                <div style={{ fontFamily: "Inter,sans-serif", fontSize: 11, color: libT.textMuted, marginBottom: 10, lineHeight: 1.4 }}>Describe the role and responsibilities.</div>
-                <div style={{ background: libT.bg, border: `1px solid ${libT.border}`, borderRadius: 7, height: 28 }} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-                <button type="button" style={{ fontFamily: "Inter,sans-serif", fontSize: 11, color: libT.textMuted, background: "transparent", border: `1px solid ${libT.border}`, borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}>Back</button>
-                <button type="button" onClick={e => { e.stopPropagation(); onOpen(); }} style={{ fontFamily: "Inter,sans-serif", fontSize: 11, fontWeight: 600, color: libT.btnText, background: libT.primary, border: "none", borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}>Open full flow</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Card footer */}
-      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: t.textMain, letterSpacing: "-0.01em" }}>EORContractCreationFlow</span>
-          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, color: t.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>All blocks + StepperRail + AutosaveWidget</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 500, color: t.textMain, background: t.surface, border: `1px solid ${t.border}`, padding: "5px 10px", borderRadius: 7, whiteSpace: "nowrap", flexShrink: 0, fontFamily: "'Inter',sans-serif" }}>
-          Open →
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ComponentPreview({ scale = 0.5, width, height, onClick, children }) {
-  return (
-    <div className="lp-preview-card" style={{ width, height }} onClick={onClick}>
-      <div className="lp-preview-inner" style={{ width: width / scale, transform: `scale(${scale})` }}>
-        {children}
-      </div>
-      <div className="lp-preview-fade" />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────
 // HOOKS
+// ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────
 function useScrollReveal(threshold = 0.15) {
   const ref = useRef(null);
@@ -1292,19 +1158,6 @@ function HowItWorksSection({ t }) {
 // ─────────────────────────────────────────────────────────────────
 // GET STARTED
 // ─────────────────────────────────────────────────────────────────
-const COMPLIANCE_SAMPLES = [
-  { rule: "Salary meets Brazil minimum wage requirements", status: "pass" },
-  { rule: "Job title aligns with CLT classification", status: "pass" },
-  { rule: "Non-compete clause validity under local law", status: "fail", detail: "Non-compete clauses are unenforceable in Brazil under CLT" },
-  { rule: "Benefits package complies with CLT regulations", status: "checking" },
-];
-
-const EOR_STEPS = [
-  { label: "Personal details" },
-  { label: "Job details" },
-  { label: "Compensation" },
-  { label: "Benefits & extras" },
-];
 
 // ─────────────────────────────────────────────────────────────────
 // APPEARANCE SECTION
@@ -1496,8 +1349,79 @@ function AppearanceSection({ t, dark }) {
   );
 }
 
-function GetStartedSection({ t, libT, onLaunchDemo }) {
+const GS_FLOWS = [
+  { name: "EOR Contract Creation", tier: "flow", status: "live", key: "EORContractCreationFlow", description: "4-step contract creation with AI compliance & market insights" },
+  { name: "Contractor Agreement", tier: "flow", status: "soon", description: "Self-service contractor onboarding with compliance checks" },
+  { name: "Global Payroll Setup", tier: "flow", status: "soon", description: "Multi-currency payroll configuration across 90+ countries" },
+];
+
+const GS_BLOCKS = [
+  { name: "Add Person", tier: "block", status: "live", key: "AddPersonBlock", description: "Worker info & workplace entity setup" },
+  { name: "Job Description", tier: "block", status: "live", key: "JobDescriptionBlock", description: "Role definition with real-time AI compliance" },
+  { name: "Compensation", tier: "block", status: "live", key: "CompensationBlock", description: "Salary editor with live market rate insights" },
+  { name: "Benefits", tier: "block", status: "live", key: "BenefitsBlock", description: "Mandatory & optional benefits by country" },
+];
+
+const GS_COMPONENTS = [
+  { name: "Market Rate Chart", tier: "ai-molecule", status: "live", key: "MarketRateChart", description: "Salary positioning in the local market" },
+  { name: "Compliance Panel", tier: "ai-molecule", status: "live", key: "ComplianceCheckPanel", description: "AI-powered compliance rule evaluation" },
+  { name: "Compliance Card", tier: "ai-molecule", status: "live", key: "ComplianceCheckCard", description: "Single rule result with AI explanation" },
+  { name: "Country Policy", tier: "molecule", status: "live", key: "CountryPolicyCard", description: "Country-specific employment policy details" },
+  { name: "Stepper Rail", tier: "molecule", status: "live", key: "StepperRail", description: "Multi-step progress indicator with nav" },
+  { name: "Context Banner", tier: "molecule", status: "live", key: "ContextBanner", description: "Contextual guides, insights & promos" },
+  { name: "Autosave Widget", tier: "molecule", status: "live", key: "AutosaveWidget", description: "Draft save status with timestamp" },
+  { name: "Buttons", tier: "atom", status: "live", key: "Buttons", description: "Primary, secondary & text button variants" },
+  { name: "Status Badge", tier: "atom", status: "live", key: "StatusBadge", description: "Mandatory, new, completed & failed states" },
+  { name: "Text Input", tier: "atom", status: "live", key: "TextInput", description: "Form text field with label & helper text" },
+  { name: "Dropdown Select", tier: "atom", status: "live", key: "DropdownSelect", description: "Single-select dropdown with search" },
+  { name: "Icon", tier: "atom", status: "live", key: "Icon", description: "20+ semantic SVG icons via name prop" },
+];
+
+const GS_CATEGORIES = [
+  { name: "Flows", items: GS_FLOWS },
+  { name: "Blocks", items: GS_BLOCKS },
+  { name: "Components", items: GS_COMPONENTS },
+];
+
+function GsCard({ item, preview, onLaunchDemo }) {
+  const isLive = item.status === "live";
+  return (
+    <div
+      className={`lp-gs-card lp-gs-card-${item.status}`}
+      onClick={isLive && item.key ? () => onLaunchDemo(item.key) : undefined}
+    >
+      <div className="lp-gs-viewport">
+        {preview ?? (
+          <div className="lp-gs-placeholder">
+            <div className="lp-gs-placeholder-bar" style={{ width: "70%" }} />
+            <div className="lp-gs-placeholder-bar" style={{ width: "90%" }} />
+            <div className="lp-gs-placeholder-bar" style={{ width: "50%" }} />
+          </div>
+        )}
+      </div>
+      <div className="lp-gs-card-footer">
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <span className="lp-gs-card-name">{item.name}</span>
+          <span className="lp-gs-tier">{item.tier}</span>
+        </div>
+        <span className={`lp-gs-status lp-gs-status-${item.status}`}>
+          {item.status === "live" ? "live" : "soon"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function GetStartedSection({ libT, onLaunchDemo }) {
   const [ref, inView] = useScrollReveal(0.1);
+  const [activeCategory, setActiveCategory] = useState("Flows");
+  const activeItems = GS_CATEGORIES.find(c => c.name === activeCategory)?.items || [];
+
+  const previewMap = useMemo(() => {
+    const entries = COMPONENT_PREVIEWS(libT, onLaunchDemo);
+    return Object.fromEntries(entries.map(p => [p.name, p.preview]));
+  }, [libT]);
+
   return (
     <section className="lp-section lp-gs">
       <div ref={ref}>
@@ -1505,67 +1429,37 @@ function GetStartedSection({ t, libT, onLaunchDemo }) {
           <p className="lp-section-label">Explore</p>
           <h2 className="lp-section-title">Get started</h2>
           <p className="lp-section-sub" style={{ marginTop: 12 }}>
-            Explore flows, blocks, and all components available!
+            Pick a category and click any component to explore it live.
           </p>
         </div>
 
-        {/* ── Flows ── */}
-        <div className={`lp-gs-category reveal ${inView ? "in" : ""}`} style={{ "--i": 0 }}>
-          <div className="lp-gs-cat-label">Flows</div>
-          <div className="lp-gs-row">
-            <MiniFlowCard t={t} libT={libT} onOpen={() => onLaunchDemo("EORContractCreationFlow")} />
-            {COMING_SOON_FLOWS.map(flow => (
-              <ComingSoonFlowCard key={flow.name} t={t} flow={flow} />
+        <div className={`lp-gs-split reveal ${inView ? "in" : ""}`} style={{ "--i": 1 }}>
+          {/* ── Left: category nav ── */}
+          <nav className="lp-gs-nav">
+            {GS_CATEGORIES.map(cat => (
+              <button
+                key={cat.name}
+                className={`lp-gs-nav-btn${activeCategory === cat.name ? " active" : ""}`}
+                onClick={() => setActiveCategory(cat.name)}
+              >
+                <span className="lp-gs-nav-name">{cat.name}</span>
+                <sup className="lp-gs-nav-count">{cat.items.length}</sup>
+              </button>
             ))}
-          </div>
-        </div>
+          </nav>
 
-        {/* ── Blocks ── */}
-        <div className={`lp-gs-category reveal ${inView ? "in" : ""}`} style={{ "--i": 1 }}>
-          <div className="lp-gs-cat-label">Blocks</div>
-          <div className="lp-gs-row">
-            <ComponentPreview scale={0.52} width={340} height={260} onClick={() => onLaunchDemo("JobDescriptionBlock")}>
-              <JobDescriptionBlock defaultTitle="Senior Engineer" defaultSeniority="senior" />
-            </ComponentPreview>
-            <ComponentPreview scale={0.52} width={340} height={260} onClick={() => onLaunchDemo("CompensationBlock")}>
-              <CompensationBlock country="Brazil" defaultSalary={58400} showMarketInsights />
-            </ComponentPreview>
-            <ComponentPreview scale={0.52} width={340} height={260} onClick={() => onLaunchDemo("BenefitsBlock")}>
-              <BenefitsBlock country="Germany" />
-            </ComponentPreview>
-          </div>
-        </div>
-
-        {/* ── Components ── */}
-        <div className={`lp-gs-category reveal ${inView ? "in" : ""}`} style={{ "--i": 2 }}>
-          <div className="lp-gs-cat-label">Components</div>
-          <div className="lp-gs-row">
-            <ComponentPreview scale={0.7} width={280} height={220} onClick={() => onLaunchDemo("MarketRateChart")}>
-              <div style={{ padding: "16px 16px 0" }}>
-                <MarketRateChart salary={72000} country="Germany" seniority="Senior" jobTitle="Engineer" />
-              </div>
-            </ComponentPreview>
-            <ComponentPreview scale={0.62} width={280} height={220} onClick={() => onLaunchDemo("ComplianceCheckPanel")}>
-              <div style={{ padding: 16 }}>
-                <ComplianceCheckPanel results={COMPLIANCE_SAMPLES} />
-              </div>
-            </ComponentPreview>
-            <ComponentPreview scale={0.82} width={280} height={220} onClick={() => onLaunchDemo("StepperRail")}>
-              <div style={{ padding: "20px 16px" }}>
-                <StepperRail steps={EOR_STEPS} currentStep={2} />
-              </div>
-            </ComponentPreview>
-            <ComponentPreview scale={0.78} width={280} height={220} onClick={() => onLaunchDemo("ContextBanner")}>
-              <div style={{ padding: 16 }}>
-                <ContextBanner variant="insight" title="Brazil hiring guide" body="Non-compete clauses aren't enforceable. Fixed-term contracts require justification." ctaLabel="Read guide" />
-              </div>
-            </ComponentPreview>
-            <ComponentPreview scale={0.82} width={280} height={220} onClick={() => onLaunchDemo("TextInput")}>
-              <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-                <TextInput label="Job title" placeholder="e.g. Senior Engineer" />
-                <DropdownSelect label="Seniority" options={["Junior", "Mid", "Senior", "Staff"]} />
-              </div>
-            </ComponentPreview>
+          {/* ── Right: 4-col grid ── */}
+          <div className="lp-gs-panel">
+            <div className="lp-gs-grid">
+              {activeItems.map(item => (
+                <GsCard
+                  key={item.name}
+                  item={item}
+                  preview={previewMap[item.key]}
+                  onLaunchDemo={onLaunchDemo}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -1767,7 +1661,7 @@ export default function LandingPage({ onLaunchDemo, dark = true, onToggleDark })
       <ProblemSection t={t} />
       <HowItWorksSection t={t} />
       <AppearanceSection t={t} dark={dark} />
-      <GetStartedSection t={t} libT={libTokens} onLaunchDemo={onLaunchDemo} />
+      <GetStartedSection libT={libTokens} onLaunchDemo={onLaunchDemo} />
       <TestimonialsSection t={t} />
       <TeamSection t={t} />
       <CTASection t={t} />
