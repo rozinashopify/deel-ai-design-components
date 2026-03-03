@@ -24,6 +24,8 @@ import {
   JobDescriptionBlock, CompensationBlock, BenefitsBlock, AddPersonBlock,
   // ── Flows
   EORContractCreationFlow,
+  // ── Overlays
+  Modal, CollapsibleItem, ManageJobScopesModal,
 } from "./ComponentLibrary.jsx";
 
 
@@ -71,8 +73,10 @@ const lightTokens = {
   waveAIBg:     "#F5F3FF",
   waveBlocks:   "#D97706",
   waveBlocksBg: "#FFFBEB",
-  waveFlow:     "#18181B",
-  waveFlowBg:   "#F4F4F5",
+  waveFlow:      "#18181B",
+  waveFlowBg:    "#F4F4F5",
+  waveOverlays:  "#E11D48",
+  waveOverlaysBg:"#FFF1F2",
   chartBar:      "#CACACE",
   chartBarActive:"#18181B",
   chartBarHover: "#D4D4D8",
@@ -117,8 +121,10 @@ const darkTokens = {
   waveAIBg:     "#1E1033",
   waveBlocks:   "#FCD34D",
   waveBlocksBg: "#1C1500",
-  waveFlow:     "#FAFAFA",
-  waveFlowBg:   "#27272A",
+  waveFlow:      "#FAFAFA",
+  waveFlowBg:    "#27272A",
+  waveOverlays:  "#FB7185",
+  waveOverlaysBg:"#1C0108",
   chartBar:      "#3F3F46",
   chartBarActive:"#FAFAFA",
   chartBarHover: "#52525B",
@@ -555,6 +561,21 @@ const WAVES = [
       { icon: "🌊", name: "EORContractCreationFlow", desc: "4-step flow: Add person · Job · Compensation · Benefits → Submit" },
     ],
   },
+  {
+    n: 6,
+    name: "Overlays",
+    subtitle: "Wave 6",
+    file: "ComponentLibrary.jsx",
+    tag: "3 components · modal · accordion",
+    tagKey: "overlays",
+    desc: "Overlay primitives — a generic modal dialog, a collapsible accordion card, and the job scope template browser that combines both.",
+    ai: false,
+    components: [
+      { icon: "⬜", name: "Modal",                desc: "Dark backdrop overlay with title, subtitle, × close, and scrollable body slot" },
+      { icon: "▿",  name: "CollapsibleItem",       desc: "Bordered accordion card — badge pill, meta text, action button, animated chevron" },
+      { icon: "📂", name: "ManageJobScopesModal",  desc: "Searchable job scope template browser — 20 Deel templates with preview and use action" },
+    ],
+  },
 ];
 
 const WAVE_COLORS = (t) => ({
@@ -562,7 +583,8 @@ const WAVE_COLORS = (t) => ({
   mol:    { color: t.waveMol,    bg: t.waveMolBg    },
   ai:     { color: t.waveAI,     bg: t.waveAIBg     },
   blocks: { color: t.waveBlocks, bg: t.waveBlocksBg },
-  flow:   { color: t.waveFlow,   bg: t.waveFlowBg   },
+  flow:     { color: t.waveFlow,     bg: t.waveFlowBg     },
+  overlays: { color: t.waveOverlays, bg: t.waveOverlaysBg },
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -1164,6 +1186,77 @@ function MiniCountryPolicyCard({ t }) {
   );
 }
 
+function MiniModal({ t }) {
+  const titles = ["Digital Marketing Manager", "SEO Specialist", "PPC Specialist"];
+  return (
+    <div style={{ width:"100%", position:"relative", paddingBottom:8 }}>
+      <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.28)", borderRadius:10, zIndex:0 }} />
+      <div style={{ position:"relative", zIndex:1, background:t.surface, border:`1px solid ${t.border}`, borderRadius:12, boxShadow:"0 8px 24px rgba(0,0,0,.14)", margin:"14px 8px 0" }}>
+        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", padding:"11px 13px 9px", borderBottom:`1px solid ${t.border}` }}>
+          <div>
+            <div style={{ fontFamily:"Inter,sans-serif", fontSize:11.5, fontWeight:600, color:t.textMain, lineHeight:1.3 }}>Select, create and manage job scopes</div>
+            <div style={{ fontFamily:"Inter,sans-serif", fontSize:10, color:t.textMuted, marginTop:2 }}>Select, create, edit, or delete templates.</div>
+          </div>
+          <div style={{ width:16, height:16, borderRadius:5, background:t.surfaceHover, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginLeft:8 }}>
+            <svg width="8" height="8" viewBox="0 0 13 13" fill="none" stroke={t.textMuted} strokeWidth="2" strokeLinecap="round"><line x1="2.5" y1="2.5" x2="10.5" y2="10.5"/><line x1="10.5" y1="2.5" x2="2.5" y2="10.5"/></svg>
+          </div>
+        </div>
+        <div style={{ padding:"9px 12px 11px", display:"flex", flexDirection:"column", gap:5 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 9px", border:`1px solid ${t.border}`, borderRadius:20, background:t.inputBg, marginBottom:3 }}>
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke={t.textDisabled} strokeWidth="1.6" strokeLinecap="round"><circle cx="6" cy="6" r="4.5"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+            <span style={{ fontFamily:"Inter,sans-serif", fontSize:10, color:t.textDisabled }}>Find existing template</span>
+          </div>
+          {titles.map(name => (
+            <div key={name} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 9px", border:`1px solid ${t.border}`, borderRadius:8, background:t.surface }}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:"Inter,sans-serif", fontSize:10.5, fontWeight:600, color:t.textMain }}>{name}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:2 }}>
+                  <span style={{ fontFamily:"Inter,sans-serif", fontSize:9, color:"#7C3AED", border:"1px solid #DDD6FE", borderRadius:999, padding:"1px 5px", background:"#FAF5FF" }}>Deel template</span>
+                  <span style={{ fontFamily:"Inter,sans-serif", fontSize:9, color:t.textDisabled }}>Non-editable</span>
+                </div>
+              </div>
+              <div style={{ fontFamily:"Inter,sans-serif", fontSize:9.5, color:t.textMain, border:`1px solid ${t.border}`, borderRadius:5, padding:"2px 7px", flexShrink:0 }}>Use</div>
+              <svg width="9" height="9" viewBox="0 0 14 14" fill="none" stroke={t.textMuted} strokeWidth="1.6" strokeLinecap="round"><polyline points="3 5 7 9 11 5"/></svg>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniCollapsibleItem({ t }) {
+  const items = [
+    { title:"Digital Marketing Manager", open: true },
+    { title:"SEO Specialist",            open: false },
+  ];
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:6, width:"100%" }}>
+      {items.map(item => (
+        <div key={item.title} style={{ border:`1px solid ${t.border}`, borderRadius:10, background:t.surface, overflow:"hidden" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 11px" }}>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontFamily:"Inter,sans-serif", fontSize:11, fontWeight:600, color:t.textMain }}>{item.title}</div>
+              <div style={{ display:"flex", gap:5, marginTop:3 }}>
+                <span style={{ fontFamily:"Inter,sans-serif", fontSize:9, color:"#7C3AED", border:"1px solid #DDD6FE", borderRadius:999, padding:"1px 6px", background:"#FAF5FF" }}>Deel template</span>
+                <span style={{ fontFamily:"Inter,sans-serif", fontSize:9, color:t.textDisabled }}>Non-editable</span>
+              </div>
+            </div>
+            <div style={{ fontFamily:"Inter,sans-serif", fontSize:9.5, color:t.textMain, border:`1px solid ${t.border}`, borderRadius:5, padding:"2px 7px", flexShrink:0 }}>Use</div>
+            <svg style={{ flexShrink:0, transform:item.open?"rotate(180deg)":undefined }} width="10" height="10" viewBox="0 0 14 14" fill="none" stroke={t.textMuted} strokeWidth="1.6" strokeLinecap="round"><polyline points="3 5 7 9 11 5"/></svg>
+          </div>
+          {item.open && (
+            <div style={{ borderTop:`1px solid ${t.border}`, padding:"7px 11px" }}>
+              <div style={{ fontFamily:"Inter,sans-serif", fontSize:9.5, color:t.textMuted, marginBottom:3 }}>Scope description</div>
+              <div style={{ fontFamily:"Inter,sans-serif", fontSize:10, color:t.textMain, lineHeight:1.5 }}>A digital marketing manager is responsible for developing, executing and managing all digital marketing campaigns…</div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"TextInput",              wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniTextInput t={t} /> },
   { name:"DateInput",               wave:"Wave 1", waveKey:"atoms",  composed:"atom",                                            preview:<MiniDateInput t={t} /> },
@@ -1191,6 +1284,9 @@ const COMPONENT_PREVIEWS = (t, openDemo) => [
   { name:"CompensationBlock",      wave:"Wave 4", waveKey:"blocks", composed:"RadioOption × 2 + SalaryInput + MarketRateChart", preview:<MiniCompensation t={t} /> },
   { name:"BenefitsBlock",          wave:"Wave 4", waveKey:"blocks", composed:"BenefitCard × n + StatusBadge + MandatoryBanner", preview:<MiniBenefits t={t} /> },
   { name:"EORContractCreationFlow",wave:"Wave 5", waveKey:"flow",   composed:"All blocks + StepperRail + AutosaveWidget",       preview:<MiniFlow t={t} onOpen={() => openDemo(5)} /> },
+  { name:"Modal",                  wave:"Wave 6", waveKey:"overlays", composed:"backdrop + dialog + × close + scrollable body",    preview:<MiniModal t={t} /> },
+  { name:"CollapsibleItem",        wave:"Wave 6", waveKey:"overlays", composed:"header + badge pill + action slot + chevron",       preview:<MiniCollapsibleItem t={t} /> },
+  { name:"ManageJobScopesModal",   wave:"Wave 6", waveKey:"overlays", composed:"Modal + search bar + CollapsibleItem × n",          preview:<MiniModal t={t} /> },
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -1303,6 +1399,32 @@ function RichDropdownCanvas() {
 // ── Per-component demo canvases ─────────────────────────────────
 // Each entry renders the component in an isolated, appropriately-sized
 // container so teams and LLMs see exactly how it behaves standalone.
+function ModalDemoWrapper() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16, maxWidth:460 }}>
+      {open && (
+        <Modal title="Example modal" subtitle="Subtitle text goes here." onClose={() => setOpen(false)}>
+          <p style={{ margin:0, fontFamily:"Inter,sans-serif", fontSize:14, color:"#374151", lineHeight:1.6 }}>
+            This is the scrollable body slot. Drop any content here — forms, lists, or rich components.
+          </p>
+        </Modal>
+      )}
+      <PrimaryButton label="Open modal" onClick={() => setOpen(true)} />
+    </div>
+  );
+}
+
+function ManageJobScopesDemoWrapper() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16, maxWidth:460 }}>
+      <ManageJobScopesModal open={open} onClose={() => setOpen(false)} onUseTemplate={() => setOpen(false)} />
+      <PrimaryButton label="Browse job scope templates" onClick={() => setOpen(true)} />
+    </div>
+  );
+}
+
 const COMPONENT_DEMOS = {
   // Forms
   TextInput: (
@@ -1617,6 +1739,31 @@ const COMPONENT_DEMOS = {
 
   // Flows
   EORContractCreationFlow: <EORContractCreationFlow />,
+
+  // Overlays
+  Modal:                <ModalDemoWrapper />,
+  CollapsibleItem: (
+    <div style={{ display:"flex", flexDirection:"column", gap:10, maxWidth:580 }}>
+      <CollapsibleItem
+        title="Digital Marketing Manager"
+        badge="Deel template"
+        metaText="Non-editable"
+        action={<SecondaryButton label="Use" size="sm" />}
+        description={`General Purpose\nResponsible for developing, executing and managing all digital marketing campaigns.\n\nDuties and Responsibilities\n- Plan and execute digital marketing campaigns\n- Manage and maintain the company's owned media channels\n- Measure and report performance of campaigns\n- Identify trends and insights`}
+        expanded
+        onToggle={() => {}}
+      />
+      <CollapsibleItem
+        title="SEO Specialist"
+        badge="Deel template"
+        metaText="Non-editable"
+        action={<SecondaryButton label="Use" size="sm" />}
+        description="Optimises website content and technical architecture for organic search performance."
+        onToggle={() => {}}
+      />
+    </div>
+  ),
+  ManageJobScopesModal: <ManageJobScopesDemoWrapper />,
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -2335,6 +2482,89 @@ const COMPONENT_PLAYGROUND_CONFIG = {
       headerSubtitle: "Full-time · United States",
     },
     render: (p) => <EORContractCreationFlow {...p} />,
+  },
+  Modal: {
+    defaults: { title: "Example modal", subtitle: "Subtitle text goes here.", maxWidth: 580 },
+    render: () => <ModalDemoWrapper />,
+  },
+  CollapsibleItem: {
+    defaults: { title: "Digital Marketing Manager", showBadge: true, metaText: "Non-editable", showAction: true, actionVariant: "secondary", expanded: false },
+    render: (p) => {
+      const actionNode = p.showAction
+        ? p.actionVariant === "primary"   ? <PrimaryButton   label="Use" size="sm" />
+        : p.actionVariant === "text"      ? <TextButton      label="Use" />
+        : /* secondary (default) */         <SecondaryButton label="Use" size="sm" />
+        : undefined;
+      return (
+        <div style={{ maxWidth: 580 }}>
+          <CollapsibleItem
+            title={p.title}
+            badge={p.showBadge ? "Deel template" : undefined}
+            metaText={p.metaText}
+            action={actionNode}
+            expanded={p.expanded}
+            description={`General Purpose\nResponsible for developing, executing and managing all digital marketing campaigns.\n\nDuties and Responsibilities\n- Plan and execute digital marketing campaigns\n- Manage and maintain the company's owned media channels`}
+            onToggle={() => {}}
+          />
+        </div>
+      );
+    },
+    customControls: (liveProps, setProp, t) => {
+      const rowStyle   = { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 20px", borderBottom:`1px solid ${t.border}`, gap:16 };
+      const labelStyle = { fontFamily:"'JetBrains Mono', monospace", fontSize:12.5, color:t.textMain, fontWeight:500 };
+      const typeStyle  = { fontFamily:"'JetBrains Mono', monospace", fontSize:10, color:t.purple };
+      const mkToggle = (key) => {
+        const active = Boolean(liveProps[key]);
+        return (
+          <button type="button" aria-checked={active} onClick={() => setProp(key, !active)}
+            style={{ display:"flex", alignItems:"center", flexShrink:0, background: active ? t.primary : t.surfaceHover, border:`1.5px solid ${active ? t.primary : t.border}`, borderRadius:999, padding:2, cursor:"pointer", width:40, height:22, transition:"background .15s, border-color .15s" }}>
+            <div style={{ width:16, height:16, borderRadius:"50%", background: active ? t.btnText : t.textDisabled, transform: active ? "translateX(18px)" : "translateX(0)", transition:"transform .15s" }} />
+          </button>
+        );
+      };
+      const selectStyle = {
+        fontFamily:"'JetBrains Mono', monospace", fontSize:12, padding:"5px 26px 5px 9px", borderRadius:7,
+        border:`1px solid ${t.border}`, background: t.inputBg || t.bg, color:t.textMain, outline:"none",
+        appearance:"none", minWidth:120,
+        backgroundImage:`url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2371717A' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")`,
+        backgroundRepeat:"no-repeat", backgroundPosition:"right 8px center",
+      };
+      return (
+        <>
+          <div style={rowStyle}>
+            <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+              <span style={labelStyle}>showBadge</span>
+              <span style={typeStyle}>boolean</span>
+            </div>
+            {mkToggle("showBadge")}
+          </div>
+          <div style={rowStyle}>
+            <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+              <span style={labelStyle}>showAction</span>
+              <span style={typeStyle}>boolean</span>
+            </div>
+            {mkToggle("showAction")}
+          </div>
+          {liveProps.showAction && (
+            <div style={rowStyle}>
+              <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                <span style={labelStyle}>actionVariant</span>
+                <span style={typeStyle}>'primary' | 'secondary' | 'text'</span>
+              </div>
+              <select value={liveProps.actionVariant || "secondary"} onChange={e => setProp("actionVariant", e.target.value)} style={selectStyle}>
+                <option value="secondary">secondary</option>
+                <option value="primary">primary</option>
+                <option value="text">text</option>
+              </select>
+            </div>
+          )}
+        </>
+      );
+    },
+  },
+  ManageJobScopesModal: {
+    defaults: {},
+    render: () => <ManageJobScopesDemoWrapper />,
   },
 };
 

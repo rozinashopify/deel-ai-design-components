@@ -670,6 +670,71 @@ export const COMPONENT_MANIFEST = [
   onStepChange={trackStep}
 />`,
   },
+
+  // ── Overlays ───────────────────────────────────────────────────
+  {
+    name: "Modal",
+    domain: "Overlays",
+    tier: "molecule",
+    description:
+      "Generic modal overlay. Renders a centred dialog with a dark backdrop, title, optional subtitle, × close button, and a scrollable body slot. Closes on backdrop click or Escape key press. Use as a wrapper for any modal content.",
+    composedOf: [],
+    props: [
+      { name: "title",    type: "string",    required: false, description: "Bold heading in the modal header." },
+      { name: "subtitle", type: "string",    required: false, description: "Muted description line below the title." },
+      { name: "maxWidth", type: "number",    required: false, description: "Max width of the dialog box in px (default: 580)." },
+      { name: "onClose",  type: "() => void", required: false, description: "Called when × is clicked, backdrop is clicked, or Escape is pressed." },
+      { name: "children", type: "ReactNode", required: false, description: "Content rendered inside the scrollable modal body." },
+    ],
+    usage: `<Modal title="Confirm action" subtitle="This cannot be undone." onClose={() => setOpen(false)}>
+  <p>Modal body content here.</p>
+</Modal>`,
+  },
+  {
+    name: "CollapsibleItem",
+    domain: "Overlays",
+    tier: "molecule",
+    description:
+      "Bordered card row with a clickable header that expands or collapses a description body. The header shows a bold title, an optional 'Deel template' badge pill, optional meta text (e.g. 'Non-editable template'), an optional action element (e.g. 'Use template' button), and an animated chevron. Used inside ManageJobScopesModal to preview scope template contents.",
+    composedOf: [],
+    props: [
+      { name: "title",       type: "string",    required: true,  description: "Primary row label." },
+      { name: "badge",       type: "string",    required: false, description: "Outlined purple pill label (e.g. 'Deel template')." },
+      { name: "metaText",    type: "string",    required: false, description: "Secondary muted text next to the badge (e.g. 'Non-editable template')." },
+      { name: "action",      type: "ReactNode", required: false, description: "Element rendered before the chevron — typically a 'Use template' SecondaryButton." },
+      { name: "description", type: "string",    required: false, description: "Body copy shown when expanded." },
+      { name: "bodyLabel",   type: "string",    required: false, description: "Label above the body description (default: 'Scope description')." },
+      { name: "expanded",    type: "boolean",   required: false, description: "Controlled expanded state." },
+      { name: "onToggle",    type: "() => void", required: false, description: "Called when the header row is clicked." },
+    ],
+    usage: `<CollapsibleItem
+  title="Digital Marketing Manager"
+  badge="Deel template"
+  metaText="Non-editable template"
+  action={<SecondaryButton size="sm" label="Use template" onClick={handleUse} />}
+  description="General Purpose A digital marketing manager is responsible for..."
+  expanded={expanded === "dmm"}
+  onToggle={() => setExpanded(expanded === "dmm" ? null : "dmm")}
+/>`,
+  },
+  {
+    name: "ManageJobScopesModal",
+    domain: "Overlays",
+    tier: "block",
+    description:
+      "Modal for browsing and selecting job scope templates. Composed of Modal + CollapsibleItem rows. Shows a searchable list of Deel-provided template cards — each with a title, 'Deel template' badge, 'Non-editable template' label, 'Use template' action button, and an expandable scope description preview. Launched by the 'Manage job scopes' button inside JobDescriptionBlock.",
+    composedOf: ["Modal", "CollapsibleItem", "SecondaryButton"],
+    props: [
+      { name: "open",          type: "boolean",   required: false, description: "Controls modal visibility." },
+      { name: "onClose",       type: "() => void", required: false, description: "Called when the modal is dismissed." },
+      { name: "onUseTemplate", type: "(template: { id: string; title: string; description: string }) => void", required: false, description: "Called when 'Use template' is clicked. The selected template object is passed." },
+    ],
+    usage: `<ManageJobScopesModal
+  open={manageOpen}
+  onClose={() => setManageOpen(false)}
+  onUseTemplate={t => setScope(t.description)}
+/>`,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1370,7 +1435,7 @@ export const makeLibraryCSS = (t, isDark) => {
   .mrc-bars-wrap { position: relative; height: 120px; margin-bottom: 6px; }
   .mrc-bars { display: flex; align-items: flex-end; gap: 3px; height: 100%; }
   .mrc-bar-col { flex: 1; position: relative; height: 100%; }
-  .mrc-bar { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 3px 3px 0 0; background: ${t.chartBar}; transition: height .4s cubic-bezier(.4,0,.2,1), background .15s; }
+  .mrc-bar { position: absolute; bottom: 0; left: 0; right: 0; border-radius: ${br}px ${br}px 0 0; background: ${t.chartBar}; transition: height .4s cubic-bezier(.4,0,.2,1), background .15s; }
   .mrc-bar.active-bar { background: ${t.chartBarActive}; }
   .mrc-bar.hover-bar  { background: ${t.chartBarHover}; }
   .mrc-bubble-wrap  { position: absolute; top: -34px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
@@ -1484,6 +1549,89 @@ export const makeLibraryCSS = (t, isDark) => {
     .flow-rail  { position: static; order: -1; }
     .flow-header { padding: 10px 16px; }
   }
+
+  /* ── Modal ── */
+  @keyframes mfadein  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes mslideup { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.42); display: flex; align-items: center; justify-content: center;
+    padding: 24px; animation: mfadein .15s ease;
+  }
+  .modal-box {
+    background: ${t.surface}; border: 1px solid ${t.border};
+    border-radius: ${br + 6}px; box-shadow: ${t.shadowLg};
+    display: flex; flex-direction: column;
+    max-height: calc(100vh - 48px); width: 100%; max-width: 580px;
+    animation: mslideup .18s cubic-bezier(.32,.72,0,1);
+  }
+  .modal-hd {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid ${t.border}; flex-shrink: 0;
+  }
+  .modal-hd-text { flex: 1; min-width: 0; }
+  .modal-title { font-size: 15px; font-weight: 600; color: ${t.textMain}; letter-spacing: -.01em; }
+  .modal-subtitle { font-size: 12.5px; color: ${t.textMuted}; margin-top: 3px; line-height: 1.45; }
+  .modal-close-btn {
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; cursor: pointer;
+    color: ${t.textMuted}; padding: 4px; border-radius: 6px;
+    flex-shrink: 0; margin-left: 12px; margin-top: -2px;
+    transition: color .12s, background .12s;
+  }
+  .modal-close-btn:hover { color: ${t.textMain}; background: ${t.surfaceHover}; }
+  .modal-body {
+    overflow-y: auto; flex: 1; padding: 20px 24px 24px;
+    scrollbar-width: thin; scrollbar-color: ${t.border} transparent;
+  }
+  .modal-body::-webkit-scrollbar { width: 5px; }
+  .modal-body::-webkit-scrollbar-track { background: transparent; }
+  .modal-body::-webkit-scrollbar-thumb { background: ${t.border}; border-radius: 999px; }
+
+  /* ── CollapsibleItem ── */
+  .ci-item { border: 1px solid ${t.border}; border-radius: ${br + 2}px; background: ${t.surface}; overflow: hidden; }
+  .ci-hd {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+    cursor: pointer; background: none; border: none; width: 100%; text-align: left;
+    font-family: ${ff}; transition: background .1s;
+  }
+  .ci-hd:hover { background: ${t.surfaceHover}; }
+  .ci-title-col { flex: 1; min-width: 0; }
+  .ci-title { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; }
+  .ci-title-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+  .ci-badge-deel {
+    font-size: 11.5px; color: ${isDark ? t.purple : "#7C3AED"};
+    border: 1px solid ${isDark ? t.purple + "55" : "#DDD6FE"};
+    background: ${isDark ? t.purpleBg : "#FAF5FF"};
+    border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+  }
+  .ci-meta-text { font-size: 12px; color: ${t.textDisabled}; }
+  .ci-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .ci-chev { color: ${t.textMuted}; flex-shrink: 0; display: flex; transition: transform .18s; }
+  .ci-chev.open { transform: rotate(180deg); }
+  .ci-bd { padding: 12px 14px 14px; border-top: 1px solid ${t.border}; }
+  .ci-bd-label { font-size: 12px; color: ${t.textMuted}; margin-bottom: 6px; }
+  .ci-bd-text { font-size: 13px; color: ${t.textMain}; line-height: 1.6; white-space: pre-wrap; }
+
+  /* ── ManageJobScopesModal ── */
+  .mjs-section-hd { font-size: 13.5px; font-weight: 600; color: ${t.textMain}; margin-bottom: 4px; }
+  .mjs-section-sub { font-size: 12.5px; color: ${t.textMuted}; margin-bottom: 16px; }
+  .mjs-search {
+    position: relative; display: flex; align-items: center;
+    border: 1px solid ${t.border}; border-radius: 999px;
+    background: ${t.inputBg}; margin-bottom: 16px;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .mjs-search:focus-within { border-color: ${t.borderFocus}; box-shadow: 0 0 0 3px ${t.ring}; }
+  .mjs-search-icon { padding: 0 8px 0 14px; color: ${t.textDisabled}; display: flex; align-items: center; flex-shrink: 0; }
+  .mjs-search input {
+    flex: 1; height: 38px; padding: 0 16px 0 0;
+    font-family: ${ff}; font-size: 13px; color: ${t.textMain};
+    background: transparent; border: none; outline: none;
+  }
+  .mjs-search input::placeholder { color: ${t.textDisabled}; }
+  .mjs-list { display: flex; flex-direction: column; gap: 8px; }
+  .mjs-empty { padding: 28px 0; text-align: center; font-size: 13px; color: ${t.textMuted}; }
 `;
   let out = css;
   if (fsc !== 1) out = out.replace(/font-size:\s*([\d.]+)px/g, (_, n) => `font-size: ${Math.round(+n * fsc * 10) / 10}px`);
@@ -1515,7 +1663,8 @@ const InfoSmall  = () => <svg width="11" height="11" viewBox="0 0 11 11" fill="n
 const X          = () => <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="2.5" y1="2.5" x2="10.5" y2="10.5"/><line x1="10.5" y1="2.5" x2="2.5" y2="10.5"/></svg>;
 const ExternalLink = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7"/><polyline points="8 1 11 1 11 4"/><line x1="5.5" y1="6.5" x2="11" y2="1"/></svg>;
 const Disk       = () => <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><rect x="1" y="1" width="9" height="9" rx="1.5"/><rect x="3" y="1" width="5" height="3.5" rx=".5" fill="currentColor" stroke="none"/><rect x="2.5" y="6" width="6" height="3" rx=".5"/></svg>;
-const CalendarIcon = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><line x1="1.5" y1="5.5" x2="12.5" y2="5.5"/><line x1="4.5" y1="1" x2="4.5" y2="4"/><line x1="9.5" y1="1" x2="9.5" y2="4"/></svg>;
+const CalendarIcon  = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><line x1="1.5" y1="5.5" x2="12.5" y2="5.5"/><line x1="4.5" y1="1" x2="4.5" y2="4"/><line x1="9.5" y1="1" x2="9.5" y2="4"/></svg>;
+const SearchIcon    = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="4.5"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>;
 
 // ═══════════════════════════════════════════════════════════════════
 // DOMAIN: Forms
@@ -2519,10 +2668,12 @@ export function MarketRateChart({ salary = 77293.01, period: initPeriod = "annua
           <div className="mrc-subtitle">Your payment rate is equal to {fmtSal} {period === "annual" ? "annually" : "monthly"} in USD.</div>
           <div className="mrc-private">Market rate insights will not be shown to employees.</div>
         </div>
-        <div className="mrc-period-toggle">
-          <button type="button" className={`mrc-period-btn${period === "annual" ? " active" : ""}`} onClick={() => setPeriod("annual")}>Annual</button>
-          <button type="button" className={`mrc-period-btn${period === "monthly" ? " active" : ""}`} onClick={() => setPeriod("monthly")}>Monthly</button>
-        </div>
+        <SegmentedControl
+          options={[{ value: "annual", label: "Annual" }, { value: "monthly", label: "Monthly" }]}
+          value={period}
+          onChange={setPeriod}
+          size="sm"
+        />
       </div>
 
       <div className="mrc-bars-wrap">
@@ -2608,10 +2759,17 @@ export function JobDescriptionBlock({
   onSave,
   onReport,
 }) {
-  const [scope, setScope]     = useState(defaultScope);
-  const [running, setRunning] = useState(complianceRunning);
-  const [results, setResults] = useState(showComplianceResults ? COMPLIANCE_RULES : []);
+  const [scope, setScope]               = useState(defaultScope);
+  const [running, setRunning]           = useState(complianceRunning);
+  const [results, setResults]           = useState(showComplianceResults ? COMPLIANCE_RULES : []);
+  const [manageOpen, setManageOpen]     = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
   const maxLen = 10000;
+
+  const applyTemplate = t => {
+    setScope(t.description);
+    setSelectedTemplate(t.id);
+  };
 
   const runCheck = () => {
     setRunning(true);
@@ -2630,6 +2788,12 @@ export function JobDescriptionBlock({
 
   return (
     <div className="block-shell">
+      <ManageJobScopesModal
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
+        onUseTemplate={applyTemplate}
+      />
+
       <div><div className="block-title">Job description</div></div>
 
       <div className="block-field-stack">
@@ -2650,7 +2814,7 @@ export function JobDescriptionBlock({
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>Job scope</span>
-          <SecondaryButton label="Manage job scopes" size="sm" />
+          <SecondaryButton label="Manage job scopes" size="sm" onClick={() => setManageOpen(true)} />
         </div>
         <div className="block-subtitle" style={{ marginBottom: 12 }}>This information will form the basis of the employment agreement.</div>
         <div style={{ marginBottom: 12 }}>
@@ -2661,9 +2825,18 @@ export function JobDescriptionBlock({
             ctaUrl="#"
           />
         </div>
-        <DropdownSelect placeholder="Job scope template (optional)" optional
+        <RichDropdownSelect
+          placeholder="Job scope template (optional)"
+          optional
           helperText="Selecting a template will replace the current job scope."
-          options={[{ value: "t1", label: "Customer Success Template" }]} />
+          searchable
+          value={selectedTemplate}
+          options={JOB_SCOPE_TEMPLATES.map(t => ({ value: t.id, label: t.title }))}
+          onChange={id => {
+            const tpl = JOB_SCOPE_TEMPLATES.find(t => t.id === id);
+            if (tpl) applyTemplate(tpl);
+          }}
+        />
         <div style={{ marginTop: 12 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
             <label className="fl">Explanation of job scope <span className="req">*</span></label>
@@ -3529,5 +3702,251 @@ export function EORContractCreationFlow({
         </div>
       </div>
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DOMAIN: Overlays
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Generic modal overlay with a dark backdrop, header, and scrollable body.
+ * Closes on backdrop click or Escape key press.
+ *
+ * @param {string}    [title]    - Bold heading in the modal header.
+ * @param {string}    [subtitle] - Muted description line below the title.
+ * @param {number}    [maxWidth] - Max dialog width in px (default: 580).
+ * @param {function}  [onClose]  - Called on backdrop click, × click, or Escape.
+ * @param {ReactNode} [children] - Content rendered inside the scrollable body.
+ */
+export function Modal({ title, subtitle, maxWidth = 580, onClose, children }) {
+  useEffect(() => {
+    const handler = e => { if (e.key === "Escape") onClose?.(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose?.(); }}>
+      <div className="modal-box" style={maxWidth !== 580 ? { maxWidth } : undefined}>
+        <div className="modal-hd">
+          <div className="modal-hd-text">
+            {title    && <div className="modal-title">{title}</div>}
+            {subtitle && <div className="modal-subtitle">{subtitle}</div>}
+          </div>
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
+            <X />
+          </button>
+        </div>
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Bordered card with a clickable header that expands/collapses a description body.
+ *
+ * @param {string}    title       - Primary row label.
+ * @param {string}    [badge]     - Outlined purple pill label (e.g. 'Deel template').
+ * @param {string}    [metaText]  - Secondary muted text next to the badge.
+ * @param {ReactNode} [action]    - Element rendered before the chevron (e.g. 'Use template' button).
+ * @param {string}    [description] - Body copy shown when expanded.
+ * @param {string}    [bodyLabel] - Label above the body (default: 'Scope description').
+ * @param {boolean}   [expanded]  - Controlled expanded state.
+ * @param {function}  [onToggle]  - Called when the header row is clicked.
+ */
+export function CollapsibleItem({ title, badge, metaText, action, description, bodyLabel = "Scope description", expanded, onToggle }) {
+  return (
+    <div className="ci-item">
+      <button className="ci-hd" onClick={onToggle}>
+        <div className="ci-title-col">
+          <div className="ci-title">{title}</div>
+          <div className="ci-title-meta">
+            {badge    && <span className="ci-badge-deel">{badge}</span>}
+            {metaText && <span className="ci-meta-text">{metaText}</span>}
+          </div>
+        </div>
+        <div className="ci-right">
+          {action && <div onClick={e => e.stopPropagation()}>{action}</div>}
+          <span className={`ci-chev${expanded ? " open" : ""}`}><Chevron /></span>
+        </div>
+      </button>
+      {expanded && description && (
+        <div className="ci-bd">
+          {bodyLabel && <div className="ci-bd-label">{bodyLabel}</div>}
+          <div className="ci-bd-text">{description}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Job scope template data ────────────────────────────────────────
+const JOB_SCOPE_TEMPLATES = [
+  {
+    id: "digital-marketing-manager",
+    title: "Digital Marketing Manager",
+    description: `General Purpose\nA digital marketing manager is responsible for developing, executing and managing all digital marketing campaigns that the company wants to promote. They should understand and identify digital technologies and best practices that will optimize the impact of their digital campaigns.\n\nDuties and Responsibilities\n- Develop the company's digital marketing strategy by studying economic indicators and tracking demand\n- Evaluate important metrics that affect website traffic, service quotas and target audience\n- Set up and optimize advertising campaigns\n- Develop campaign budgets and strategies that drive customers to the website\n- Find new potential customers and identify their current and future needs\n- Create email campaigns to target key audiences\n- Use advanced metrics to measure the success of marketing campaigns`,
+  },
+  {
+    id: "seo-specialist",
+    title: "SEO Specialist",
+    description: `General Purpose\nThe SEO Specialist is responsible for improving the company's organic search rankings and online visibility.\n\nDuties and Responsibilities\n- Perform keyword research and analysis to guide content strategy\n- Optimize website content, landing pages and paid search copy\n- Conduct ongoing link building and outreach campaigns\n- Track, report and analyse website analytics and PPC initiatives\n- Develop and implement link building strategies\n- Work with the development team to ensure SEO best practices are properly implemented`,
+  },
+  {
+    id: "ppc-specialist",
+    title: "PPC Specialist",
+    description: `General Purpose\nThe PPC Specialist manages the company's pay-per-click advertising campaigns across search engines and social media platforms.\n\nDuties and Responsibilities\n- Plan, create and manage PPC campaigns across Google Ads, Meta, and other platforms\n- Conduct keyword research and audience targeting\n- Monitor, report and optimise campaign performance against KPIs\n- Manage advertising budget and optimise for ROI\n- Write compelling ad copy and collaborate with design for creatives\n- A/B test ad formats, copy and landing pages`,
+  },
+  {
+    id: "media-buyer",
+    title: "Media Buyer",
+    description: `General Purpose\nThe Media Buyer is responsible for purchasing advertising space across digital and traditional media channels to reach target audiences effectively.\n\nDuties and Responsibilities\n- Negotiate and purchase media placements across digital, print, broadcast and outdoor channels\n- Develop and execute media plans that align with campaign objectives\n- Monitor campaign delivery and performance metrics\n- Manage relationships with media vendors and publishers\n- Analyse audience data and market research to identify optimal media mix\n- Track budget allocation and reconcile invoices`,
+  },
+  {
+    id: "content-writer",
+    title: "Content Writer",
+    description: `General Purpose\nThe Content Writer creates compelling written content across digital channels to engage the company's target audiences and support business objectives.\n\nDuties and Responsibilities\n- Write clear, engaging copy for websites, blogs, email newsletters and social media\n- Research industry topics to develop authoritative and accurate content\n- Collaborate with marketing and design teams to ensure content aligns with brand voice\n- Edit and proofread content for grammar, clarity and style\n- Optimise content for SEO best practices\n- Track content performance metrics and iterate based on data`,
+  },
+  {
+    id: "video-producer",
+    title: "Video Producer",
+    description: `General Purpose\nThe Video Producer oversees the planning, filming and editing of video content to support the company's marketing and communications goals.\n\nDuties and Responsibilities\n- Develop video concepts, scripts and storyboards\n- Manage all aspects of video production including pre-production, filming and post-production\n- Edit footage using professional video editing software\n- Collaborate with marketing and creative teams to ensure brand consistency\n- Manage production schedules and budgets\n- Ensure final deliverables meet technical and creative standards`,
+  },
+  {
+    id: "software-developer",
+    title: "Software Developer",
+    description: `General Purpose\nThe Software Developer designs, builds and maintains software applications to meet the company's technical requirements.\n\nDuties and Responsibilities\n- Write clean, scalable code using programming languages and frameworks relevant to the role\n- Collaborate with product managers and designers to translate requirements into technical solutions\n- Conduct code reviews and contribute to engineering best practices\n- Debug, test and deploy applications\n- Participate in agile ceremonies including sprint planning and retrospectives\n- Document technical specifications and maintain up-to-date code repositories`,
+  },
+  {
+    id: "business-developer",
+    title: "Business Developer",
+    description: `General Purpose\nThe Business Developer identifies new market opportunities and builds strategic partnerships to drive the company's revenue growth.\n\nDuties and Responsibilities\n- Research and identify new business opportunities including new markets, growth areas and partnerships\n- Generate leads and cold-call prospective customers\n- Meet with customers and clients to negotiate and close deals\n- Develop a strong understanding of the company's products and services\n- Create and deliver compelling presentations and proposals\n- Collaborate with internal teams to align business development efforts with company objectives`,
+  },
+  {
+    id: "designer",
+    title: "Designer",
+    description: `General Purpose\nThe Designer creates visual assets and user experiences that communicate the company's brand effectively across all touchpoints.\n\nDuties and Responsibilities\n- Design graphics, layouts and visual assets for digital and print media\n- Develop and maintain the company's visual brand guidelines\n- Collaborate with marketing, product and engineering teams\n- Create wireframes, mockups and prototypes for digital products\n- Ensure consistency of design across all company materials\n- Incorporate feedback from stakeholders and iterate on designs`,
+  },
+  {
+    id: "quality-assurance-engineer",
+    title: "Quality Assurance Engineer",
+    description: `General Purpose\nThe Quality Assurance Engineer ensures the company's software products meet defined quality standards before release.\n\nDuties and Responsibilities\n- Design and execute test plans, test cases and test scripts\n- Identify, document and track software defects through resolution\n- Perform manual and automated testing across functional and regression test cycles\n- Collaborate with developers and product managers to understand requirements\n- Contribute to continuous improvement of QA processes and tooling\n- Ensure test coverage for new features and bug fixes`,
+  },
+  {
+    id: "customer-support",
+    title: "Customer Support",
+    description: `General Purpose\nThe Customer Support Specialist delivers timely and accurate assistance to the company's customers, ensuring high satisfaction and retention.\n\nDuties and Responsibilities\n- Respond to customer inquiries via email, chat and phone\n- Diagnose and resolve customer issues or escalate to appropriate teams\n- Maintain detailed records of customer interactions in CRM systems\n- Identify trends in customer feedback and share insights with product and operations teams\n- Contribute to help centre documentation and self-service resources\n- Meet individual and team SLA targets`,
+  },
+  {
+    id: "account-executive",
+    title: "Account Executive",
+    description: `General Purpose\nThe Account Executive drives new business acquisition and manages the full sales cycle from prospecting to close.\n\nDuties and Responsibilities\n- Identify and qualify leads through outbound prospecting and inbound follow-up\n- Conduct discovery calls and product demonstrations\n- Develop and present tailored proposals and negotiate contract terms\n- Achieve and exceed monthly and quarterly revenue targets\n- Maintain accurate pipeline data in CRM\n- Collaborate with customer success to ensure smooth client onboarding`,
+  },
+  {
+    id: "strategy-consulting",
+    title: "Strategy Consulting",
+    description: `General Purpose\nThe Strategy Consultant works with internal stakeholders to identify business challenges and develop data-driven recommendations to drive growth.\n\nDuties and Responsibilities\n- Conduct quantitative and qualitative analysis to support strategic decisions\n- Develop frameworks and models to evaluate business opportunities\n- Prepare executive-level presentations and reports\n- Facilitate workshops and alignment sessions with cross-functional teams\n- Monitor industry trends and competitive dynamics\n- Track implementation of strategic initiatives and measure outcomes`,
+  },
+  {
+    id: "influencer",
+    title: "Influencer",
+    description: `General Purpose\nThe Influencer creates engaging content that promotes the company's products or services to their audience across social media platforms.\n\nDuties and Responsibilities\n- Create original, high-quality content aligned with the company's brand guidelines\n- Publish content on agreed platforms and schedules\n- Engage authentically with followers and respond to comments\n- Provide performance reports including reach, engagement and conversion metrics\n- Disclose sponsored content in accordance with applicable regulations\n- Collaborate with the company's marketing team on campaign briefs`,
+  },
+  {
+    id: "account-manager",
+    title: "Account Manager",
+    description: `General Purpose\nThe Account Manager builds and maintains long-term relationships with assigned client accounts, ensuring retention and identifying growth opportunities.\n\nDuties and Responsibilities\n- Serve as the primary point of contact for assigned accounts\n- Understand client goals and ensure the company's products and services deliver value\n- Identify upsell and cross-sell opportunities within the account portfolio\n- Conduct regular business reviews with key stakeholders\n- Coordinate with internal teams to resolve client issues promptly\n- Track account health metrics and report on portfolio performance`,
+  },
+  {
+    id: "customer-success",
+    title: "Customer Success",
+    description: `General Purpose\nThe Customer Success Manager ensures customers achieve their desired outcomes with the company's products, driving retention and expansion.\n\nDuties and Responsibilities\n- Onboard new customers and ensure successful product adoption\n- Develop success plans tailored to each customer's goals\n- Conduct regular check-ins and quarterly business reviews\n- Monitor customer health scores and proactively address risk signals\n- Identify expansion opportunities and collaborate with sales\n- Serve as the voice of the customer internally to influence product roadmap`,
+  },
+  {
+    id: "sales-development-representative",
+    title: "Sales-Development Representative",
+    description: `General Purpose\nThe Sales Development Representative is responsible for generating and qualifying new business opportunities to feed the sales pipeline.\n\nDuties and Responsibilities\n- Prospect and research target accounts using outbound channels including email, phone and social media\n- Qualify inbound leads and route them to the appropriate account executives\n- Conduct initial discovery conversations to understand prospect needs\n- Maintain accurate records of prospecting activity in CRM\n- Meet daily, weekly and monthly outreach and pipeline targets\n- Collaborate with marketing on outbound sequences and messaging`,
+  },
+  {
+    id: "online-teacher",
+    title: "Online Teacher",
+    description: `General Purpose\nThe Online Teacher designs and delivers high-quality educational content to students through digital platforms.\n\nDuties and Responsibilities\n- Plan, develop and deliver engaging online lessons aligned with curriculum objectives\n- Assess student progress and provide constructive feedback\n- Adapt teaching methods to meet diverse learning styles and needs\n- Maintain accurate records of student attendance and performance\n- Communicate regularly with students and, where applicable, their guardians\n- Contribute to continuous improvement of course materials and delivery methods`,
+  },
+  {
+    id: "virtual-assistant",
+    title: "Virtual Assistant",
+    description: `General Purpose\nThe Virtual Assistant provides administrative and operational support to the company's team members remotely.\n\nDuties and Responsibilities\n- Manage calendars, schedule meetings and coordinate travel arrangements\n- Handle email correspondence and draft communications on behalf of stakeholders\n- Conduct research and compile reports or presentations as required\n- Maintain organised digital filing systems and databases\n- Support onboarding administration and document preparation\n- Manage recurring operational tasks and flag issues requiring attention`,
+  },
+  {
+    id: "content-marketing",
+    title: "Content Marketing",
+    description: `General Purpose\nThe Content Marketing Specialist develops and executes content strategies that attract and engage the company's target audiences, supporting pipeline and brand awareness goals.\n\nDuties and Responsibilities\n- Develop and manage the editorial content calendar across all channels\n- Write and edit long-form content including blog posts, whitepapers and case studies\n- Collaborate with designers and video producers to create multimedia content\n- Distribute content through owned, earned and paid channels\n- Analyse content performance using web analytics and adjust strategy accordingly\n- Stay current with content marketing trends and best practices`,
+  },
+];
+
+/**
+ * Modal for browsing and selecting job scope templates.
+ * Launched by the "Manage job scopes" button inside JobDescriptionBlock.
+ *
+ * @param {boolean}  [open]           - Controls modal visibility.
+ * @param {function} [onClose]        - Called when the modal is dismissed.
+ * @param {function} [onUseTemplate]  - Called with the selected template object.
+ */
+export function ManageJobScopesModal({ open, onClose, onUseTemplate }) {
+  const [search, setSearch]     = useState("");
+  const [expanded, setExpanded] = useState(null);
+
+  const filtered = JOB_SCOPE_TEMPLATES.filter(t =>
+    t.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (!open) return null;
+
+  return (
+    <Modal
+      title="Select, create and manage job scopes"
+      subtitle="Select, create, edit, or delete job scope templates for worker contracts."
+      onClose={onClose}
+    >
+      <div className="mjs-section-hd">Custom job scope templates</div>
+      <div className="mjs-section-sub">Click on a job scope template to use it</div>
+
+      <div className="mjs-search">
+        <span className="mjs-search-icon"><SearchIcon /></span>
+        <input
+          type="text"
+          placeholder="Find existing template"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
+      <div className="mjs-list">
+        {filtered.length === 0 ? (
+          <div className="mjs-empty">No templates match "{search}"</div>
+        ) : (
+          filtered.map(t => (
+            <CollapsibleItem
+              key={t.id}
+              title={t.title}
+              badge="Deel template"
+              metaText="Non-editable template"
+              action={
+                <SecondaryButton
+                  size="sm"
+                  label="Use template"
+                  onClick={() => { onUseTemplate?.(t); onClose?.(); }}
+                />
+              }
+              description={t.description}
+              expanded={expanded === t.id}
+              onToggle={() => setExpanded(expanded === t.id ? null : t.id)}
+            />
+          ))
+        )}
+      </div>
+    </Modal>
   );
 }
